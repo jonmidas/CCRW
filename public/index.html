@@ -188,7 +188,7 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
 .unit .ch .sub{font-size:12px;color:var(--ink2);font-weight:400;margin-top:2px}
 .unit ul{list-style:none;margin:0;padding:6px 0}
 .unit li{display:flex;align-items:center;gap:10px;padding:7px 16px;font-size:14px}
-.unit li .t{margin-left:auto;font-size:12px;color:var(--ink3)}
+.unit li .t{flex:none;font-size:12px;color:var(--ink3);min-width:52px;text-align:right}.unit li .badge{flex:none}
 .st{width:8px;height:8px;border-radius:50%;flex:none;background:var(--no)}.st.ok{background:var(--ok)}
 .seg{display:inline-flex;padding:3px;border-radius:9px;background:var(--hover);gap:2px}
 .seg button{border:0;background:none;height:28px;padding:0 10px;border-radius:7px;font-size:13px;font-weight:550;color:var(--ink2);cursor:pointer}
@@ -232,6 +232,19 @@ a.hcard:hover{border-color:var(--ink3)}
 .ptbl tr.is-ok td{background:color-mix(in srgb,var(--okbg) 45%,transparent)}
 .ptbl tr.is-no td:first-child b{font-weight:500}
 @media print{.hl,.split{break-inside:avoid}.gsec{break-inside:auto}.gsec-h{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+/* leaders */
+.leadcard{margin-bottom:16px}
+.leads{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;padding:12px 16px}
+.lead{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px}.lead:hover{background:var(--hover)}
+.lead b{display:block;font-size:14px;font-weight:600}.lead span span{font-size:12px;color:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 4px}
+.chip2{display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 4px 0 10px;border-radius:8px;background:var(--brand2);color:var(--brandink);font-weight:550;font-size:13px}
+.chip2 button{border:0;background:none;color:inherit;width:22px;height:22px;border-radius:6px;cursor:pointer;display:grid;place-items:center}.chip2 button:hover{background:rgb(0 0 0 / 8%)}.chip2 .ico{width:13px;height:13px}
+.chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.chk{display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:8px;font-weight:500;cursor:pointer}
+.chk:has(input:checked){border-color:var(--brand);background:var(--brand2);color:var(--brandink)}
+.chk input{accent-color:var(--brand);margin:0}
 
 /* empty */
 .empty{display:grid;justify-items:center;text-align:center;gap:8px;padding:56px 16px}
@@ -348,8 +361,8 @@ let canWrite = true, ready = false, downloads = true;
 const S = {members:{}, groups:{}, meetings:{}, current:null};
 const store = {get(k,d){ try { const v = localStorage.getItem('ccrw.'+k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }, set(k,v){ try { localStorage.setItem('ccrw.'+k, JSON.stringify(v)); } catch(e){} }};
 let pass = store.get('pass', ''), queue = store.get('queue', []), cursor = 0, online = true;
-{ const c = store.get('cache', null); if (c && pass) { Object.assign(S, c.S); cursor = c.cursor || 0; ready = true; } }
-const persist = () => { store.set('queue', queue); store.set('cache', {S, cursor}); };
+{ const c = store.get('cache', null); if (c && pass && c.v === 3) { Object.assign(S, c.S); cursor = c.cursor || 0; ready = true; } }
+const persist = () => { store.set('queue', queue); store.set('cache', {v: 3, S, cursor}); };
 
 /* ---------- server sync ---------- */
 // On Cloudflare (or locally) the API lives on the same site. Any other host, such as Vercel, calls the Worker directly.
@@ -378,7 +391,7 @@ async function flush(){
 }
 function apply(d){
   let changed = false;
-  for (const g of d.groups) { changed = true; if (g.deleted) delete S.groups[g.id]; else S.groups[g.id] = {id:g.id, name:g.name, parent:g.parent||''}; }
+  for (const g of d.groups) { changed = true; if (g.deleted) delete S.groups[g.id]; else { let L = []; try { L = JSON.parse(g.leaders || '[]'); } catch(e) {} S.groups[g.id] = {id:g.id, name:g.name, parent:g.parent||'', leaders: Array.isArray(L) ? L : []}; } }
   for (const m of d.members) { changed = true; if (m.deleted) delete S.members[m.id]; else S.members[m.id] = {id:m.id, name:m.name, phone:m.phone||'', group:m.group||'', subgroup:m.subgroup||'', role:m.role||'member'}; }
   for (const m of d.meetings) { changed = true; if (m.deleted) delete S.meetings[m.id]; else S.meetings[m.id] = {...(S.meetings[m.id]||{present:{}}), title:m.title, date:m.date, createdAt:m.createdAt, endedAt:m.endedAt||null, totalAtEnd:m.totalAtEnd||null}; }
   for (const c of d.checkins) { changed = true; const mt = S.meetings[c.meeting] ||= {present:{}, title:'', date:''}; mt.present = {...mt.present, [c.member]: c.deleted ? null : c.at}; }
@@ -423,7 +436,11 @@ const gName = id => S.groups[id]?.name || '';
 const meeting = () => S.meetings[S.current] || null;
 const presentMap = m => { const out = {}; if (m) for (const [k,v] of Object.entries(m.present||{})) if (v && S.members[k]) out[k] = v; return out; };
 const inGroup = gid => members().filter(m => m.group === gid);
-const headOf = (gid, role) => Object.values(S.members).find(m => m.role === role && (role === 'group_head' ? m.group === gid : m.subgroup === gid));
+const leadersOf = gid => { const g = S.groups[gid]; if (!g) return []; const ids = [...(g.leaders || [])]; for (const m of Object.values(S.members)) if (m.role === 'group_head' && m.group === gid && !ids.includes(m.id)) ids.push(m.id); return ids.map(id => S.members[id]).filter(Boolean); };
+const leaderNames = (gid, max=3) => { const l = leadersOf(gid); return l.length ? l.slice(0, max).map(p => p.name).join(', ') + (l.length > max ? ` and ${l.length - max} more` : '') : ''; };
+const leadsGroups = p => groupsTop().filter(g => (g.leaders || []).includes(p.id) || (p.role === 'group_head' && p.group === g.id));
+const isLeader = p => p.role !== 'member' || leadsGroups(p).length > 0;
+const headOf = (gid, role) => role === 'group_head' ? leadersOf(gid)[0] : Object.values(S.members).find(m => m.role === role && m.subgroup === gid);
 const isPaired = p => S.groups[p.group] && !isUnp(S.groups[p.group]);
 const unitLabel = id => { const u = S.groups[id]; if (!u) return ''; const g = S.groups[u.parent]; return g && /^group\s/i.test(u.name) && u.name.startsWith(g.name) && u.name.length > g.name.length ? 'Unit ' + u.name.replace(/^group\s*/i, '') : u.name; };
 const unitShort = id => unitLabel(id).replace(/^Unit /, '');
@@ -432,7 +449,8 @@ const initials = n => { const w = n.replace(/^(pst|pastor|rev|reverend|apst|apst
 const pct = (a,b) => b ? Math.round(a/b*100) : 0;
 const pctTxt = (a,b) => a && pct(a,b) === 0 ? '<1%' : pct(a,b) + '%';
 const ROLE_LABEL = {group_head:'Group head', subgroup_head:'Unit head', assistant_head:'Assistant unit head', member:'Member'};
-const roleBadge = r => r && r !== 'member' ? `<span class="badge brand">${ROLE_LABEL[r]}</span>` : '';
+const roleBadge = r => r && r !== 'member' && r !== 'group_head' ? `<span class="badge brand">${ROLE_LABEL[r]}</span>` : '';
+const badges = p => { const lg = leadsGroups(p); return (lg.length ? `<span class="badge brand">${lg.length === 1 && lg[0].id === p.group ? 'Group leader' : 'Leads ' + esc(lg.map(g => g.name).join(', '))}</span>` : '') + roleBadge(p.role); };
 const whereBadge = p => isPaired(p) ? `<span class="badge">${esc(where(p))}</span>` : `<span class="badge warn">${UNPAIRED}</span>`;
 const isPhoneQ = q => /^\+?[\d\s-]{6,}$/.test(q.trim());
 const titleCase = s => s.trim().replace(/\s+/g,' ').replace(/(^|[\s\-'])(\p{L})/gu, (a,b,c) => b + c.toUpperCase());
@@ -554,8 +572,8 @@ function board(pres){
   const letters = 'ABCDEF'.slice(0, cols).split('');
   let h = `<div class="board" style="--cols:${cols}" role="table" aria-label="Group strength"><div class="hd">Group</div>${letters.map(l => `<div class="hd" style="text-align:center">Unit ${l}</div>`).join('')}<div class="hd tot-h">Whole group</div>`;
   for (const g of gs) {
-    const units = subsOf(g.id), list = Object.values(S.members).filter(p => p.group === g.id), gh = list.filter(p => pres[p.id]).length, gh2 = headOf(g.id, 'group_head');
-    h += `<a class="gname" href="#groups/${g.id}"><b>${esc(g.name)}</b><span>${gh2 ? esc(gh2.name) : `${list.length} people`}</span></a>`;
+    const units = subsOf(g.id), list = Object.values(S.members).filter(p => p.group === g.id), gh = list.filter(p => pres[p.id]).length, ln = leaderNames(g.id, 1);
+    h += `<a class="gname" href="#groups/${g.id}"><b>${esc(g.name)}</b><span>${ln ? esc(ln) : `${list.length} people`}</span></a>`;
     for (let i = 0; i < cols; i++) { const u = units[i];
       if (!u) { h += `<div class="cell none">–</div>`; continue; }
       const ul = list.filter(p => p.subgroup === u.id), uh = ul.filter(p => pres[p.id]).length, p = pct(uh, ul.length);
@@ -596,7 +614,7 @@ function deskBody(){
   }
   if (res.length) h += `<ul class="list" role="listbox" aria-label="Matching people">${res.map((p,i) => { const t = pres[p.id];
     return `<li class="${i===ui.sel?'sel':''}" role="option" aria-selected="${i===ui.sel}"><span class="av ${t?'ok':''}">${esc(initials(p.name))}</span>
-      <span class="who"><b>${esc(p.name)}</b><span class="m">${whereBadge(p)}${roleBadge(p.role)}${firstPhone(p) ? `<span class="num">${esc(firstPhone(p))}</span>` : ''}</span></span>
+      <span class="who"><b>${esc(p.name)}</b><span class="m">${whereBadge(p)}${badges(p)}${firstPhone(p) ? `<span class="num">${esc(firstPhone(p))}</span>` : ''}</span></span>
       ${t ? `<span class="done">${I('check')}<span class="num">${fmtTime(t)}</span></span><button class="btn ghost sm" data-act="undo" data-id="${p.id}" ${m.endedAt?'disabled':''}>Undo</button>`
         : `<button class="btn primary" data-act="reg" data-id="${p.id}" ${m.endedAt?'disabled':''}>Check in</button>`}</li>`; }).join('')}</ul>`;
   if (ui.q.trim().length > 1 && !m.endedAt) {
@@ -615,31 +633,32 @@ const renderDesk = () => { const b = $('#deskBody'); if (b) b.innerHTML = deskBo
 function vGroups(){
   const m = meeting(), pres = presentMap(m), gs = realGroups(), units = gs.reduce((a,g) => a + subsOf(g.id).length, 0), unpN = members().filter(p => !isPaired(p)).length;
   return pageTitle('Groups', `${gs.length} groups and ${units} units`, `<button class="btn" data-act="addG">${I('plus')}Add group</button>`)
-    + `<div class="tblwrap"><table class="tbl"><thead><tr><th>Group</th><th class="hide-sm">Group head</th><th class="hide-sm">Units</th><th class="r">People</th>${m ? '<th style="width:28%">Here today</th>' : ''}<th style="width:36px"></th></tr></thead><tbody>
-    ${gs.map(g => { const l = Object.values(S.members).filter(p => p.group === g.id), h = l.filter(p => pres[p.id]).length, gh = headOf(g.id, 'group_head');
-      return `<tr class="click" data-go="#groups/${g.id}"><td><b>${esc(g.name)}</b></td><td class="hide-sm">${gh ? esc(gh.name) : '<span class="faint">Not set</span>'}</td><td class="hide-sm muted">${subsOf(g.id).map(u => unitShort(u.id)).join(', ') || '–'}</td><td class="r num">${l.length}</td>
+    + `<div class="tblwrap"><table class="tbl"><thead><tr><th>Group</th><th class="hide-sm">Group leaders</th><th class="hide-sm">Units</th><th class="r">People</th>${m ? '<th style="width:28%">Here today</th>' : ''}<th style="width:36px"></th></tr></thead><tbody>
+    ${gs.map(g => { const l = Object.values(S.members).filter(p => p.group === g.id), h = l.filter(p => pres[p.id]).length, gl = leaderNames(g.id, 2);
+      return `<tr class="click" data-go="#groups/${g.id}"><td><b>${esc(g.name)}</b></td><td class="hide-sm">${gl ? esc(gl) : '<span class="faint">Not set</span>'}</td><td class="hide-sm muted">${subsOf(g.id).map(u => unitShort(u.id)).join(', ') || '–'}</td><td class="r num">${l.length}</td>
         ${m ? `<td><div class="row" style="flex-wrap:nowrap;gap:10px"><div class="bar grow"><i style="width:${pct(h,l.length)}%"></i></div><span class="num small" style="min-width:64px;text-align:right"><b>${h}</b> <span class="faint">(${pctTxt(h,l.length)})</span></span></div></td>` : ''}<td>${I('right','faint')}</td></tr>`; }).join('')}
     </tbody></table></div>
     ${unpN ? `<div class="callout" style="margin-top:16px"><span class="badge warn">${unpN}</span><span class="grow">people aren't in a group yet.</span><a class="btn sm" href="#directory" data-act="needsPairing">Pair them</a></div>` : ''}`;
 }
 function vGroup(gid){
   const g = S.groups[gid]; if (!g) return `<div class="empty"><h2>That group doesn't exist</h2><a class="btn" href="#groups">Back to groups</a></div>`;
-  const m = meeting(), pres = presentMap(m), list = inGroup(gid), here = list.filter(p => pres[p.id]).length, gh = headOf(gid, 'group_head');
+  const m = meeting(), pres = presentMap(m), list = inGroup(gid), here = list.filter(p => pres[p.id]).length, gl = leadersOf(gid);
   const units = subsOf(gid).map(u => ({id: u.id, label: unitLabel(u.id), head: headOf(u.id, 'subgroup_head'), list: list.filter(p => p.subgroup === u.id)}));
   const loose = list.filter(p => !S.groups[p.subgroup]); if (loose.length) units.push({id:'', label: units.length ? 'Not in a unit' : 'Members', head: null, list: loose});
   const show = p => ui.gf === 'all' || (ui.gf === 'here' ? !!pres[p.id] : !pres[p.id]);
-  return pageTitle(esc(g.name), `${gh ? `Group head: ${esc(gh.name)}${firstPhone(gh) ? `, ${esc(firstPhone(gh))}` : ''}` : 'No group head set yet'}. ${list.length} people in ${subsOf(gid).length} units.`,
+  return pageTitle(esc(g.name), `${list.length} people in ${subsOf(gid).length} units.`,
       `<button class="btn" data-act="editG" data-id="${gid}">${I('edit')}Edit group</button>`)
+    + `<section class="card leadcard"><div class="ch"><h2>Group leaders</h2><button class="btn ghost sm" data-act="editG" data-id="${gid}">${gl.length ? 'Change' : 'Add leaders'}</button></div><div class="leads">${gl.map(p => `<a href="#" class="lead" data-act="editP" data-id="${p.id}"><span class="av ${pres[p.id]?'ok':''}">${esc(initials(p.name))}</span><span><b>${esc(p.name)}</b><span>${esc(firstPhone(p) || 'No phone')}${p.group !== gid ? `, seated in ${esc(where(p))}` : ''}${m ? (pres[p.id] ? ', here' : ', not here') : ''}</span></span></a>`).join('') || '<p class="muted small" style="margin:0;padding:4px 0">No leaders set for this group yet.</p>'}</div></section>`
     + (m ? `<div class="stats" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="stat"><div class="l">Here today</div><div class="v num">${here}<small>of ${list.length}</small></div></div><div class="stat"><div class="l">Not here</div><div class="v num">${list.length - here}</div></div><div class="stat"><div class="l">Attendance</div><div class="v num">${pctTxt(here, list.length)}</div></div></div>
       <div class="row sp" style="margin-bottom:12px"><div class="seg" role="group" aria-label="Show">${[['all','Everyone'],['here','Here'],['away','Not here']].map(([k,l]) => `<button data-act="gf" data-v="${k}" aria-pressed="${ui.gf===k}">${l}</button>`).join('')}</div></div>` : '')
     + `<div class="gdetail">${units.map(u => { const uh = u.list.filter(p => pres[p.id]).length, vis = u.list.filter(show).sort((a,b) => (!!pres[b.id] - !!pres[a.id]) || byName(a,b));
       return `<section class="card unit"><div class="ch"><div><h2>${esc(u.label)}</h2><div class="sub">${u.head ? 'Head: ' + esc(u.head.name) : 'No unit head'}</div></div>${m ? `<span class="badge ${uh === u.list.length && uh ? 'ok' : ''} num">${uh}/${u.list.length}</span>` : `<span class="badge num">${u.list.length}</span>`}</div>
-        <ul>${vis.map(p => `<li>${m ? `<span class="st ${pres[p.id]?'ok':''}" title="${pres[p.id]?'Here':'Not here'}"></span>` : ''}<a href="#" data-act="editP" data-id="${p.id}" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</a>${p.role !== 'member' ? `<span class="badge brand" style="height:20px">${ROLE_LABEL[p.role].replace('Assistant unit head','Assistant')}</span>` : ''}<span class="t num">${pres[p.id] ? fmtTime(pres[p.id]) : ''}</span></li>`).join('') || `<li class="faint small">No one ${ui.gf === 'here' ? 'here yet' : 'missing'}</li>`}</ul></section>`; }).join('')}</div>`;
+        <ul>${vis.map(p => `<li>${m ? `<span class="st ${pres[p.id]?'ok':''}" title="${pres[p.id]?'Here':'Not here'}"></span>` : ''}<a href="#" data-act="editP" data-id="${p.id}" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</a>${leadsGroups(p).some(x => x.id === gid) ? '<span class="badge brand" style="height:20px">Leader</span>' : ''}${p.role !== 'member' && p.role !== 'group_head' ? `<span class="badge brand" style="height:20px">${ROLE_LABEL[p.role].replace('Assistant unit head','Assistant')}</span>` : ''}<span class="t num">${pres[p.id] ? fmtTime(pres[p.id]) : ''}</span></li>`).join('') || `<li class="faint small">No one ${ui.gf === 'here' ? 'here yet' : 'missing'}</li>`}</ul></section>`; }).join('')}</div>`;
 }
 
 /* ---------- directory ---------- */
 function vDirectory(){
-  const all = members(), unp = all.filter(p => !isPaired(p)), leaders = all.filter(p => p.role !== 'member');
+  const all = members(), unp = all.filter(p => !isPaired(p)), leaders = all.filter(isLeader);
   return pageTitle('Directory', `${all.length} people on the register`, `<input type="file" id="file" accept=".csv,.xlsx,.xls,text/csv" class="hide"><button class="btn" data-act="pick">${I('upload')}Import</button><button class="btn primary" data-act="addP">${I('plus')}Add person</button>`)
     + `<div class="tabs" role="tablist">${[['all','All people',all.length],['pair','Needs pairing',unp.length],['leaders','Leaders',leaders.length]].map(([k,l,c]) => `<button role="tab" data-act="dtab" data-v="${k}" aria-selected="${ui.dtab===k}">${l}<span class="count num">${c}</span></button>`).join('')}</div>
     <div class="toolbar"><div class="sinput">${I('search')}<input class="input" id="dq" type="search" placeholder="Search name or phone" aria-label="Search the directory" autocomplete="off"></div>
@@ -649,7 +668,7 @@ function vDirectory(){
 }
 function dirBody(){
   const pres = presentMap(meeting()), m = meeting(), q = norm(ui.dq), digits = ui.dq.replace(/\D/g,'');
-  let list = members().filter(p => ui.dtab === 'pair' ? !isPaired(p) : ui.dtab === 'leaders' ? p.role !== 'member' : (ui.dg === 'all' || p.group === ui.dg));
+  let list = members().filter(p => ui.dtab === 'pair' ? !isPaired(p) : ui.dtab === 'leaders' ? isLeader(p) : (ui.dg === 'all' || p.group === ui.dg));
   if (q) list = list.filter(p => norm(p.name).includes(q) || (digits.length >= 3 && (p.phone||'').replace(/\D/g,'').includes(digits)));
   if (!list.length) return `<div class="empty"><h2>${ui.dtab === 'pair' && !q ? 'Everyone is paired' : 'No one matches'}</h2><p>${ui.dtab === 'pair' && !q ? 'New first-timers will appear here.' : 'Try another name or number.'}</p></div>`;
   const shown = list.slice(0, ui.dlimit);
@@ -661,7 +680,7 @@ function dirBody(){
   }
   return `<div class="tblwrap"><table class="tbl"><thead><tr><th>Person</th><th class="hide-sm">Phone</th><th>Group</th><th class="hide-sm">Role</th>${m ? '<th class="hide-sm">Today</th>' : ''}</tr></thead><tbody>${shown.map(p => `<tr class="click" data-act="editP" data-id="${p.id}">
     <td><span class="person"><span class="av">${esc(initials(p.name))}</span><b>${esc(p.name)}</b></span></td><td class="hide-sm num muted">${esc(firstPhone(p))}</td><td>${isPaired(p) ? `<span class="small">${esc(gName(p.group))}${S.groups[p.subgroup] ? `<span class="muted">, ${esc(unitShort(p.subgroup))}</span>` : ''}</span>` : `<span class="badge warn">${UNPAIRED}</span>`}</td>
-    <td class="hide-sm">${roleBadge(p.role)}</td>${m ? `<td class="hide-sm">${pres[p.id] ? `<span class="badge ok"><span class="dot"></span>Here</span>` : '<span class="faint small">–</span>'}</td>` : ''}</tr>`).join('')}</tbody></table></div>${more(list)}`;
+    <td class="hide-sm">${badges(p)}</td>${m ? `<td class="hide-sm">${pres[p.id] ? `<span class="badge ok"><span class="dot"></span>Here</span>` : '<span class="faint small">–</span>'}</td>` : ''}</tr>`).join('')}</tbody></table></div>${more(list)}`;
 }
 const more = list => list.length > ui.dlimit ? `<div style="text-align:center;margin-top:14px"><button class="btn" data-act="more">Show ${Math.min(150, list.length - ui.dlimit)} more of ${list.length}</button></div>` : '';
 const renderDir = () => { const b = $('#dirBody'); if (b) b.innerHTML = dirBody(); };
@@ -718,16 +737,19 @@ function personPanel(id){
       <label class="field">Phone<input class="input" name="phone" inputmode="tel" value="${esc(p.phone)}" autocomplete="off"><span class="hint">Separate extra numbers with commas.</span></label>
       <div class="two"><label class="field">Group<select class="input" name="group" id="pfGroup"><option value="">${UNPAIRED}</option>${realGroups().map(g => `<option value="${g.id}" ${p.group===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select></label>
         <label class="field">Unit<select class="input" name="subgroup" id="pfUnit">${unitOptions(p.group, p.subgroup)}</select></label></div>
-      <label class="field">Role<select class="input" name="role">${Object.entries(ROLE_LABEL).map(([k,l]) => `<option value="${k}" ${p.role===k?'selected':''}>${l}</option>`).join('')}</select></label></div>
+      <label class="field">Role in their unit<select class="input" name="role">${Object.entries(ROLE_LABEL).filter(([k]) => k !== 'group_head').map(([k,l]) => `<option value="${k}" ${p.role===k?'selected':''}>${l}</option>`).join('')}</select></label>
+      <fieldset class="field" style="border:0;padding:0;margin:0"><legend style="padding:0;margin-bottom:6px">Leads these groups</legend><div class="chkgrid">${realGroups().map(g => `<label class="chk"><input type="checkbox" name="lead" value="${g.id}" ${leadsGroups(p).some(x => x.id === g.id) ? 'checked' : ''}><span>${esc(g.name)}</span></label>`).join('')}</div><span class="hint">A group can have several leaders, and they can be seated in any group.</span></fieldset></div>
     <div class="df">${isNew ? '' : `<button type="button" class="btn danger l" data-act="delP" data-id="${p.id}">Remove</button>`}<button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary">${isNew ? 'Add person' : 'Save changes'}</button></div></form>`);
 }
+const leaderChip = p => `<span class="chip2"><input type="hidden" name="leader" value="${p.id}">${esc(p.name)}<button type="button" data-act="rmLeader" aria-label="Remove ${esc(p.name)}">${I('x')}</button></span>`;
 function groupPanel(gid){
   const g = gid ? S.groups[gid] : null, list = g ? inGroup(g.id) : [], units = g ? subsOf(g.id) : [];
   const opts = (l, sel) => `<option value="">Not set</option>${l.map(p => `<option value="${p.id}" ${sel===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}`;
   openPanel(`${dh(g ? 'Edit ' + esc(g.name) : 'Add a group', g ? `${list.length} people in ${units.length} units` : '')}
     <form id="gform" data-id="${g ? g.id : ''}" style="display:contents"><div class="db">
       <label class="field">Group name<input class="input" name="name" required value="${g ? esc(g.name) : ''}" autocomplete="off"></label>
-      ${g ? `<label class="field">Group head<select class="input" name="head">${opts(list, headOf(g.id,'group_head')?.id)}</select></label>
+      ${g ? `<div class="field">Group leaders<div class="chips" id="leadChips">${leadersOf(g.id).map(p => leaderChip(p)).join('')}</div>
+        <select class="input" id="addLeader" aria-label="Add a group leader"><option value="">Add a leader…</option><optgroup label="In ${esc(g.name)}">${list.filter(p => !leadersOf(g.id).includes(p)).map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</optgroup><optgroup label="From other groups">${members().filter(p => p.group !== g.id).map(p => `<option value="${p.id}">${esc(p.name)}, ${esc(where(p))}</option>`).join('')}</optgroup></select></div>
       <div class="field">Units and their heads
         ${units.map(u => `<div class="two" style="gap:8px"><input class="input" name="u_${u.id}" value="${esc(u.name)}" aria-label="Unit name" required><select class="input" name="h_${u.id}" aria-label="Head of ${esc(u.name)}">${opts(list.filter(p => p.subgroup === u.id), headOf(u.id,'subgroup_head')?.id)}</select></div>`).join('') || '<span class="hint">No units yet.</span>'}
         <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px"><input class="input" name="newUnit" placeholder="New unit, e.g. ${esc(g.name)}${'ABCDEF'[units.length] || ''}" aria-label="New unit name"><button type="button" class="btn" data-act="addUnit">Add unit</button></div></div>` : ''}</div>
@@ -809,7 +831,7 @@ function reportData(mid){
     const list = all.filter(p => p.group === g.id), h = list.filter(p => pres[p.id]).length;
     const units = subsOf(g.id).map(u => { const l = list.filter(p => p.subgroup === u.id); return {id: u.id, label: unitLabel(u.id), head: headOf(u.id,'subgroup_head'), list: l, h: l.filter(p => pres[p.id]).length}; });
     const loose = list.filter(p => !S.groups[p.subgroup]); if (loose.length && units.length) units.push({id:'', label:'Not in a unit', head:null, list: loose, h: loose.filter(p => pres[p.id]).length});
-    return {g, unp: isUnp(g), head: headOf(g.id,'group_head'), list, h, units};
+    return {g, unp: isUnp(g), head: headOf(g.id,'group_head'), leads: leaderNames(g.id, 3), list, h, units};
   }).filter(x => x.list.length);
   return {m, pres, all, here, total: all.length, groups};
 }
@@ -825,15 +847,15 @@ function rSummary(R){
       <div class="stat"><div class="l">Attendance rate</div><div class="v num">${pctTxt(R.here, R.total)}</div><div class="split" title="${R.here} present, ${R.total - R.here} absent"><i style="width:${r*100}%"></i></div></div></div>
     <div class="hl">
       ${best ? `<a class="hcard" href="#" data-act="rgroup" data-id="${best.g.id}"><span class="hl-l">Strongest group</span><b>${esc(best.g.name)}</b><span>${best.h} of ${best.list.length} present, ${pctTxt(best.h, best.list.length)}</span></a>` : ''}
-      ${worst && worst !== best ? `<a class="hcard warn" href="#" data-act="rgroup" data-id="${worst.g.id}"><span class="hl-l">Needs the most follow-up</span><b>${esc(worst.g.name)}</b><span>${worst.list.length - worst.h} absent${worst.head ? `. Head: ${esc(worst.head.name)}` : ''}</span></a>` : ''}
+      ${worst && worst !== best ? `<a class="hcard warn" href="#" data-act="rgroup" data-id="${worst.g.id}"><span class="hl-l">Needs the most follow-up</span><b>${esc(worst.g.name)}</b><span>${worst.list.length - worst.h} absent${worst.head ? `. Leader: ${esc(worst.head.name)}` : ''}</span></a>` : ''}
       <div class="hcard"><span class="hl-l">Units fully present</span><b class="num">${full.length} <span class="faint" style="font-weight:500">of ${units.length}</span></b><span>${full.length ? esc(full.slice(0,4).map(u => u.label.replace('Unit ','')).join(', ')) + (full.length > 4 ? ` and ${full.length - 4} more` : '') : 'None yet'}</span></div>
       <div class="hcard"><span class="hl-l">Units with no one present</span><b class="num">${emptyU.length}</b><span>${emptyU.length ? esc(emptyU.slice(0,5).map(u => u.label.replace('Unit ','')).join(', ')) + (emptyU.length > 5 ? ` and ${emptyU.length - 5} more` : '') : 'Every unit had someone'}</span></div>
       ${unp ? `<div class="hcard"><span class="hl-l">First-timers and unpaired</span><b class="num">${unp.h}</b><span>present, of ${unp.list.length} not yet paired</span></div>` : ''}
     </div>
     <section class="card"><div class="ch"><div><h2>Attendance by group</h2><div class="small muted" style="margin-top:2px">Green at 70% or more, amber from 40%, red below. Select a group to see its units.</div></div>
       <div class="seg" role="group" aria-label="Detail"><button data-act="rexpAll" data-v="0" aria-pressed="${!ui.rexpAll}">Groups</button><button data-act="rexpAll" data-v="1" aria-pressed="${!!ui.rexpAll}">With units</button></div></div>
-    <div style="overflow-x:auto"><table class="tbl rtbl"><thead><tr><th>Group</th><th class="hide-sm">Head</th><th class="r">Present</th><th class="r">Absent</th><th class="r hide-sm">Total</th><th style="width:24%">Attendance</th></tr></thead><tbody>
-    ${R.groups.map(x => { const open = ui.rexpAll || ui.rexp.has(x.g.id); return `<tr class="grow-row click ${open ? 'open' : ''}" data-act="rexp" data-id="${x.g.id}" aria-expanded="${open}"><td><span class="gl"><b>${esc(x.unp ? UNPAIRED : x.g.name)}</b>${x.units.some(u => u.id) ? I('chev') : ''}</span></td><td class="hide-sm">${x.head ? esc(x.head.name) : '<span class="faint">–</span>'}</td><td class="r num ok-t">${x.h}</td><td class="r num no-t">${x.list.length - x.h}</td><td class="r num hide-sm">${x.list.length}</td>
+    <div style="overflow-x:auto"><table class="tbl rtbl"><thead><tr><th>Group</th><th class="hide-sm">Leaders and unit heads</th><th class="r">Present</th><th class="r">Absent</th><th class="r hide-sm">Total</th><th style="width:24%">Attendance</th></tr></thead><tbody>
+    ${R.groups.map(x => { const open = ui.rexpAll || ui.rexp.has(x.g.id); return `<tr class="grow-row click ${open ? 'open' : ''}" data-act="rexp" data-id="${x.g.id}" aria-expanded="${open}"><td><span class="gl"><b>${esc(x.unp ? UNPAIRED : x.g.name)}</b>${x.units.some(u => u.id) ? I('chev') : ''}</span></td><td class="hide-sm">${x.leads ? esc(x.leads) : '<span class="faint">–</span>'}</td><td class="r num ok-t">${x.h}</td><td class="r num no-t">${x.list.length - x.h}</td><td class="r num hide-sm">${x.list.length}</td>
         <td><div class="rate"><div class="bar grow"><i class="${rateCls(x.h/x.list.length)}" style="width:${pct(x.h, x.list.length)}%"></i></div>${ratePill(x.h, x.list.length)}</div></td></tr>
       ${(open ? x.units.filter(u => u.id) : []).map(u => `<tr class="unit-row"><td><span class="ind">${esc(u.label)}</span></td><td class="hide-sm muted">${u.head ? esc(u.head.name) : ''}</td><td class="r num">${u.h}</td><td class="r num">${u.list.length - u.h}</td><td class="r num hide-sm">${u.list.length}</td>
         <td><div class="rate"><div class="bar grow thin"><i class="${rateCls(u.list.length ? u.h/u.list.length : 0)}" style="width:${pct(u.h, u.list.length)}%"></i></div><span class="small num muted" style="min-width:44px;text-align:right">${pctTxt(u.h, u.list.length)}</span></div></td></tr>`).join('')}
@@ -849,11 +871,11 @@ function rGroups(R){
       <div class="seg" role="group" aria-label="Show">${[['all','Everyone'],['present','Present'],['absent','Absent']].map(([k,l]) => `<button data-act="rf" data-v="${k}" aria-pressed="${ui.rf===k}">${l}</button>`).join('')}</div>
       <span class="grow"></span><span class="legend2"><span class="badge ok">Present</span><span class="badge no">Absent</span></span></div>
     ${gs.map(x => { const units = x.units.length ? x.units : [{id:'', label:'', head:null, list:x.list, h:x.h}];
-      return `<section class="gsec" id="rg-${x.g.id}"><header class="gsec-h"><div><h2>${esc(x.unp ? UNPAIRED : x.g.name)}</h2><p>${x.head ? `Group head: ${esc(x.head.name)}${firstPhone(x.head) ? `, ${esc(firstPhone(x.head))}` : ''}` : x.unp ? 'First-timers and people not yet in a group' : 'No group head set'}</p></div>
+      return `<section class="gsec" id="rg-${x.g.id}"><header class="gsec-h"><div><h2>${esc(x.unp ? UNPAIRED : x.g.name)}</h2><p>${x.leads ? `Group leaders: ${esc(leaderNames(x.g.id, 6))}` : x.unp ? 'First-timers and people not yet in a group' : 'No group leaders set'}</p></div>
         <div class="gsec-s"><span class="num"><b>${x.h}</b> of ${x.list.length} present</span>${ratePill(x.h, x.list.length)}</div></header>
         ${units.map(u => { const l = u.list.filter(show).sort((a,b) => (st(b) - st(a)) || byName(a,b)); if (!l.length && ui.rf !== 'all') return '';
           return `${u.label ? `<div class="usec-h"><b>${esc(u.label)}</b><span class="muted">${u.head ? `Head: ${esc(u.head.name)}` : ''}</span><span class="grow"></span><span class="num small"><b>${u.h}</b> of ${u.list.length}</span></div>` : ''}
-          <table class="tbl ptbl"><tbody>${l.map(p => `<tr class="${st(p) ? 'is-ok' : 'is-no'}"><td><span class="person"><span class="av ${st(p)?'ok':''}">${esc(initials(p.name))}</span><span><b>${esc(p.name)}</b>${p.role !== 'member' ? ` <span class="badge brand" style="height:20px">${ROLE_LABEL[p.role]}</span>` : ''}</span></span></td>
+          <table class="tbl ptbl"><tbody>${l.map(p => `<tr class="${st(p) ? 'is-ok' : 'is-no'}"><td><span class="person"><span class="av ${st(p)?'ok':''}">${esc(initials(p.name))}</span><span><b>${esc(p.name)}</b> ${badges(p)}</span></span></td>
             <td class="hide-sm muted num">${esc(firstPhone(p))}</td><td class="r stc">${st(p) ? `<span class="small faint num">${fmtTime(R.pres[p.id])}</span><span class="badge ok"><span class="dot"></span>Present</span>` : '<span class="badge no"><span class="dot"></span>Absent</span>'}</td></tr>`).join('') || `<tr><td class="faint small">No one</td></tr>`}</tbody></table>`; }).join('')}</section>`; }).join('')}`;
 }
 function peopleTable(R, present){
@@ -932,12 +954,12 @@ async function downloadReport(mid){
     c1.value = l; c1.font = F({color:{argb:C.grey}, size:10});
     c2.value = v; c2.alignment = {horizontal:'left'}; c1.alignment = {horizontal:'left'}; c2.font = F({size:20, bold:true, color:{argb: i===0 ? C.okFg : i===1 ? C.noFg : C.ink}}); if (i === 3) c2.numFmt = '0%'; });
   s.getRow(5).height = 30;
-  headerRow(s, 7, ['Group / unit', 'Head', 'Present', 'Absent', 'Total', 'Attendance']);
+  headerRow(s, 7, ['Group / unit', 'Leaders / unit head', 'Present', 'Absent', 'Total', 'Attendance']);
   let r = 8;
   for (const g of groupsTop()) {
     const list = all.filter(p => p.group === g.id); if (!list.length) continue;
-    const st = stat(list), gh = headOf(g.id, 'group_head'), [bg, fg] = rateStyle(st.r);
-    const row = s.getRow(r++); row.values = [g.name, gh ? gh.name : '', st.h, st.a, st.t, st.r]; row.height = 22;
+    const st = stat(list), gh = leaderNames(g.id, 4), [bg, fg] = rateStyle(st.r);
+    const row = s.getRow(r++); row.values = [g.name, gh, st.h, st.a, st.t, st.r]; row.height = 22;
     row.eachCell({includeEmpty:true}, c => { c.font = F({bold:true}); c.fill = fill(C.unit); c.alignment = {vertical:'middle'}; });
     row.getCell(6).numFmt = '0%'; row.getCell(6).fill = fill(bg); row.getCell(6).font = F({bold:true, color:{argb:fg}});
     row.getCell(3).font = F({bold:true, color:{argb:C.okFg}}); row.getCell(4).font = F({bold:true, color:{argb:C.noFg}});
@@ -964,9 +986,9 @@ async function downloadReport(mid){
   r = 5;
   for (const g of groupsTop()) {
     const list = all.filter(p => p.group === g.id); if (!list.length) continue;
-    const st = stat(list), gh = headOf(g.id, 'group_head');
+    const st = stat(list), gh = leaderNames(g.id, 6);
     b.mergeCells(r, 1, r, 6);
-    Object.assign(b.getCell(r, 1), {value: `${g.name}   ·   ${st.h} of ${st.t} present (${Math.round(st.r*100)}%)${gh ? `   ·   Group head: ${gh.name}` : ''}`, font: F({bold:true, size:12, color:{argb:C.white}}), fill: fill(C.ink), alignment:{vertical:'middle', indent:1}});
+    Object.assign(b.getCell(r, 1), {value: `${g.name}   ·   ${st.h} of ${st.t} present (${Math.round(st.r*100)}%)${gh ? `   ·   Group leaders: ${gh}` : ''}`, font: F({bold:true, size:12, color:{argb:C.white}}), fill: fill(C.ink), alignment:{vertical:'middle', indent:1}});
     b.getRow(r++).height = 26;
     for (const u of unitsOf(g, list)) {
       if (u.label) { const us = stat(u.list); b.mergeCells(r, 1, r, 6);
@@ -975,7 +997,7 @@ async function downloadReport(mid){
       // present first, then absent
       for (const p of [...u.list].sort((x,y) => (!!pres[y.id] - !!pres[x.id]) || byName(x,y))) {
         const ok = !!pres[p.id], row = b.getRow(r++);
-        row.values = [p.name, (p.phone||'').split(',')[0].trim(), S.groups[p.subgroup] ? unitLabel(p.subgroup).replace(/^Unit /,'') : '', ROLE_LABEL[p.role] === 'Member' ? '' : ROLE_LABEL[p.role], ok ? 'Present' : 'Absent', ok ? fmtTime(pres[p.id]) : ''];
+        row.values = [p.name, (p.phone||'').split(',')[0].trim(), S.groups[p.subgroup] ? unitLabel(p.subgroup).replace(/^Unit /,'') : '', [leadsGroups(p).length ? 'Group leader' : '', p.role !== 'member' && p.role !== 'group_head' ? ROLE_LABEL[p.role] : ''].filter(Boolean).join(', '), ok ? 'Present' : 'Absent', ok ? fmtTime(pres[p.id]) : ''];
         row.eachCell({includeEmpty:true}, c => { c.font = F(); c.fill = fill(ok ? C.okTint : C.noTint); c.border = thin; });
         Object.assign(row.getCell(5), {fill: fill(ok ? C.okBg : C.noBg), font: F({bold:true, color:{argb: ok ? C.okFg : C.noFg}}), alignment:{horizontal:'center'}});
         row.outlineLevel = 1;
@@ -1125,6 +1147,7 @@ document.addEventListener('click', e => {
     const before = {...p}; p.group = g; p.subgroup = u; saveMember(p); renderDir(); render(true);
     toast(`${p.name} paired with ${where(p)}.`, () => { S.members[id] = before; saveMember(before); renderDir(); render(true); }); }
   else if (a === 'delP') { const p = S.members[id]; confirmPanel(`Remove ${esc(p.name)}?`, 'They come off the register and every attendance list.', 'Remove person', () => { delete S.members[id]; dropMember(id); render(); toast(`${p.name} removed.`); }); }
+  else if (a === 'rmLeader') b.closest('.chip2').remove();
   else if (a === 'addG') groupPanel();
   else if (a === 'editG') groupPanel(id);
   else if (a === 'addUnit') { const f = $('#gform'), v = f.newUnit.value.trim(); if (!v) return; const u = {id: uid('g'), name: v, parent: f.dataset.id}; S.groups[u.id] = u; saveGroup(u); groupPanel(f.dataset.id); }
@@ -1155,6 +1178,7 @@ document.addEventListener('change', async e => {
   else if (t.id === 'rm') { ui.rm = t.value; render(); }
   else if (t.id === 'rg') { ui.rg = t.value; render(); }
   else if (t.id === 'pfGroup') $('#pfUnit').innerHTML = unitOptions(t.value, '');
+  else if (t.id === 'addLeader' && t.value) { const p = S.members[t.value]; if (!$(`#leadChips input[value="${t.value}"]`)) $('#leadChips').insertAdjacentHTML('beforeend', leaderChip(p)); t.value = ''; }
   else if (t.dataset.pairg) { const u = $(`[data-pairu="${t.dataset.pairg}"]`); u.innerHTML = `<option value="">Unit</option>` + subsOf(t.value).map(x => `<option value="${x.id}">${esc(unitShort(x.id))}</option>`).join(''); u.disabled = !t.value; }
 });
 document.addEventListener('submit', e => {
@@ -1170,14 +1194,17 @@ document.addEventListener('submit', e => {
     const m = {id, name: f.name.value.trim(), phone: f.phone.value.trim(), group: f.group.value || unpairedGroup(), subgroup: f.group.value ? f.subgroup.value : '', role: f.role.value};
     if (!m.name) return;
     S.members[id] = m; saveMember(m);
-    if (m.role === 'group_head') setHead(m.group, 'group_head', id); else if (m.role === 'subgroup_head' && m.subgroup) setHead(m.subgroup, 'subgroup_head', id);
+    if (m.role === 'subgroup_head' && m.subgroup) setHead(m.subgroup, 'subgroup_head', id);
+    const want = new Set([...f.querySelectorAll('input[name=lead]:checked')].map(x => x.value));
+    for (const g of realGroups()) { const L = (g.leaders || []).filter(x => x !== id); if (want.has(g.id)) L.push(id); if (L.join() !== (g.leaders || []).join()) { g.leaders = L; saveGroup(g); } }
     closePanel(); render(); toast(isNew ? `${m.name} added.` : 'Changes saved.');
   }
   else if (f.id === 'gform') {
     const gid = f.dataset.id, name = f.name.value.trim(); if (!name) return;
     if (!gid) { const g = {id: uid('g'), name, parent: ''}; S.groups[g.id] = g; saveGroup(g); closePanel(); location.hash = 'groups/' + g.id; render(); groupPanel(g.id); return; }
-    const g = S.groups[gid]; if (g.name !== name) { g.name = name; saveGroup(g); }
-    setHead(gid, 'group_head', f.head.value);
+    const g = S.groups[gid], L = [...new Set([...f.querySelectorAll('input[name=leader]')].map(x => x.value))];
+    for (const m of Object.values(S.members)) if (m.role === 'group_head' && m.group === gid) { m.role = 'member'; saveMember(m); }
+    g.name = name; g.leaders = L; saveGroup(g);
     for (const u of subsOf(gid)) { const nn = f['u_' + u.id].value.trim(); if (nn && nn !== u.name) { u.name = nn; saveGroup(u); } setHead(u.id, 'subgroup_head', f['h_' + u.id].value); }
     const nu = f.newUnit.value.trim(); if (nu) { const u = {id: uid('g'), name: nu, parent: gid}; S.groups[u.id] = u; saveGroup(u); }
     closePanel(); render(); toast('Changes saved.');

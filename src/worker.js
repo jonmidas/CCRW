@@ -51,12 +51,15 @@ function statement(env, op, now) {
   const d = op.data || {};
   const id = str(d.id, 64);
   switch (op.t) {
-    case 'group':
+    case 'group': {
       if (op.op === 'del') return env.DB.prepare('UPDATE groups SET deleted = 1, updated_at = ? WHERE id = ?').bind(now, id);
+      // leaders only change when the client sends them, so older pages can't wipe them
+      const leaders = Array.isArray(d.leaders) ? JSON.stringify(d.leaders.slice(0, 40).map((x) => str(x, 64))) : null;
       return env.DB.prepare(
-        `INSERT INTO groups (id, name, parent, updated_at, deleted) VALUES (?, ?, ?, ?, 0)
-         ON CONFLICT(id) DO UPDATE SET name = excluded.name, parent = excluded.parent, updated_at = excluded.updated_at, deleted = 0`
-      ).bind(id, str(d.name, 120), str(d.parent, 64), now);
+        `INSERT INTO groups (id, name, parent, leaders, updated_at, deleted) VALUES (?1, ?2, ?3, COALESCE(?4, '[]'), ?5, 0)
+         ON CONFLICT(id) DO UPDATE SET name = excluded.name, parent = excluded.parent, leaders = COALESCE(?4, groups.leaders), updated_at = excluded.updated_at, deleted = 0`
+      ).bind(id, str(d.name, 120), str(d.parent, 64), leaders, now);
+    }
     case 'member':
       if (op.op === 'del') return env.DB.prepare('UPDATE members SET deleted = 1, updated_at = ? WHERE id = ?').bind(now, id);
       return env.DB.prepare(
@@ -102,7 +105,7 @@ async function handleApi(req, env, url) {
     const now = Date.now();
     const q = (sql) => env.DB.prepare(sql).bind(since);
     const [groups, members, meetings, checkins, current] = await env.DB.batch([
-      q('SELECT id, name, parent, deleted FROM groups WHERE updated_at > ?'),
+      q('SELECT id, name, parent, leaders, deleted FROM groups WHERE updated_at > ?'),
       q('SELECT id, name, phone, group_id AS "group", subgroup_id AS subgroup, role, deleted FROM members WHERE updated_at > ?'),
       q('SELECT id, title, date, created_at AS createdAt, ended_at AS endedAt, total_at_end AS totalAtEnd, deleted FROM meetings WHERE updated_at > ?'),
       q('SELECT meeting_id AS meeting, member_id AS member, at, deleted FROM checkins WHERE updated_at > ?'),

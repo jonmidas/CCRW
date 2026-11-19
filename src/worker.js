@@ -44,7 +44,7 @@ async function checkPasscode(env, req) {
 }
 
 const str = (v, max = 200) => String(v ?? '').slice(0, max);
-const ROLES = new Set(['member', 'group_head', 'subgroup_head']);
+const ROLES = new Set(['member', 'group_head', 'subgroup_head', 'assistant_head']);
 
 // Turn one client op into a D1 statement.
 function statement(env, op, now) {

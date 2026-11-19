@@ -125,7 +125,8 @@ const shardOf = id => 's' + ([...id].reduce((a,c)=>a + c.charCodeAt(0),0) % 8);
 const fmtTime = t => new Date(t).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
 const fmtDate = d => d ? new Date(d + 'T12:00').toLocaleDateString([], {weekday:'short', day:'numeric', month:'short', year:'numeric'}) : '';
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
-const ROLE = {member:'Member', group_head:'Group head', subgroup_head:'Subgroup head'};
+const ROLE = {member:'Member', group_head:'Group head', subgroup_head:'Subgroup head', assistant_head:'Assistant subgroup head'};
+const byName = (a,b) => a.name.localeCompare(b.name, undefined, {numeric:true, sensitivity:'base'});
 
 let canWrite = true, ready = false, downloads = true;
 const S = {members:{}, groups:{}, meetings:{}, current:null};
@@ -192,8 +193,8 @@ const saveMeeting = id => { const m = S.meetings[id]; enqueue({t:'meeting', op:'
 /* ---------- derived ---------- */
 const members = () => Object.values(S.members).sort((a,b)=>a.name.localeCompare(b.name));
 const isUnp = g => norm(g.name)==='not paired yet';
-const groupsTop = () => Object.values(S.groups).filter(g=>!g.parent).sort((a,b)=>(isUnp(a)-isUnp(b)) || a.name.localeCompare(b.name));
-const subsOf = gid => Object.values(S.groups).filter(g=>g.parent===gid).sort((a,b)=>a.name.localeCompare(b.name));
+const groupsTop = () => Object.values(S.groups).filter(g=>!g.parent).sort((a,b)=>(isUnp(a)-isUnp(b)) || byName(a,b));
+const subsOf = gid => Object.values(S.groups).filter(g=>g.parent===gid).sort(byName);
 const gName = id => S.groups[id]?.name || '';
 const meeting = () => S.meetings[S.current] || null;
 const presentMap = m => { const out = {}; if (m) for (const [k,v] of Object.entries(m.present||{})) if (v && S.members[k]) out[k] = v; return out; };
@@ -261,15 +262,19 @@ function vCheckin(){
     ${m.endedAt ? `<p class="note">This meeting has ended, so registration is closed. <button class="ghost" data-act="reopen" style="text-decoration:underline">Reopen it</button></p>` : ''}
     <input id="q" class="search" type="search" autocomplete="off" placeholder="Type a name or phone number…" aria-label="Search people" ${m.endedAt?'disabled':''}>
     <p class="muted small" style="margin:8px 2px 0">Use ↑ ↓ to pick, Enter to register.</p>
-    <ul class="res" id="res">${ui.q && !res.length ? `<li><span><b>No one called “${esc(ui.q)}” on the register.</b><br><span class="muted small">Add them to “Not paired yet” and register them now — you can pair them later.</span></span><span></span></li>` : ''}
+    <ul class="res" id="res">${ui.q && !res.length ? `<li><span><b>${isPhoneQ(ui.q)?'No one with that number':'No one called “'+esc(ui.q)+'”'} on the register.</b><br><span class="muted small">Add them to “Not paired yet” and register them now — you can pair them later.</span></span><span></span></li>` : ''}
     ${res.map((p,i)=>{ const t = pres[p.id];
       return `<li class="${i===ui.sel?'sel':''} ${ui.flash===p.id?'flash':''}" data-id="${p.id}"><div><div class="nm">${esc(p.name)}${p.role!=='member'&&p.role?`<span class="tag">${ROLE[p.role]}</span>`:''}</div>
       <div class="muted small">${esc([gName(p.group)||UNPAIRED, gName(p.subgroup), p.phone].filter(Boolean).join(' · '))}</div></div>
       <div>${t ? `<span class="done num">${fmtTime(t)}</span> <button class="ghost small" data-act="undo" data-id="${p.id}" ${canWrite&&!m.endedAt?'':'disabled'}>Undo</button>` : `<button class="solid" data-act="reg" data-id="${p.id}" ${canWrite&&!m.endedAt?'':'disabled'}>Register</button>`}</div></li>`}).join('')}
-    ${ui.q.trim().length>1 && canWrite && !m.endedAt ? `<li style="border-bottom:0"><form id="quickAdd" class="row" style="grid-column:1/-1;background:var(--soft);padding:12px;border-radius:8px">
+    ${ui.q.trim().length>1 && canWrite && !m.endedAt ? (isPhoneQ(ui.q) ? `<li style="border-bottom:0"><form id="quickAdd" class="row" style="grid-column:1/-1;background:var(--soft);padding:12px;border-radius:8px">
+      <span style="flex:1 1 200px">${res.length?'Not on the list? ':''}Add a new person with this number</span>
+      <input id="qaName" placeholder="Full name" aria-label="Full name" required style="flex:1 1 200px">
+      <input id="qaPhone" type="hidden" value="${esc(ui.q.trim())}">
+      <button class="${res.length?'':'solid'}">Add &amp; register</button></form></li>` : `<li style="border-bottom:0"><form id="quickAdd" class="row" style="grid-column:1/-1;background:var(--soft);padding:12px;border-radius:8px">
       <span style="flex:1 1 200px">${res.length?'Not on the list? ':''}Add <b>${esc(titleCase(ui.q))}</b> as a new person</span>
       <input id="qaPhone" inputmode="tel" placeholder="Phone (optional)" aria-label="Phone (optional)" style="flex:0 1 190px">
-      <button class="${res.length?'':'solid'}">Add &amp; register</button></form></li>` : ''}</ul>
+      <button class="${res.length?'':'solid'}">Add &amp; register</button></form></li>`) : ''}</ul>
   </section><aside>
     <h3>Just arrived</h3>
     <ul class="feed">${recent.length ? recent.map(([id,t])=>`<li><span>${esc(S.members[id].name)}</span><span class="muted num">${fmtTime(t)}</span></li>`).join('') : '<li class="muted">No one yet.</li>'}</ul>
@@ -395,6 +400,7 @@ function register(id){
   ui.flash = id; ui.q = ''; ui.sel = 0;
   toast(`Registered ${p.name}${gName(p.group)?' — '+gName(p.group):''}`, () => unregister(id));
 }
+const isPhoneQ = q => /^\+?[\d\s-]{6,}$/.test(q.trim());
 const titleCase = s => s.trim().replace(/\s+/g,' ').replace(/(^|[\s\-'])(\p{L})/gu, (a,b,c)=>b+c.toUpperCase());
 const UNPAIRED = 'Not paired yet';
 function unpairedGroup(){
@@ -465,7 +471,7 @@ async function readFile(file){
     const name = iName>=0 ? r[iName] : [r[iFirst], iLast>=0?r[iLast]:''].filter(Boolean).join(' ');
     const role = norm(iRole>=0 ? r[iRole] : '');
     return {name: name.replace(/\s+/g,' ').trim(), phone: iPhone>=0?r[iPhone]:'', group: iGroup>=0?r[iGroup]:'', subgroup: iSub>=0?r[iSub]:'',
-      role: /sub/.test(role) && /head|leader|lead/.test(role) ? 'subgroup_head' : /head|leader|lead|coordinator/.test(role) ? 'group_head' : 'member'};
+      role: /assist/.test(role) ? 'assistant_head' : /sub|unit/.test(role) && /head|leader|lead/.test(role) ? 'subgroup_head' : /head|leader|lead|coordinator/.test(role) ? 'group_head' : 'member'};
   }).filter(r=>r.name);
   const key = r => norm(r.name) + '|' + String(r.phone||'').replace(/\D/g,'');
   const have = new Set(Object.values(S.members).map(key));
@@ -568,8 +574,7 @@ document.addEventListener('submit', e => {
   const f = e.target; e.preventDefault();
   if (f.id==='login') { pass = $('#pc').value.trim(); state.loginMsg = ''; api('/login').then(() => { store.set('pass', pass); ready = false; cursor = 0; S.members = {}; S.groups = {}; S.meetings = {}; S.current = null; render(); pull(); }).catch(err => { pass = ''; state.loginMsg = err.auth ? err.msg : "Can't reach the server. Check the internet connection."; render(); }); }
   else if (f.id==='changePass') { const v = $('#np').value.trim(); api('/passcode', {method:'POST', body: JSON.stringify({passcode: v})}).then(() => { pass = v; store.set('pass', v); f.reset(); toast('Passcode changed. Other desks will need the new one.'); }).catch(err => toast(err.msg || err.message || 'Could not change the passcode.')); }
-  else if (f.id==='quickAdd')
- quickAdd(ui.q, $('#qaPhone').value);
+  else if (f.id==='quickAdd') quickAdd($('#qaName') ? $('#qaName').value : ui.q, $('#qaPhone').value);
   else if (f.id==='newMeeting') startMeeting($('#nmTitle').value.trim() || 'Meeting', $('#nmDate').value || today());
   else if (f.id==='addGroup') { const v = f.querySelector('input').value.trim(); if (v) { const g = {id: uid('g'), name: v, parent:''}; S.groups[g.id] = g; saveGroup(g); render(); } }
   else if (f.dataset.addsub) { const v = f.querySelector('input').value.trim(); if (v) { const g = {id: uid('g'), name: v, parent: f.dataset.addsub}; S.groups[g.id] = g; saveGroup(g); render(); } }

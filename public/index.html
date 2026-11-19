@@ -52,6 +52,7 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
 :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .ico{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .badge{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:550;background:var(--hover);color:var(--ink2);white-space:nowrap}
+.badge.newb{background:var(--brand);color:#fff;font-weight:650}
 .badge.ok{background:var(--okbg);color:var(--ok)}.badge.no{background:var(--nobg);color:var(--no)}.badge.warn{background:var(--warnbg);color:var(--warn)}.badge.brand{background:var(--brand2);color:var(--brandink)}
 .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
 .livedot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent);flex:none}
@@ -406,7 +407,7 @@ async function flush(){
 function apply(d){
   let changed = false;
   for (const g of d.groups) { changed = true; if (g.deleted) delete S.groups[g.id]; else { let L = []; try { L = JSON.parse(g.leaders || '[]'); } catch(e) {} S.groups[g.id] = {id:g.id, name:g.name, parent:g.parent||'', leaders: Array.isArray(L) ? L : []}; } }
-  for (const m of d.members) { changed = true; if (m.deleted) delete S.members[m.id]; else S.members[m.id] = {id:m.id, name:m.name, phone:m.phone||'', group:m.group||'', subgroup:m.subgroup||'', role:m.role||'member'}; }
+  for (const m of d.members) { changed = true; if (m.deleted) delete S.members[m.id]; else S.members[m.id] = {id:m.id, name:m.name, phone:m.phone||'', group:m.group||'', subgroup:m.subgroup||'', role:m.role||'member', joinedMeeting:m.joinedMeeting||'', createdAt:m.createdAt||0}; }
   for (const m of d.meetings) { changed = true; if (m.deleted) delete S.meetings[m.id]; else S.meetings[m.id] = {...(S.meetings[m.id]||{present:{}}), title:m.title, date:m.date, createdAt:m.createdAt, endedAt:m.endedAt||null, totalAtEnd:m.totalAtEnd||null}; }
   for (const c of d.checkins) { changed = true; const mt = S.meetings[c.meeting] ||= {present:{}, title:'', date:''}; mt.present = {...mt.present, [c.member]: c.deleted ? null : c.at}; }
   const cur = d.current || null; if (cur !== S.current) { S.current = cur; changed = true; }
@@ -464,7 +465,12 @@ const pct = (a,b) => b ? Math.round(a/b*100) : 0;
 const pctTxt = (a,b) => a && pct(a,b) === 0 ? '<1%' : pct(a,b) + '%';
 const ROLE_LABEL = {group_head:'Group head', subgroup_head:'Unit head', assistant_head:'Assistant unit head', member:'Member'};
 const roleBadge = r => r && r !== 'member' && r !== 'group_head' ? `<span class="badge brand">${ROLE_LABEL[r]}</span>` : '';
-const badges = p => { const lg = leadsGroups(p); return (lg.length ? `<span class="badge brand">${lg.length === 1 && lg[0].id === p.group ? 'Group leader' : 'Leads ' + esc(lg.map(g => g.name).join(', '))}</span>` : '') + roleBadge(p.role); };
+const latestMeeting = () => { let best = null; for (const [id,v] of Object.entries(S.meetings)) if (v && v.title && (!best || (v.createdAt||0) > (S.meetings[best].createdAt||0))) best = id; return best; };
+// a first-timer stays "New" until a later meeting is started
+const isNew = p => !!p.joinedMeeting && p.joinedMeeting === latestMeeting();
+const firstTimersOf = mid => Object.values(S.members).filter(p => p.joinedMeeting === mid).sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
+const newBadge = p => isNew(p) ? '<span class="badge newb">New</span>' : '';
+const badges = p => { const lg = leadsGroups(p); return newBadge(p) + (lg.length ? `<span class="badge brand">${lg.length === 1 && lg[0].id === p.group ? 'Group leader' : 'Leads ' + esc(lg.map(g => g.name).join(', '))}</span>` : '') + roleBadge(p.role); };
 const whereBadge = p => isPaired(p) ? `<span class="badge">${esc(where(p))}</span>` : `<span class="badge warn">${UNPAIRED}</span>`;
 const isPhoneQ = q => /^\+?[\d\s-]{6,}$/.test(q.trim());
 const titleCase = s => s.trim().replace(/\s+/g,' ').replace(/(^|[\s\-'])(\p{L})/gu, (a,b,c) => b + c.toUpperCase());
@@ -555,7 +561,7 @@ function vOverview(){
     + `<div class="stats">
       <div class="stat"><div class="l"><span class="dot" style="color:var(--ok)"></span>Checked in</div><div class="v num">${n}<small>of ${total}</small></div><div class="d">${pctTxt(n,total)} of the register</div></div>
       <div class="stat"><div class="l"><span class="dot" style="color:var(--no)"></span>${m.endedAt ? 'Absent' : 'Not here yet'}</div><div class="v num">${total - n}</div><div class="d"><a href="#reports" data-act="toAbsent" style="color:var(--brandink)">See who</a></div></div>
-      <div class="stat"><div class="l"><span class="dot" style="color:var(--warn)"></span>First-timers and unpaired</div><div class="v num">${unpHere}</div><div class="d">here today</div></div>
+      <div class="stat"><div class="l"><span class="dot" style="color:var(--brand)"></span>First-timers</div><div class="v num">${firstTimersOf(S.current).length}</div><div class="d"><a href="#directory" data-act="toNew" style="color:var(--brandink)">${firstTimersOf(S.current).length ? 'See who' : 'registered at this meeting'}</a></div></div>
       <div class="stat"><div class="l">Groups at 50% or more</div><div class="v num">${realGroups().filter(g => { const l = all.filter(p => p.group === g.id); return l.length && l.filter(p=>pres[p.id]).length / l.length >= .5; }).length}<small>of ${realGroups().length}</small></div><div class="d">${fullUnits(pres)} units fully here</div></div>
     </div>
     <div class="grid2" style="margin-bottom:16px">
@@ -674,7 +680,7 @@ function vGroup(gid){
 function vDirectory(){
   const all = members(), unp = all.filter(p => !isPaired(p)), leaders = all.filter(isLeader);
   return pageTitle('Directory', `${all.length} people on the register`, `<input type="file" id="file" accept=".csv,.xlsx,.xls,text/csv" class="hide"><button class="btn" data-act="pick">${I('upload')}Import</button><button class="btn primary" data-act="addP">${I('plus')}Add person</button>`)
-    + `<div class="tabs" role="tablist">${[['all','All people',all.length],['pair','Needs pairing',unp.length],['leaders','Leaders',leaders.length]].map(([k,l,c]) => `<button role="tab" data-act="dtab" data-v="${k}" aria-selected="${ui.dtab===k}">${l}<span class="count num">${c}</span></button>`).join('')}</div>
+    + `<div class="tabs" role="tablist">${[['all','All people',all.length],['new','First-timers',all.filter(isNew).length],['pair','Needs pairing',unp.length],['leaders','Leaders',leaders.length]].map(([k,l,c]) => `<button role="tab" data-act="dtab" data-v="${k}" aria-selected="${ui.dtab===k}">${l}<span class="count num">${c}</span></button>`).join('')}</div>
     <div class="toolbar"><div class="sinput">${I('search')}<input class="input" id="dq" type="search" placeholder="Search name or phone" aria-label="Search the directory" autocomplete="off"></div>
       ${ui.dtab === 'all' ? `<select class="input" id="dg" aria-label="Filter by group" style="max-width:200px"><option value="all">All groups</option>${realGroups().map(g => `<option value="${g.id}" ${ui.dg===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select>` : ''}
       ${ui.dtab === 'pair' ? '<span class="small muted">Choose a group and unit, then select Pair.</span>' : ''}</div>
@@ -682,18 +688,19 @@ function vDirectory(){
 }
 function dirBody(){
   const pres = presentMap(meeting()), m = meeting(), q = norm(ui.dq), digits = ui.dq.replace(/\D/g,'');
-  let list = members().filter(p => ui.dtab === 'pair' ? !isPaired(p) : ui.dtab === 'leaders' ? isLeader(p) : (ui.dg === 'all' || p.group === ui.dg));
+  let list = members().filter(p => ui.dtab === 'pair' ? !isPaired(p) : ui.dtab === 'leaders' ? isLeader(p) : ui.dtab === 'new' ? isNew(p) : (ui.dg === 'all' || p.group === ui.dg));
   if (q) list = list.filter(p => norm(p.name).includes(q) || (digits.length >= 3 && (p.phone||'').replace(/\D/g,'').includes(digits)));
-  if (!list.length) return `<div class="empty"><h2>${ui.dtab === 'pair' && !q ? 'Everyone is paired' : 'No one matches'}</h2><p>${ui.dtab === 'pair' && !q ? 'New first-timers will appear here.' : 'Try another name or number.'}</p></div>`;
+  if (!list.length) return `<div class="empty"><h2>${ui.dtab === 'pair' && !q ? 'Everyone is paired' : ui.dtab === 'new' && !q ? 'No first-timers yet' : 'No one matches'}</h2><p>${ui.dtab === 'pair' && !q ? 'New first-timers will appear here.' : ui.dtab === 'new' && !q ? 'People added at check-in during a meeting show here until the next meeting starts.' : 'Try another name or number.'}</p></div>`;
+  if (ui.dtab === 'new') list.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
   const shown = list.slice(0, ui.dlimit);
   if (ui.dtab === 'pair') {
     const gopts = realGroups().map(g => `<option value="${g.id}">${esc(g.name)}</option>`).join('');
     return `<div class="tblwrap"><table class="tbl"><thead><tr><th>Person</th><th class="hide-sm">Phone</th>${m ? '<th class="hide-sm">Today</th>' : ''}<th>Pair with</th></tr></thead><tbody>${shown.map(p => `<tr>
-      <td><a href="#" class="person" data-act="editP" data-id="${p.id}"><span class="av">${esc(initials(p.name))}</span><b>${esc(p.name)}</b></a></td><td class="hide-sm num muted">${esc(firstPhone(p))}</td>${m ? `<td class="hide-sm">${pres[p.id] ? '<span class="badge ok">Here</span>' : ''}</td>` : ''}
+      <td><a href="#" class="person" data-act="editP" data-id="${p.id}"><span class="av">${esc(initials(p.name))}</span><b>${esc(p.name)}</b>${newBadge(p)}</a></td><td class="hide-sm num muted">${esc(firstPhone(p))}</td>${m ? `<td class="hide-sm">${pres[p.id] ? '<span class="badge ok">Here</span>' : ''}</td>` : ''}
       <td><div class="pairsel"><select class="input" data-pairg="${p.id}" aria-label="Group for ${esc(p.name)}"><option value="">Group</option>${gopts}</select><select class="input" data-pairu="${p.id}" aria-label="Unit for ${esc(p.name)}" disabled><option value="">Unit</option></select><button class="btn sm" data-act="pair" data-id="${p.id}">Pair</button></div></td></tr>`).join('')}</tbody></table></div>${more(list)}`;
   }
   const allSel = shown.length && shown.every(p => ui.sel2.has(p.id));
-  return `<div class="tblwrap"><table class="tbl"><thead><tr><th style="width:36px"><input type="checkbox" class="cb" id="selAll" aria-label="Select everyone shown" ${allSel ? 'checked' : ''}></th><th>Person</th><th class="hide-sm">Phone</th><th>Group</th><th class="hide-sm">Role</th>${m ? '<th class="hide-sm">Today</th>' : ''}</tr></thead><tbody>${shown.map(p => `<tr class="click ${ui.sel2.has(p.id) ? 'picked' : ''}" data-act="editP" data-id="${p.id}">
+  return `<div class="tblwrap"><table class="tbl"><thead><tr><th style="width:36px"><input type="checkbox" class="cb" id="selAll" aria-label="Select everyone shown" ${allSel ? 'checked' : ''}></th><th>Person</th><th class="hide-sm">Phone</th><th>Group</th><th class="hide-sm">Tags</th>${m ? '<th class="hide-sm">Today</th>' : ''}</tr></thead><tbody>${shown.map(p => `<tr class="click ${ui.sel2.has(p.id) ? 'picked' : ''}" data-act="editP" data-id="${p.id}">
     <td><input type="checkbox" class="cb" data-pick="${p.id}" aria-label="Select ${esc(p.name)}" ${ui.sel2.has(p.id) ? 'checked' : ''}></td><td><span class="person"><span class="av">${esc(initials(p.name))}</span><b>${esc(p.name)}</b></span></td><td class="hide-sm num muted">${esc(firstPhone(p))}</td><td>${isPaired(p) ? `<span class="small">${esc(gName(p.group))}${S.groups[p.subgroup] ? `<span class="muted">, ${esc(unitShort(p.subgroup))}</span>` : ''}</span>` : `<span class="badge warn">${UNPAIRED}</span>`}</td>
     <td class="hide-sm">${badges(p)}</td>${m ? `<td class="hide-sm">${pres[p.id] ? `<span class="badge ok"><span class="dot"></span>Here</span>` : '<span class="faint small">–</span>'}</td>` : ''}</tr>`).join('')}</tbody></table></div>${more(list)}`;
 }
@@ -750,9 +757,9 @@ function findResults(){
 }
 function unitOptions(gid, sel){ return `<option value="">No unit</option>${subsOf(gid).map(u => `<option value="${u.id}" ${sel===u.id?'selected':''}>${esc(unitLabel(u.id))}</option>`).join('')}`; }
 function personPanel(id){
-  const isNew = !id, p = isNew ? {id: uid('m'), name:'', phone:'', group:'', subgroup:'', role:'member'} : {...S.members[id]};
+  const isNew = !id, p = isNew ? {id: uid('m'), name:'', phone:'', group:'', subgroup:'', role:'member'} : {...S.members[id]}, isNew_ = x => !!x.joinedMeeting && x.joinedMeeting === latestMeeting();
   const m = meeting(), t = presentMap(m)[p.id];
-  openPanel(`${dh(isNew ? 'Add a person' : esc(p.name), isNew ? 'They go into “Not paired yet” unless you choose a group.' : esc(where(p)))}
+  openPanel(`${dh(isNew ? 'Add a person' : esc(p.name) + (isNew_(p) ? ' <span class="badge newb" style="vertical-align:3px">New</span>' : ''), isNew ? 'They go into “Not paired yet” unless you choose a group.' : esc(where(p)) + (p.joinedMeeting && S.meetings[p.joinedMeeting] ? `. First came to ${esc(S.meetings[p.joinedMeeting].title)}, ${fmtShort(S.meetings[p.joinedMeeting].date)}` : ''))}
     <form id="pform" data-id="${p.id}" style="display:contents"><div class="db">
       ${!isNew && m ? `<div class="callout" style="margin:0">${t ? `<span class="badge ok">Here</span><span class="grow">Checked in at ${fmtTime(t)}</span><button type="button" class="btn sm" data-act="undo" data-id="${p.id}">Undo</button>` : `<span class="badge">Not here</span><span class="grow">${esc(m.title)}</span>${m.endedAt ? '' : `<button type="button" class="btn sm primary" data-act="reg" data-id="${p.id}">Check in</button>`}`}</div>` : ''}
       <label class="field">Full name<input class="input" name="name" required value="${esc(p.name)}" autocomplete="off"></label>
@@ -760,6 +767,7 @@ function personPanel(id){
       <div class="two"><label class="field">Group<select class="input" name="group" id="pfGroup"><option value="">${UNPAIRED}</option>${realGroups().map(g => `<option value="${g.id}" ${p.group===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select></label>
         <label class="field">Unit<select class="input" name="subgroup" id="pfUnit">${unitOptions(p.group, p.subgroup)}</select></label></div>
       <label class="field">Role in their unit<select class="input" name="role">${Object.entries(ROLE_LABEL).filter(([k]) => k !== 'group_head').map(([k,l]) => `<option value="${k}" ${p.role===k?'selected':''}>${l}</option>`).join('')}</select></label>
+      ${latestMeeting() ? `<label class="chk" style="height:auto;padding:10px 12px;align-items:flex-start"><input type="checkbox" name="firstTimer" ${(isNew && meeting() && !meeting().endedAt) || isNew_(p) ? 'checked' : ''} style="margin-top:3px"><span><b style="font-weight:600">First-timer</b><span class="hint" style="display:block">${isNew ? 'New people added during a meeting are marked New until the next meeting starts.' : isNew_(p) ? 'Marked New until the next meeting starts.' : 'Tick to mark them New for the latest meeting.'}</span></span></label>` : ''}
       <fieldset class="field" style="border:0;padding:0;margin:0"><legend style="padding:0;margin-bottom:6px">Leads these groups</legend><div class="chkgrid">${realGroups().map(g => `<label class="chk"><input type="checkbox" name="lead" value="${g.id}" ${leadsGroups(p).some(x => x.id === g.id) ? 'checked' : ''}><span>${esc(g.name)}</span></label>`).join('')}</div><span class="hint">A group can have several leaders, and they can be seated in any group.</span></fieldset></div>
     <div class="df">${isNew ? '' : `<span class="l row" style="gap:6px">${isPaired(p) ? `<button type="button" class="btn" data-act="unpair" data-id="${p.id}">Remove from group</button>` : ''}<button type="button" class="btn ghost danger" data-act="delP" data-id="${p.id}">Delete</button></span>`}${isNew ? '<button type="button" class="btn" data-act="close">Cancel</button>' : ''}<button class="btn primary">${isNew ? 'Add person' : 'Save'}</button></div></form>`);
 }
@@ -808,7 +816,7 @@ function unpair(ids){
 }
 function quickAdd(name, phone){
   if (!name.trim()) return;
-  const m = {id: uid('m'), name: titleCase(name), phone: phone.trim(), group: unpairedGroup(), subgroup: '', role: 'member'};
+  const m = {id: uid('m'), name: titleCase(name), phone: phone.trim(), group: unpairedGroup(), subgroup: '', role: 'member', joinedMeeting: S.current || '', createdAt: Date.now()};
   S.members[m.id] = m; saveMember(m); register(m.id);
 }
 function setHead(gid, role, memberId){
@@ -843,12 +851,12 @@ function vReports(){
   if (!ms.length) return pageTitle('Reports', 'Attendance for every meeting.') + `<div class="empty">${crowd()}<h2>No meetings yet</h2><p>Reports appear here once you run a meeting.</p></div>`;
   if (!S.meetings[ui.rm]) ui.rm = S.current && S.meetings[S.current] ? S.current : ms[0][0];
   const m = S.meetings[ui.rm], R = reportData(ui.rm);
-  const tabs = [['summary','Summary'],['groups','By group'],['present','Present', R.here],['absent','Absent', R.total - R.here],['history','All meetings', ms.length]];
+  const tabs = [['summary','Summary'],['groups','By group'],['present','Present', R.here],['absent','Absent', R.total - R.here],['new','First-timers', firstTimersOf(ui.rm).length],['history','All meetings', ms.length]];
   return `<div class="ptitle"><div><h1>Reports</h1><p>${ui.rtab === 'history' ? 'Attendance across all your meetings.' : `${esc(m.title)}, ${fmtDate(m.date)}. ${m.endedAt ? `Final, ended at ${fmtTime(m.endedAt)}.` : ui.rm === S.current ? 'Live, updating as people check in.' : 'Not ended.'}`}</p></div>
       <div class="row">${ui.rtab === 'history' ? '' : `<select class="input" id="rm" aria-label="Choose a meeting" style="width:auto;max-width:240px">${ms.map(([id,v]) => `<option value="${id}" ${id===ui.rm?'selected':''}>${esc(v.title)}, ${fmtShort(v.date)}</option>`).join('')}</select>
       <button class="btn" data-act="print">${I('print')}<span class="hide-sm">Print</span></button><button class="btn primary" data-act="report" data-id="${ui.rm}">${I('download')}Excel report</button>`}</div></div>
     <div class="tabs" role="tablist">${tabs.map(([k,l,c]) => `<button role="tab" data-act="rtab" data-v="${k}" aria-selected="${ui.rtab===k}">${l}${c !== undefined ? `<span class="count num">${c}</span>` : ''}</button>`).join('')}</div>
-    ${{summary: rSummary, groups: rGroups, present: rPresent, absent: rAbsent, history: rHistory}[ui.rtab](R)}`;
+    ${{summary: rSummary, groups: rGroups, present: rPresent, absent: rAbsent, new: rNew, history: rHistory}[ui.rtab](R)}`;
 }
 const meetingsSorted = () => Object.entries(S.meetings).filter(([,v]) => v && v.title).sort((a,b) => (b[1].date||'').localeCompare(a[1].date||'') || (b[1].createdAt||0)-(a[1].createdAt||0));
 const rateCls = r => r >= .7 ? 'ok' : r >= .4 ? 'warn' : 'no';
@@ -878,7 +886,7 @@ function rSummary(R){
       ${worst && worst !== best ? `<a class="hcard warn" href="#" data-act="rgroup" data-id="${worst.g.id}"><span class="hl-l">Needs the most follow-up</span><b>${esc(worst.g.name)}</b><span>${worst.list.length - worst.h} absent${worst.head ? `. Leader: ${esc(worst.head.name)}` : ''}</span></a>` : ''}
       <div class="hcard"><span class="hl-l">Units fully present</span><b class="num">${full.length} <span class="faint" style="font-weight:500">of ${units.length}</span></b><span>${full.length ? esc(full.slice(0,4).map(u => u.label.replace('Unit ','')).join(', ')) + (full.length > 4 ? ` and ${full.length - 4} more` : '') : 'None yet'}</span></div>
       <div class="hcard"><span class="hl-l">Units with no one present</span><b class="num">${emptyU.length}</b><span>${emptyU.length ? esc(emptyU.slice(0,5).map(u => u.label.replace('Unit ','')).join(', ')) + (emptyU.length > 5 ? ` and ${emptyU.length - 5} more` : '') : 'Every unit had someone'}</span></div>
-      ${unp ? `<div class="hcard"><span class="hl-l">First-timers and unpaired</span><b class="num">${unp.h}</b><span>present, of ${unp.list.length} not yet paired</span></div>` : ''}
+      <a class="hcard" href="#" data-act="rtab" data-v="new"><span class="hl-l">First-timers</span><b class="num">${firstTimersOf(ui.rm).length}</b><span>${firstTimersOf(ui.rm).length ? 'registered for the first time at this meeting' : 'No one new at this meeting'}</span></a>
     </div>
     <section class="card"><div class="ch"><div><h2>Attendance by group</h2><div class="small muted" style="margin-top:2px">Green at 70% or more, amber from 40%, red below. Select a group to see its units.</div></div>
       <div class="seg" role="group" aria-label="Detail"><button data-act="rexpAll" data-v="0" aria-pressed="${!ui.rexpAll}">Groups</button><button data-act="rexpAll" data-v="1" aria-pressed="${!!ui.rexpAll}">With units</button></div></div>
@@ -936,6 +944,16 @@ function rHistory(){
         <td class="hide-sm"><div class="rate"><div class="bar grow"><i class="${rateCls(t ? n/t : 0)}" style="width:${pct(n,t)}%"></i></div>${ratePill(n, t)}</div></td>
         <td class="r" style="white-space:nowrap"><button class="btn ghost sm" data-act="report" data-id="${id}" title="Download Excel report">${I('download')}<span class="hide-sm">Excel</span></button>${id !== S.current ? `<button class="btn ghost sm" data-act="openM" data-id="${id}">Open</button>` : ''}<button class="btn ghost sm" data-act="delM" data-id="${id}" aria-label="Delete ${esc(v.title)}">${I('x')}</button></td></tr>`).join('')}
     </tbody></table></div>`;
+}
+
+function rNew(R){
+  const list = firstTimersOf(ui.rm);
+  if (!list.length) return `<div class="empty">${crowd(3)}<h2>No first-timers at this meeting</h2><p>People added at check-in while this meeting was open show here.</p></div>`;
+  const paired = list.filter(isPaired).length;
+  return `<div class="callout"><span class="grow">${list.length} ${list.length === 1 ? 'person' : 'people'} came for the first time. ${paired} ${paired === 1 ? 'has' : 'have'} been paired with a group${list.length - paired ? `, ${list.length - paired} still ${list.length - paired === 1 ? 'needs' : 'need'} pairing` : ''}.</span>${list.length - paired ? '<a class="btn sm" href="#directory" data-act="needsPairing">Pair them</a>' : ''}</div>
+    <div class="tblwrap"><table class="tbl"><thead><tr><th>Name</th><th class="hide-sm">Phone</th><th>Group</th><th class="r">Registered</th></tr></thead><tbody>
+    ${list.map(p => `<tr class="click" data-act="editP" data-id="${p.id}"><td><span class="person"><span class="av ${R.pres[p.id]?'ok':''}">${esc(initials(p.name))}</span><b>${esc(p.name)}</b>${newBadge(p)}</span></td><td class="hide-sm num muted">${esc(firstPhone(p)) || '<span class="faint">None given</span>'}</td>
+      <td>${isPaired(p) ? `<span class="small">${esc(where(p))}</span>` : `<span class="badge warn">${UNPAIRED}</span>`}</td><td class="r num small">${p.createdAt ? fmtTime(p.createdAt) : ''}</td></tr>`).join('')}</tbody></table></div>`;
 }
 /* ---------- Excel report ---------- */
 function loadExcelJS(){
@@ -1025,7 +1043,7 @@ async function downloadReport(mid){
       // present first, then absent
       for (const p of [...u.list].sort((x,y) => (!!pres[y.id] - !!pres[x.id]) || byName(x,y))) {
         const ok = !!pres[p.id], row = b.getRow(r++);
-        row.values = [p.name, (p.phone||'').split(',')[0].trim(), S.groups[p.subgroup] ? unitLabel(p.subgroup).replace(/^Unit /,'') : '', [leadsGroups(p).length ? 'Group leader' : '', p.role !== 'member' && p.role !== 'group_head' ? ROLE_LABEL[p.role] : ''].filter(Boolean).join(', '), ok ? 'Present' : 'Absent', ok ? fmtTime(pres[p.id]) : ''];
+        row.values = [p.name, (p.phone||'').split(',')[0].trim(), S.groups[p.subgroup] ? unitLabel(p.subgroup).replace(/^Unit /,'') : '', [p.joinedMeeting === (mid || S.current) ? 'First-timer' : '', leadsGroups(p).length ? 'Group leader' : '', p.role !== 'member' && p.role !== 'group_head' ? ROLE_LABEL[p.role] : ''].filter(Boolean).join(', '), ok ? 'Present' : 'Absent', ok ? fmtTime(pres[p.id]) : ''];
         row.eachCell({includeEmpty:true}, c => { c.font = F(); c.fill = fill(ok ? C.okTint : C.noTint); c.border = thin; });
         Object.assign(row.getCell(5), {fill: fill(ok ? C.okBg : C.noBg), font: F({bold:true, color:{argb: ok ? C.okFg : C.noFg}}), alignment:{horizontal:'center'}});
         row.outlineLevel = 1;
@@ -1047,12 +1065,21 @@ async function downloadReport(mid){
       if (p.group !== last) { band = !band; last = p.group; }
       const gh = (S.groups[p.subgroup] && headOf(p.subgroup, 'subgroup_head')) || headOf(p.group, 'group_head');
       const row = w.getRow(rr++);
-      row.values = ok ? [p.name, (p.phone||'').split(',')[0].trim(), gName(p.group) || UNPAIRED, S.groups[p.subgroup] ? unitLabel(p.subgroup).replace(/^Unit /,'') : '', ROLE_LABEL[p.role] === 'Member' ? '' : ROLE_LABEL[p.role], fmtTime(pres[p.id])]
+      row.values = ok ? [p.name, (p.phone||'').split(',')[0].trim(), gName(p.group) || UNPAIRED, S.groups[p.subgroup] ? unitLabel(p.subgroup).replace(/^Unit /,'') : '', [p.joinedMeeting === (mid || S.current) ? 'First-timer' : '', p.role !== 'member' && p.role !== 'group_head' ? ROLE_LABEL[p.role] : ''].filter(Boolean).join(', '), fmtTime(pres[p.id])]
         : [p.name, (p.phone||'').split(',')[0].trim(), gName(p.group) || UNPAIRED, S.groups[p.subgroup] ? unitLabel(p.subgroup).replace(/^Unit /,'') : '', ROLE_LABEL[p.role] === 'Member' ? '' : ROLE_LABEL[p.role], gh && gh.id !== p.id ? gh.name : '', gh && gh.id !== p.id ? (gh.phone||'').split(',')[0].trim() : ''];
       row.eachCell({includeEmpty:true}, c => { c.font = F(); c.border = thin; if (band) c.fill = fill(C.soft); });
     }
     if (list.length) w.autoFilter = {from:{row:4, column:1}, to:{row:4 + list.length, column:cols.length}};
   };
+  const ft = firstTimersOf(mid || S.current);
+  if (ft.length) {
+    const w = wb.addWorksheet('First-timers', {views:[{state:'frozen', ySplit:4, showGridLines:false}]});
+    w.columns = [36,18,24,12].map(width => ({width}));
+    titleRows(w, 4, `First-timers · ${ft.length} ${ft.length === 1 ? 'person' : 'people'}`);
+    w.getCell(1,1).font = F({size:18, bold:true, color:{argb:'FF2F45FF'}});
+    headerRow(w, 4, ['Name','Phone','Group','Registered']);
+    ft.forEach((p, i) => { const row = w.getRow(5 + i); row.values = [p.name, firstPhone(p), isPaired(p) ? where(p) : UNPAIRED, p.createdAt ? fmtTime(p.createdAt) : '']; row.eachCell({includeEmpty:true}, c => { c.font = F(); c.border = thin; }); });
+  }
   flat('Present', all.filter(p => pres[p.id]), true);
   flat('Absent', all.filter(p => !pres[p.id]), false);
 
@@ -1138,7 +1165,7 @@ document.addEventListener('click', e => {
   if (e.target.matches('.cb')) return;
   const b = e.target.closest('[data-act]'); if (!b) return;
   const a = b.dataset.act, id = b.dataset.id;
-  if (b.tagName === 'A' && a !== 'needsPairing' && a !== 'toAbsent') e.preventDefault();
+  if (b.tagName === 'A' && a !== 'needsPairing' && a !== 'toAbsent' && a !== 'toNew') e.preventDefault();
   if (a === 'reg') register(id);
   else if (a === 'undo') unregister(id);
   else if (a === 'clearQ') { ui.q = ''; ui.sel = 0; const q = $('#q'); q.value = ''; q.focus(); renderDesk(); }
@@ -1159,6 +1186,7 @@ document.addEventListener('click', e => {
   else if (a === 'rgroup') { ui.rtab = 'groups'; ui.rg = id; ui.rf = 'all'; render(); scrollTo(0,0); }
   else if (a === 'viewReport') { if (e.target.closest('button')) return; ui.rm = id; ui.rtab = 'summary'; render(); scrollTo(0,0); }
   else if (a === 'dtab') { ui.dtab = b.dataset.v; ui.dlimit = 150; render(); }
+  else if (a === 'toNew') { ui.dtab = 'new'; ui.dq = ''; if (location.hash === '#directory') render(); }
   else if (a === 'needsPairing') { ui.dtab = 'pair'; if (location.hash === '#directory') render(); }
   else if (a === 'gf') { ui.gf = b.dataset.v; render(); }
   else if (a === 'print') window.print();
@@ -1228,7 +1256,9 @@ document.addEventListener('submit', e => {
   else if (f.id === 'changePass') { const v = f.np.value.trim(); api('/passcode', {method:'POST', body: JSON.stringify({passcode: v})}).then(() => { pass = v; store.set('pass', v); f.reset(); toast('Passcode changed. Other desks need the new one.'); }).catch(err => toast(err.msg || err.message || "The passcode couldn't be changed.")); }
   else if (f.id === 'pform') {
     const id = f.dataset.id, isNew = !S.members[id];
-    const m = {id, name: f.name.value.trim(), phone: f.phone.value.trim(), group: f.group.value || unpairedGroup(), subgroup: f.group.value ? f.subgroup.value : '', role: f.role.value};
+    const prev = S.members[id] || {}, lm = latestMeeting(), ft = f.firstTimer ? f.firstTimer.checked : false;
+    const joined = ft ? (prev.joinedMeeting === lm ? lm : lm) : (prev.joinedMeeting === lm ? '' : (prev.joinedMeeting || ''));
+    const m = {id, name: f.name.value.trim(), phone: f.phone.value.trim(), group: f.group.value || unpairedGroup(), subgroup: f.group.value ? f.subgroup.value : '', role: f.role.value, joinedMeeting: joined || '', createdAt: prev.createdAt || Date.now()};
     if (!m.name) return;
     S.members[id] = m; saveMember(m);
     if (m.role === 'subgroup_head' && m.subgroup) setHead(m.subgroup, 'subgroup_head', id);

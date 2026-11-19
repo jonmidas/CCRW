@@ -60,13 +60,18 @@ function statement(env, op, now) {
          ON CONFLICT(id) DO UPDATE SET name = excluded.name, parent = excluded.parent, leaders = COALESCE(?4, groups.leaders), updated_at = excluded.updated_at, deleted = 0`
       ).bind(id, str(d.name, 120), str(d.parent, 64), leaders, now);
     }
-    case 'member':
+    case 'member': {
       if (op.op === 'del') return env.DB.prepare('UPDATE members SET deleted = 1, updated_at = ? WHERE id = ?').bind(now, id);
+      // first-timer fields only change when the client sends them, so older pages can't clear them
+      const joined = d.joinedMeeting === undefined ? null : str(d.joinedMeeting, 64);
+      const created = Number(d.createdAt) || null;
       return env.DB.prepare(
-        `INSERT INTO members (id, name, phone, group_id, subgroup_id, role, updated_at, deleted) VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+        `INSERT INTO members (id, name, phone, group_id, subgroup_id, role, joined_meeting, created_at, updated_at, deleted) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 0)
          ON CONFLICT(id) DO UPDATE SET name = excluded.name, phone = excluded.phone, group_id = excluded.group_id,
-         subgroup_id = excluded.subgroup_id, role = excluded.role, updated_at = excluded.updated_at, deleted = 0`
-      ).bind(id, str(d.name, 160), str(d.phone, 40), str(d.group, 64), str(d.subgroup, 64), ROLES.has(d.role) ? d.role : 'member', now);
+         subgroup_id = excluded.subgroup_id, role = excluded.role, joined_meeting = COALESCE(?7, members.joined_meeting),
+         created_at = COALESCE(members.created_at, ?8), updated_at = excluded.updated_at, deleted = 0`
+      ).bind(id, str(d.name, 160), str(d.phone, 40), str(d.group, 64), str(d.subgroup, 64), ROLES.has(d.role) ? d.role : 'member', joined, created, now);
+    }
     case 'meeting':
       if (op.op === 'del') return env.DB.prepare('UPDATE meetings SET deleted = 1, updated_at = ? WHERE id = ?').bind(now, id);
       return env.DB.prepare(
@@ -106,7 +111,7 @@ async function handleApi(req, env, url) {
     const q = (sql) => env.DB.prepare(sql).bind(since);
     const [groups, members, meetings, checkins, current] = await env.DB.batch([
       q('SELECT id, name, parent, leaders, deleted FROM groups WHERE updated_at > ?'),
-      q('SELECT id, name, phone, group_id AS "group", subgroup_id AS subgroup, role, deleted FROM members WHERE updated_at > ?'),
+      q('SELECT id, name, phone, group_id AS "group", subgroup_id AS subgroup, role, joined_meeting AS joinedMeeting, created_at AS createdAt, deleted FROM members WHERE updated_at > ?'),
       q('SELECT id, title, date, created_at AS createdAt, ended_at AS endedAt, total_at_end AS totalAtEnd, deleted FROM meetings WHERE updated_at > ?'),
       q('SELECT meeting_id AS meeting, member_id AS member, at, deleted FROM checkins WHERE updated_at > ?'),
       env.DB.prepare("SELECT value FROM settings WHERE key = 'current_meeting'"),

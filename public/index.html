@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCRW Rollcall</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a calm, fast registration desk; plain words, big targets.
+   IDEA: a printed attendance register / timetable board.
+   PICTURE: the live search-and-tick list itself, with huge hanging tallies.
+   COLOUR and TYPE: white, black, signal red for absent, one grey; Archivo wide 800 + Archivo.
+   LAYOUT: thick top rule, strict left edge, numerals hanging in a wide left column. */
+:root{color-scheme:light dark;--bg:light-dark(#fff,#0e0e0e);--ink:light-dark(#0b0b0b,#f3f3f3);--grey:light-dark(#6b6b6b,#9a9a9a);--line:light-dark(#e3e3e3,#2a2a2a);--soft:light-dark(#f5f5f5,#181818);--red:#e4002b;--ok:light-dark(#0b0b0b,#f3f3f3)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Archivo,system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(18px,3vw,40px) max(4vw,16px)}
+button,input,select{font:inherit;color:inherit}
+input,select{font-size:16px;min-height:44px;padding:8px 12px;border:1.5px solid var(--line);border-radius:6px;background:var(--bg)}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+button{min-height:44px;padding:8px 16px;border-radius:6px;border:1.5px solid var(--ink);background:var(--bg);cursor:pointer;font-weight:600;white-space:nowrap}
+button.solid{background:var(--ink);color:var(--bg)}
+button.red{border-color:var(--red);color:var(--red)}
+button.ghost{border-color:transparent;padding:8px 10px}
+button:disabled{opacity:.4;cursor:default}
+.wide{font-stretch:112%;font-weight:800;letter-spacing:-.01em}
+.muted{color:var(--grey)}
+.small{font-size:14px}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto}
+/* header */
+.top{border-top:8px solid var(--ink);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 32px;align-items:end}
+.brand{font-size:15px;font-weight:700;margin:0 0 6px}
+.mt{font-size:clamp(26px,3.6vw,44px);line-height:1.05;margin:0;text-wrap:balance}
+.tally{text-align:right}
+.tally b{display:block;font-size:clamp(56px,9vw,120px);line-height:.9}
+.tally span{font-size:15px}
+nav{display:flex;flex-wrap:wrap;gap:4px 24px;border-bottom:2px solid var(--ink);padding-bottom:0}
+nav a{color:inherit;text-decoration:none;font-weight:700;padding:10px 0;border-bottom:4px solid transparent;margin-bottom:-2px}
+nav a[aria-current]{border-color:var(--red)}
+nav .n{color:var(--grey);font-weight:500;margin-left:4px}
+.note{background:var(--soft);border-left:4px solid var(--red);padding:12px 16px;margin:0 0 20px}
+/* check-in */
+.ci{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:40px}
+.search{width:100%;font-size:clamp(22px,2.6vw,30px);min-height:68px;border:2.5px solid var(--ink);border-radius:8px;padding:10px 18px}
+.res{list-style:none;margin:12px 0 0;padding:0}
+.res li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 12px;border-bottom:1px solid var(--line);border-radius:6px}
+.res li.sel{background:var(--soft)}
+.res .nm{font-size:20px;font-weight:700}
+.tag{display:inline-block;font-size:13px;font-weight:700;border:1.5px solid var(--ink);border-radius:99px;padding:0 8px;margin-left:8px;vertical-align:2px}
+.done{font-weight:700}
+.done::before{content:"✓ ";}
+aside h3,.h3{font-size:15px;margin:0 0 8px;font-weight:700}
+.feed{list-style:none;margin:0 0 28px;padding:0}
+.feed li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+/* groups board */
+.grp{display:grid;grid-template-columns:clamp(84px,12vw,150px) minmax(0,1fr);gap:0 24px;border-top:3px solid var(--ink);padding:18px 0 24px}
+.big{font-size:clamp(44px,6vw,80px);line-height:.9}
+.big small{display:block;font-size:15px;font-weight:500;font-stretch:100%;color:var(--grey);margin-top:6px}
+.gname{font-size:clamp(22px,2.4vw,30px);margin:0;line-height:1.1}
+.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden;margin:10px 0}
+.bar i{display:block;height:100%;background:var(--ink)}
+.subs{list-style:none;margin:14px 0 0;padding:0}
+.subs li{display:grid;grid-template-columns:minmax(0,1fr) 120px auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.subs .bar{margin:0;height:6px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row.sp{justify-content:space-between}
+/* absent */
+.abs h3{font-size:22px;margin:28px 0 4px;border-top:3px solid var(--red);padding-top:12px}
+.abs ul{list-style:none;padding:0;margin:8px 0 0;columns:2 280px;column-gap:40px}
+.abs li{break-inside:avoid;padding:6px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}
+/* tables & forms */
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:14px;color:var(--grey);font-weight:600;border-bottom:2px solid var(--ink)}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end;background:var(--soft);padding:16px;border-radius:8px;margin:0 0 20px}
+label{display:grid;gap:4px;font-size:14px;font-weight:600}
+.empty{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:32px;align-items:center;padding:24px 0}
+.empty svg{width:100%;height:auto}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 12px 12px 20px;border-radius:8px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 30px #0004;z-index:9;max-width:calc(100vw - 32px)}
+.toast button{border-color:var(--bg);color:var(--bg);background:transparent;min-height:36px;padding:4px 12px}
+@media (prefers-reduced-motion:no-preference){.res li.flash{animation:fl .6s}@keyframes fl{from{background:var(--ink);color:var(--bg)}}}
+@media print{header .tally,nav,#toastHost,button,.note,#sync{display:none!important}.band{padding:12px 0}body{font-size:12px}.abs h3{margin-top:14px}}
+@media(max-width:820px){.ci{grid-template-columns:minmax(0,1fr)}.empty{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.top{grid-template-columns:minmax(0,1fr)}.tally{text-align:left}.grp{grid-template-columns:minmax(0,1fr)}.big{display:flex;align-items:baseline;gap:10px;font-size:48px;margin-bottom:6px}.big small{margin:0}.subs li{grid-template-columns:minmax(0,1fr);gap:6px}.subs li .bar{display:none}.subs li .row{justify-content:flex-start}
+table{font-size:14px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:7em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:6.5em;margin-inline-start:-7em;color:var(--grey)}.stack td:empty{display:none}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<header class="band top" style="padding-bottom:12px">
+  <div>
+    <p class="brand">CCRW Rollcall <span id="sync" class="muted" style="font-weight:500"></span></p>
+    <h1 class="mt wide" id="mtitle">Loading the register…</h1>
+    <div class="muted" id="msub"></div>
+  </div>
+  <div class="tally" id="tally"></div>
+</header>
+<div class="band" style="padding-top:0;padding-bottom:0"><nav id="nav"></nav></div>
+<main class="band" id="view"></main>
+<div id="toastHost"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="person">
+      <ellipse cx="0" cy="96" rx="30" ry="6" fill="currentColor" opacity=".12"/>
+      <path d="M-26 92 C-26 52 -16 40 0 40 C16 40 26 52 26 92 Z"/>
+      <circle cx="0" cy="22" r="15"/>
+      <path d="M-9 14 A12 12 0 0 1 12 12" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3"/>
+    </g>
+  </defs>
+</svg>
+
+<script>
+{
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const shardOf = id => 's' + ([...id].reduce((a,c)=>a + c.charCodeAt(0),0) % 8);
+const fmtTime = t => new Date(t).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+const fmtDate = d => d ? new Date(d + 'T12:00').toLocaleDateString([], {weekday:'short', day:'numeric', month:'short', year:'numeric'}) : '';
+const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
+const ROLE = {member:'Member', group_head:'Group head', subgroup_head:'Subgroup head'};
+
+let canWrite = true, ready = false, downloads = true;
+const S = {members:{}, groups:{}, meetings:{}, current:null};
+const ui = {q:'', sel:0, mq:'', edit:null, confirm:null, importRows:null, openGroup:null};
+const store = {get(k,d){ try { const v = localStorage.getItem('ccrw.'+k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }, set(k,v){ try { localStorage.setItem('ccrw.'+k, JSON.stringify(v)); } catch(e){} }};
+let pass = store.get('pass', ''), queue = store.get('queue', []), cursor = 0, online = true;
+{ const c = store.get('cache', null); if (c && pass) { Object.assign(S, c.S); cursor = c.cursor || 0; ready = true; } }
+const persist = () => { store.set('queue', queue); store.set('cache', {S, cursor}); };
+
+/* ---------- server sync ---------- */
+// On Cloudflare (or locally) the API lives on the same site. Any other host, such as Vercel, calls the Worker directly.
+const WORKER = 'https://ccrw.WORKERS_SUBDOMAIN.workers.dev';
+const API = /\.workers\.dev$|^localhost$|^127\./.test(location.hostname) || WORKER.includes('WORKERS_SUBDOMAIN') ? '/api' : WORKER + '/api';
+async function api(path, opts = {}){
+  const r = await fetch(API + path, {...opts, headers:{'content-type':'application/json', 'x-passcode': pass}});
+  const body = await r.json().catch(()=>({}));
+  if (r.status === 401 || r.status === 429) throw {auth:true, msg: body.error || 'Wrong passcode.'};
+  if (!r.ok) throw new Error(body.error || 'Request failed');
+  return body;
+}
+function setOnline(v){ online = v; syncBadge(); }
+function syncBadge(){ const el = $('#sync'); if (!el) return; el.textContent = !pass ? '' : !online ? `· offline${queue.length?` — ${queue.length} change${queue.length===1?'':'s'} waiting`:''}` : queue.length ? '· saving…' : '· live'; el.style.color = online ? '' : 'var(--red)'; }
+function enqueue(op){ queue.push(op); persist(); syncBadge(); flush(); }
+let flushing = false;
+async function flush(){
+  if (flushing || !queue.length || !pass) return; flushing = true;
+  try { while (queue.length) { const batch = queue.slice(0, 400); await api('/ops', {method:'POST', body: JSON.stringify({ops: batch})}); queue.splice(0, batch.length); persist(); } setOnline(true); }
+  catch(e){ if (e.auth) lock(e.msg); else setOnline(false); }
+  finally { flushing = false; syncBadge(); }
+}
+function apply(d){
+  let changed = false;
+  for (const g of d.groups) { changed = true; if (g.deleted) delete S.groups[g.id]; else S.groups[g.id] = {id:g.id, name:g.name, parent:g.parent||''}; }
+  for (const m of d.members) { changed = true; if (m.deleted) delete S.members[m.id]; else S.members[m.id] = {id:m.id, name:m.name, phone:m.phone||'', group:m.group||'', subgroup:m.subgroup||'', role:m.role||'member'}; }
+  for (const m of d.meetings) { changed = true; if (m.deleted) delete S.meetings[m.id]; else S.meetings[m.id] = {...(S.meetings[m.id]||{present:{}}), title:m.title, date:m.date, createdAt:m.createdAt, endedAt:m.endedAt||null, totalAtEnd:m.totalAtEnd||null}; }
+  for (const c of d.checkins) { changed = true; const mt = S.meetings[c.meeting] ||= {present:{}, title:'', date:''}; mt.present = {...mt.present, [c.member]: c.deleted ? null : c.at}; }
+  const cur = d.current || null; if (cur !== S.current) { S.current = cur; changed = true; }
+  return changed;
+}
+let pulling = false;
+async function pull(){
+  if (pulling || !pass) return; pulling = true;
+  try { await flush(); if (queue.length) return; const d = await api('/sync?since=' + cursor); const first = !ready; const changed = apply(d); cursor = d.now; ready = true; state.msg = ''; setOnline(true); persist(); if (changed || first) softRender(); }
+  catch(e){ if (e.auth) lock(e.msg); else { setOnline(false); if (!ready) { state.msg = "Can't reach the register — check the internet connection. It will retry by itself."; render(); } } }
+  finally { pulling = false; }
+}
+function lock(msg){ pass = ''; store.set('pass', ''); store.set('cache', null); state.loginMsg = msg || ''; render(); }
+// Don't wipe a half-typed form when another desk's update arrives.
+let pendingRender = false;
+function softRender(){
+  const a = document.activeElement;
+  if (a && /INPUT|SELECT|TEXTAREA/.test(a.tagName) && a.id !== 'q' && a.id !== 'mq') { pendingRender = true; render(true); return; }
+  render();
+}
+document.addEventListener('focusout', () => setTimeout(() => { const a = document.activeElement; if (pendingRender && !(a && /INPUT|SELECT|TEXTAREA/.test(a.tagName))) { pendingRender = false; render(); } }, 250));
+
+const saveMember = m => enqueue({t:'member', op:'put', data:m});
+const dropMember = id => enqueue({t:'member', op:'del', data:{id}});
+const saveGroup = g => enqueue({t:'group', op:'put', data:g});
+const dropGroup = id => enqueue({t:'group', op:'del', data:{id}});
+const setCurrent = id => { S.current = id; enqueue({t:'current', op:'put', data:{id: id || ''}}); };
+const saveMeeting = id => { const m = S.meetings[id]; enqueue({t:'meeting', op:'put', data:{id, title:m.title, date:m.date, createdAt:m.createdAt, endedAt:m.endedAt||null, totalAtEnd:m.totalAtEnd||null}}); };
+
+/* ---------- derived ---------- */
+const members = () => Object.values(S.members).sort((a,b)=>a.name.localeCompare(b.name));
+const isUnp = g => norm(g.name)==='not paired yet';
+const groupsTop = () => Object.values(S.groups).filter(g=>!g.parent).sort((a,b)=>(isUnp(a)-isUnp(b)) || a.name.localeCompare(b.name));
+const subsOf = gid => Object.values(S.groups).filter(g=>g.parent===gid).sort((a,b)=>a.name.localeCompare(b.name));
+const gName = id => S.groups[id]?.name || '';
+const meeting = () => S.meetings[S.current] || null;
+const presentMap = m => { const out = {}; if (m) for (const [k,v] of Object.entries(m.present||{})) if (v && S.members[k]) out[k] = v; return out; };
+const headOf = (gid, role) => members().find(m => role==='group_head' ? (m.group===gid && m.role==='group_head') : (m.subgroup===gid && m.role==='subgroup_head'));
+
+/* ---------- render ---------- */
+const TABS = [['checkin','Check in'],['groups','Groups'],['absent','Absent'],['members','Members'],['meetings','Meetings']];
+function route(){ const h = location.hash.slice(1); return TABS.some(t=>t[0]===h) ? h : 'checkin'; }
+
+function render(headerOnly){
+  const m = meeting(), pres = presentMap(m), total = Object.keys(S.members).length, n = Object.keys(pres).length;
+  $('#mtitle').textContent = m ? m.title : (ready ? 'No meeting open' : 'Loading the register…');
+  $('#msub').textContent = m ? fmtDate(m.date) + (m.endedAt ? ' · ended ' + fmtTime(m.endedAt) : ' · registration open') : '';
+  $('#tally').innerHTML = m ? `<b class="wide num">${n}</b><span class="muted num">of ${total} registered · ${total ? Math.round(n/total*100) : 0}%</span>` : '';
+  const r = route();
+  $('#nav').innerHTML = TABS.map(([k,l]) => `<a href="#${k}" ${k===r?'aria-current="page"':''}>${l}${k==='absent'&&m?`<span class="n num">${total-n}</span>`:''}${k==='members'?`<span class="n num">${total}</span>`:''}</a>`).join('');
+  syncBadge();
+  if (headerOnly) return;
+  const v = $('#view');
+  if (!pass) { $('#nav').innerHTML = ''; $('#mtitle').textContent = 'Registration desk'; $('#msub').textContent = ''; $('#tally').innerHTML = '';
+    v.innerHTML = `<div class="empty"><form id="login" style="max-width:440px"><h2 class="mt wide" style="font-size:32px;margin-bottom:8px">Enter the desk passcode</h2>
+      <p class="muted">Ask the meeting organiser for it. You only need it once on this device.</p>${state.loginMsg?`<p class="note">${esc(state.loginMsg)}</p>`:''}
+      <div class="row"><input id="pc" type="password" autocomplete="current-password" aria-label="Desk passcode" required style="flex:1 1 200px"><button class="solid">Unlock</button></div></form>${crowd()}</div>`;
+    $('#pc').focus(); return; }
+  if (!ready) { v.innerHTML = state.msg ? `<p class="note">${esc(state.msg)}</p>` : `<p class="muted">Loading the register…</p>`; return; }
+
+  const banner = '';
+  const stale = state.msg ? `<p class="note">${esc(state.msg)}</p>` : '';
+  v.innerHTML = banner + stale + ({checkin:vCheckin, groups:vGroups, absent:vAbsent, members:vMembers, meetings:vMeetings}[r])();
+  if (r==='checkin') { const s = $('#q'); if (s && !s.disabled) { s.value = ui.q; s.focus(); s.setSelectionRange(ui.q.length, ui.q.length); } }
+  if (r==='members') { const s = $('#mq'); if (s && document.activeElement !== s && ui.mqFocus) { s.focus(); s.setSelectionRange(ui.mq.length, ui.mq.length); } }
+}
+const state = {msg:'', loginMsg:''};
+
+const crowd = (n=5) => `<svg viewBox="-40 0 ${n*70+10} 110" role="img" aria-label="People arriving">${Array.from({length:n},(_,i)=>`<g transform="translate(${i*70+(i%2?0:6)},${i%2?6:0}) scale(${i%2?.92:1})" fill="${i===2?'var(--red)':'currentColor'}" style="color:var(--ink)"><use href="#person"/></g>`).join('')}</svg>`;
+
+function startForm(){
+  return `<form class="form" id="newMeeting" style="background:none;padding:0">
+    <label>Meeting name<input id="nmTitle" required placeholder="Sunday service" value="${esc(ui.nmTitle||'')}"></label>
+    <label>Date<input id="nmDate" type="date" value="${today()}" required></label>
+    <button class="solid" ${canWrite?'':'disabled'}>Start meeting</button></form>`;
+}
+
+function search(q){
+  const toks = norm(q).split(/\s+/).filter(Boolean); if (!toks.length) return [];
+  const digits = q.replace(/\D/g,'');
+  const out = [];
+  for (const m of Object.values(S.members)) {
+    const n = norm(m.name), words = n.split(/[\s\-']+/);
+    let ok = toks.every(t => words.some(w => w.startsWith(t)) || n.includes(t));
+    if (!ok && digits.length >= 4) ok = (m.phone||'').replace(/\D/g,'').includes(digits);
+    if (ok) out.push([n.startsWith(norm(q)) ? 0 : words.some(w=>w.startsWith(toks[0])) ? 1 : 2, m]);
+  }
+  return out.sort((a,b)=>a[0]-b[0] || a[1].name.localeCompare(b[1].name)).slice(0,30).map(x=>x[1]);
+}
+
+function vCheckin(){
+  const m = meeting();
+  if (!Object.keys(S.members).length) return `<div class="empty"><div><h2 class="mt wide" style="font-size:32px">Add your people first</h2><p>Put everyone on the register — import a spreadsheet or add them one by one — and set up their groups. Then start a meeting and tick them in as they arrive.</p><a href="#members"><button class="solid">Go to Members</button></a></div>${crowd()}</div>`;
+  if (!m) return `<div class="empty"><div><h2 class="mt wide" style="font-size:32px">Start a meeting to open registration</h2><p class="muted">Every desk using this page will register into the same meeting.</p>${startForm()}</div>${crowd()}</div>`;
+  const pres = presentMap(m), res = search(ui.q); ui.sel = Math.min(ui.sel, Math.max(res.length-1,0));
+  const recent = Object.entries(pres).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const tops = groupsTop();
+  return `<div class="ci"><section>
+    ${m.endedAt ? `<p class="note">This meeting has ended, so registration is closed. <button class="ghost" data-act="reopen" style="text-decoration:underline">Reopen it</button></p>` : ''}
+    <input id="q" class="search" type="search" autocomplete="off" placeholder="Type a name or phone number…" aria-label="Search people" ${m.endedAt?'disabled':''}>
+    <p class="muted small" style="margin:8px 2px 0">Use ↑ ↓ to pick, Enter to register.</p>
+    <ul class="res" id="res">${ui.q && !res.length ? `<li><span><b>No one called “${esc(ui.q)}” on the register.</b><br><span class="muted small">Add them to “Not paired yet” and register them now — you can pair them later.</span></span><span></span></li>` : ''}
+    ${res.map((p,i)=>{ const t = pres[p.id];
+      return `<li class="${i===ui.sel?'sel':''} ${ui.flash===p.id?'flash':''}" data-id="${p.id}"><div><div class="nm">${esc(p.name)}${p.role!=='member'&&p.role?`<span class="tag">${ROLE[p.role]}</span>`:''}</div>
+      <div class="muted small">${esc([gName(p.group)||UNPAIRED, gName(p.subgroup), p.phone].filter(Boolean).join(' · '))}</div></div>
+      <div>${t ? `<span class="done num">${fmtTime(t)}</span> <button class="ghost small" data-act="undo" data-id="${p.id}" ${canWrite&&!m.endedAt?'':'disabled'}>Undo</button>` : `<button class="solid" data-act="reg" data-id="${p.id}" ${canWrite&&!m.endedAt?'':'disabled'}>Register</button>`}</div></li>`}).join('')}
+    ${ui.q.trim().length>1 && canWrite && !m.endedAt ? `<li style="border-bottom:0"><form id="quickAdd" class="row" style="grid-column:1/-1;background:var(--soft);padding:12px;border-radius:8px">
+      <span style="flex:1 1 200px">${res.length?'Not on the list? ':''}Add <b>${esc(titleCase(ui.q))}</b> as a new person</span>
+      <input id="qaPhone" inputmode="tel" placeholder="Phone (optional)" aria-label="Phone (optional)" style="flex:0 1 190px">
+      <button class="${res.length?'':'solid'}">Add &amp; register</button></form></li>` : ''}</ul>
+  </section><aside>
+    <h3>Just arrived</h3>
+    <ul class="feed">${recent.length ? recent.map(([id,t])=>`<li><span>${esc(S.members[id].name)}</span><span class="muted num">${fmtTime(t)}</span></li>`).join('') : '<li class="muted">No one yet.</li>'}</ul>
+    <h3>Group strength</h3>
+    <ul class="feed">${tops.map(g=>{const all = members().filter(x=>x.group===g.id), p = all.filter(x=>pres[x.id]).length; return `<li><span>${esc(g.name)}</span><span class="num"><b>${p}</b><span class="muted">/${all.length}</span></span></li>`}).join('') || '<li class="muted">No groups yet.</li>'}</ul>
+    <a href="#groups">Full group breakdown →</a>
+  </aside></div>`;
+}
+
+function headLine(gid, role, isSub){
+  const h = headOf(gid, role);
+  const pool = members().filter(m => isSub ? m.subgroup===gid : m.group===gid);
+  return `<label class="small" style="display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-weight:500">${isSub?'Subgroup head':'Group head'}
+    <select data-head="${gid}" data-role="${role}" ${canWrite?'':'disabled'} style="min-height:36px;padding:4px 8px">
+      <option value="">${h?'— remove head —':'Not set'}</option>${pool.map(m=>`<option value="${m.id}" ${h&&h.id===m.id?'selected':''}>${esc(m.name)}</option>`).join('')}
+    </select></label>`;
+}
+
+function vGroups(){
+  const m = meeting(), pres = presentMap(m), tops = groupsTop(), all = members();
+  const none = all.filter(x=>!x.group || !S.groups[x.group]);
+  const pct = (a,b) => b ? Math.round(a/b*100) : 0;
+  const card = (g) => {
+    const mem = all.filter(x=>x.group===g.id), p = mem.filter(x=>pres[x.id]).length;
+    const subs = subsOf(g.id);
+    const loose = mem.filter(x=>!x.subgroup || !S.groups[x.subgroup]);
+    const confirmDel = ui.confirm === 'g'+g.id;
+    return `<article class="grp"><div class="big wide num">${m?p:mem.length}<small>${m?`of ${mem.length} · ${pct(p,mem.length)}%`:'people'}</small></div><div>
+      <div class="row sp"><h2 class="gname wide">${esc(g.name)}</h2>
+        <div class="row">${canWrite?`<button class="ghost small" data-act="renameG" data-id="${g.id}">Rename</button>
+        <button class="ghost small ${confirmDel?'red':''}" data-act="delG" data-id="${g.id}" ${mem.length||subs.length?'disabled title="Move its people and subgroups out first"':''}>${confirmDel?'Confirm delete':'Delete'}</button>`:''}</div></div>
+      ${m?`<div class="bar"><i style="width:${pct(p,mem.length)}%"></i></div>`:''}
+      ${headLine(g.id,'group_head',false)}
+      <ul class="subs">${subs.map(s=>{const sm = mem.filter(x=>x.subgroup===s.id), sp = sm.filter(x=>pres[x.id]).length; const cd = ui.confirm==='g'+s.id;
+        return `<li><div><b>${esc(s.name)}</b><div>${headLine(s.id,'subgroup_head',true)}</div></div>
+        <div class="bar"><i style="width:${m?pct(sp,sm.length):0}%"></i></div>
+        <div class="row"><span class="num">${m?`<b>${sp}</b><span class="muted">/${sm.length}</span>`:`${sm.length} people`}</span>${canWrite?`<button class="ghost small" data-act="renameG" data-id="${s.id}">Rename</button><button class="ghost small ${cd?'red':''}" data-act="delG" data-id="${s.id}" ${sm.length?'disabled title="Move its people out first"':''}>${cd?'Confirm':'Delete'}</button>`:''}</div></li>`}).join('')}
+        ${loose.length&&subs.length?`<li><div class="muted">Not in a subgroup</div><div></div><div class="num">${m?`<b>${loose.filter(x=>pres[x.id]).length}</b><span class="muted">/${loose.length}</span>`:loose.length}</div></li>`:''}
+      </ul>
+      ${canWrite?`<form class="row" data-addsub="${g.id}" style="margin-top:12px"><input placeholder="New subgroup name" aria-label="New subgroup name" required style="max-width:260px"><button>Add subgroup</button></form>`:''}
+    </div></article>`;
+  };
+  return `${canWrite?`<form class="row" id="addGroup" style="margin-bottom:24px"><input placeholder="New group name" aria-label="New group name" required style="max-width:320px"><button class="solid">Add group</button></form>`:''}
+    ${!m?`<p class="muted">No meeting is open, so this shows group sizes. Start a meeting to see attendance strength.</p>`:''}
+    ${tops.map(card).join('') || `<div class="empty"><div><h2 class="mt wide" style="font-size:32px">No groups yet</h2><p>Add groups above, or import a spreadsheet with Group and Subgroup columns on the Members tab and they'll be created for you.</p></div>${crowd(4)}</div>`}
+    ${none.length?`<article class="grp"><div class="big wide num">${m?none.filter(x=>pres[x.id]).length:none.length}<small>${m?`of ${none.length}`:'people'}</small></div><div><h2 class="gname wide">Not paired yet</h2><p class="muted">People with no group. Pair them on the Members tab.</p></div></article>`:''}`;
+}
+
+function absentList(){
+  const m = meeting(), pres = presentMap(m);
+  return members().filter(x=>!pres[x.id]);
+}
+function vAbsent(){
+  const m = meeting();
+  if (!m) return `<p class="muted">No meeting is open. Start one on the Check in tab.</p>`;
+  const abs = absentList(), byG = {};
+  for (const p of abs) (byG[S.groups[p.group] ? p.group : '_'] ||= []).push(p);
+  const order = [...groupsTop().map(g=>g.id), '_'].filter(k=>byG[k]);
+  return `<div class="row sp" style="margin-bottom:8px"><div><h2 class="mt wide" style="font-size:clamp(26px,3vw,36px)">${m.endedAt?'Not present at the end of the meeting':'Not registered yet'}</h2>
+    <p class="muted" style="margin:6px 0 0">${abs.length} ${abs.length===1?'person':'people'}${m.endedAt?'':' so far — this becomes the final absent list when you end the meeting'}.</p></div>
+    <div class="row">${downloads?`<button data-act="dlAbsent">Download absent list</button><button data-act="dlAll">Download full report</button>`:''}<button data-act="copyAbsent">Copy list</button><button data-act="print">Print</button>
+    ${canWrite?(m.endedAt?`<button data-act="reopen">Reopen meeting</button>`:`<button class="${ui.confirm==='end'?'red':'solid'}" data-act="end">${ui.confirm==='end'?'Confirm: end meeting':'End meeting'}</button>`):''}</div></div>
+    <div class="abs">${order.map(k=>{const gh = k==='_'?null:headOf(k,'group_head');
+      return `<h3 class="wide">${k==='_'?'Not paired yet':esc(gName(k))} <span class="muted num" style="font-weight:500;font-size:16px">${byG[k].length} absent</span></h3>
+      ${gh?`<div class="muted small">Group head: ${esc(gh.name)}${gh.phone?' · '+esc(gh.phone):''}</div>`:''}
+      <ul>${byG[k].map(p=>`<li><span>${esc(p.name)}${S.groups[p.subgroup]?`<span class="muted small"> · ${esc(gName(p.subgroup))}</span>`:''}</span><span class="muted small num">${esc(p.phone||'')}</span></li>`).join('')}</ul>`}).join('') || `<p style="font-size:20px">Everyone on the register is here.</p>`}</div>`;
+}
+
+function memberForm(){
+  const e = ui.edit; if (!e) return '';
+  const subs = e.group ? subsOf(e.group) : [];
+  return `<form class="form" id="mform"><label>Full name<input id="fName" required value="${esc(e.name)}"></label>
+    <label>Phone<input id="fPhone" inputmode="tel" value="${esc(e.phone)}"></label>
+    <label>Group<select id="fGroup"><option value="">Not paired yet</option>${groupsTop().map(g=>`<option value="${g.id}" ${e.group===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}<option value="__new">+ New group…</option></select></label>
+    <label>Subgroup<select id="fSub" ${e.group?'':'disabled'}><option value="">None</option>${subs.map(s=>`<option value="${s.id}" ${e.subgroup===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}${e.group?'<option value="__new">+ New subgroup…</option>':''}</select></label>
+    <label>Role<select id="fRole">${Object.entries(ROLE).map(([k,l])=>`<option value="${k}" ${e.role===k?'selected':''}>${l}</option>`).join('')}</select></label>
+    <div class="row"><button class="solid">${S.members[e.id]?'Save':'Add person'}</button><button type="button" class="ghost" data-act="cancelEdit">Cancel</button></div></form>`;
+}
+
+function vMembers(){
+  const q = norm(ui.mq), list = members().filter(m => !q || norm([m.name,m.phone,gName(m.group),gName(m.subgroup)].join(' ')).includes(q));
+  const imp = ui.importRows;
+  return `<div class="row sp" style="margin-bottom:16px"><input id="mq" type="search" placeholder="Filter by name, phone or group" aria-label="Filter people" value="${esc(ui.mq)}" style="flex:1 1 260px;max-width:420px">
+    ${canWrite?`<div class="row"><button class="solid" data-act="add">Add person</button><label style="display:inline-block"><span class="sr" style="position:absolute;left:-9999px">Import</span><input type="file" id="file" accept=".csv,.xlsx,.xls,text/csv" style="display:none"><button type="button" data-act="pick">Import spreadsheet</button></label>${downloads?'<button class="ghost" data-act="tpl">Template</button>':''}</div>`:''}</div>
+    ${imp ? `<div class="note"><b>${imp.rows.length} people found in ${esc(imp.file)}</b> — ${imp.dupes} already on the register will be skipped, ${imp.newGroups} new group${imp.newGroups===1?'':'s'} will be created.
+      <div class="muted small">Columns read: ${esc(imp.cols)}</div><div class="row" style="margin-top:10px"><button class="solid" data-act="doImport">Import ${imp.rows.length-imp.dupes}</button><button class="ghost" data-act="cancelImport">Cancel</button></div></div>`:''}
+    ${memberForm()}
+    ${!Object.keys(S.members).length ? `<div class="empty"><div><h2 class="mt wide" style="font-size:32px">The register is empty</h2><p>Import a spreadsheet (.xlsx or .csv) with columns <b>Name, Phone, Group, Subgroup, Role</b>. Role can say “Group head” or “Subgroup head”. Groups and subgroups are created automatically.</p></div>${crowd()}</div>` :
+    `<div class="scroll"><table class="stack"><thead><tr><th>Name</th><th>Phone</th><th>Group</th><th>Subgroup</th><th>Role</th><th></th></tr></thead><tbody>
+    ${list.slice(0,500).map(m=>`<tr><td><b>${esc(m.name)}</b></td><td class="num">${esc(m.phone)}</td><td>${esc(gName(m.group))}</td><td>${esc(gName(m.subgroup))}</td><td>${m.role&&m.role!=='member'?ROLE[m.role]:''}</td>
+      <td>${canWrite?`<div class="row" style="justify-content:flex-end"><button class="ghost small" data-act="edit" data-id="${m.id}">Edit</button><button class="ghost small ${ui.confirm==='m'+m.id?'red':''}" data-act="delM" data-id="${m.id}">${ui.confirm==='m'+m.id?'Confirm':'Remove'}</button></div>`:''}</td></tr>`).join('')}
+    </tbody></table></div>${list.length>500?`<p class="muted">Showing 500 of ${list.length}. Filter to narrow down.</p>`:''}`}`;
+}
+
+function vMeetings(){
+  const ms = Object.entries(S.meetings).filter(([,v])=>v).sort((a,b)=>(b[1].date||'').localeCompare(a[1].date||'') || (b[1].createdAt||0)-(a[1].createdAt||0));
+  const total = Object.keys(S.members).length;
+  return `${canWrite?`<h2 class="h3">Start a new meeting</h2>${startForm()}`:''}
+    <h2 class="h3" style="margin-top:28px">All meetings</h2>
+    <div class="scroll"><table class="stack"><thead><tr><th>Date</th><th>Meeting</th><th>Present</th><th>Status</th><th></th></tr></thead><tbody>
+    ${ms.map(([id,v])=>{const n = Object.keys(presentMap(v)).length; return `<tr><td class="num">${fmtDate(v.date)}</td><td><b>${esc(v.title)}</b></td><td class="num"><b>${n}</b> <span class="muted">/ ${v.endedAt&&v.totalAtEnd?v.totalAtEnd:total}</span></td>
+      <td>${id===S.current?'<b>Open now</b>':v.endedAt?'Ended':'Paused'}</td>
+      <td><div class="row" style="justify-content:flex-end">${id!==S.current&&canWrite?`<button class="small" data-act="open" data-id="${id}">Open</button>`:''}${canWrite?`<button class="ghost small ${ui.confirm==='x'+id?'red':''}" data-act="delMeeting" data-id="${id}">${ui.confirm==='x'+id?'Confirm delete':'Delete'}</button>`:''}</div></td></tr>`}).join('') || '<tr><td colspan="5" class="muted">No meetings yet.</td></tr>'}
+    </tbody></table></div>
+    <h2 class="h3" style="margin-top:36px">Desk access</h2>
+    <form id="changePass" class="row"><input id="np" type="text" minlength="8" required placeholder="New passcode (8+ characters)" aria-label="New passcode" style="max-width:300px" autocomplete="off"><button>Change passcode</button><button type="button" class="ghost" data-act="lock">Lock this device</button></form>
+    <p class="muted small">Changing the passcode locks out every other desk until they enter the new one.</p>`;
+}
+
+/* ---------- actions ---------- */
+let toastT;
+function toast(msg, undo){
+  clearTimeout(toastT);
+  $('#toastHost').innerHTML = `<div class="toast" role="status"><span>${esc(msg)}</span>${undo?'<button id="tUndo">Undo</button>':''}</div>`;
+  if (undo) $('#tUndo').onclick = () => { undo(); $('#toastHost').innerHTML=''; };
+  toastT = setTimeout(()=>$('#toastHost').innerHTML='', 5000);
+}
+function register(id){
+  const m = meeting(); if (!m || m.endedAt || !canWrite) return;
+  const p = S.members[id]; if (!p) return;
+  if (presentMap(m)[id]) { toast(p.name + ' is already registered.'); return; }
+  const at = Date.now(); m.present = {...m.present, [id]: at}; enqueue({t:'checkin', op:'put', data:{meeting:S.current, member:id, at}});
+  ui.flash = id; ui.q = ''; ui.sel = 0;
+  toast(`Registered ${p.name}${gName(p.group)?' — '+gName(p.group):''}`, () => unregister(id));
+}
+const titleCase = s => s.trim().replace(/\s+/g,' ').replace(/(^|[\s\-'])(\p{L})/gu, (a,b,c)=>b+c.toUpperCase());
+const UNPAIRED = 'Not paired yet';
+function unpairedGroup(){
+  let g = Object.values(S.groups).find(x => !x.parent && norm(x.name)===norm(UNPAIRED));
+  if (!g) { g = {id: uid('g'), name: UNPAIRED, parent: ''}; S.groups[g.id] = g; saveGroup(g); }
+  return g.id;
+}
+function quickAdd(name, phone){
+  const m = {id: uid('m'), name: titleCase(name), phone: phone.trim(), group: unpairedGroup(), subgroup: '', role: 'member'};
+  S.members[m.id] = m;
+  saveMember(m); register(m.id); ui.q = ''; ui.sel = 0; render();
+}
+function unregister(id){ const m = meeting(); if (!m) return; m.present = {...m.present, [id]: null}; enqueue({t:'checkin', op:'del', data:{meeting:S.current, member:id}}); render(); }
+
+function csvCell(v){ v = String(v ?? ''); return /[",\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }
+const toCsv = rows => rows.map(r=>r.map(csvCell).join(',')).join('\r\n');
+function saveFile(name, text){
+  const url = URL.createObjectURL(new Blob(['\ufeff' + text], {type:'text/csv;charset=utf-8'}));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+const slug = s => (s||'meeting').replace(/[^\w]+/g,'-').replace(/^-|-$/g,'').toLowerCase();
+
+function startMeeting(title, date){
+  const id = uid('mt');
+  S.meetings[id] = {title, date, createdAt: Date.now(), endedAt:null, present:{}}; saveMeeting(id); setCurrent(id); ui.nmTitle = '';
+  location.hash = 'checkin'; render();
+}
+
+function findOrMakeGroup(name, parent, pending){
+  const n = norm(name); if (!n) return '';
+  const hit = Object.values(S.groups).concat(pending).find(g => !!g && norm(g.name)===n && (g.parent||'')===(parent||''));
+  if (hit) return hit.id;
+  const g = {id: uid('g'), name: name.trim(), parent: parent || ''}; pending.push(g); return g.id;
+}
+
+/* import parsing */
+function parseCsv(text){
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i=0;i<text.length;i++){ const c = text[i];
+    if (q) { if (c==='"' && text[i+1]==='"') { cell+='"'; i++; } else if (c==='"') q=false; else cell+=c; }
+    else if (c==='"') q=true; else if (c===','||c===';'||c==='\t') { row.push(cell); cell=''; }
+    else if (c==='\n'||c==='\r') { if (c==='\r'&&text[i+1]==='\n') i++; row.push(cell); rows.push(row); row=[]; cell=''; }
+    else cell+=c; }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r=>r.some(c=>c.trim()));
+}
+function loadXlsx(){
+  return new Promise((ok, bad) => { if (window.XLSX) return ok(window.XLSX);
+    const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = () => ok(window.XLSX); s.onerror = bad; document.head.appendChild(s); });
+}
+async function readFile(file){
+  let grid;
+  if (/\.xlsx?$/i.test(file.name)) { const X = await loadXlsx(); const wb = X.read(await file.arrayBuffer()); grid = X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:false, defval:''}); }
+  else grid = parseCsv(await file.text());
+  grid = grid.map(r=>r.map(c=>String(c??'').trim())).filter(r=>r.some(Boolean));
+  if (grid.length < 2) throw new Error('empty');
+  const H = grid[0].map(norm), find = (...tests) => H.findIndex(h => tests.some(t => t(h)));
+  const has = w => h => h.includes(w);
+  const iFirst = find(h=>/first ?name|given/.test(h)), iLast = find(h=>/(last|sur) ?name|family/.test(h));
+  const iName = find(h=>h==='name'||h==='full name'||h==='names', h=>h.includes('name') && !/first|last|sur|group/.test(h));
+  const iPhone = find(has('phone'), has('mobile'), has('tel'), has('contact'), has('whatsapp'));
+  const iSub = find(h=>/sub ?-?group|subgroup/.test(h), has('cell'), has('unit'), has('sub'));
+  const iGroup = find(h=>!/sub/.test(h) && /group|department|dept|team|zone|ministry|fellowship/.test(h));
+  const iRole = find(has('role'), has('position'), has('head'), has('leader'), has('title'));
+  if (iName<0 && iFirst<0) throw new Error('noname');
+  const rows = grid.slice(1).map(r => {
+    const name = iName>=0 ? r[iName] : [r[iFirst], iLast>=0?r[iLast]:''].filter(Boolean).join(' ');
+    const role = norm(iRole>=0 ? r[iRole] : '');
+    return {name: name.replace(/\s+/g,' ').trim(), phone: iPhone>=0?r[iPhone]:'', group: iGroup>=0?r[iGroup]:'', subgroup: iSub>=0?r[iSub]:'',
+      role: /sub/.test(role) && /head|leader|lead/.test(role) ? 'subgroup_head' : /head|leader|lead|coordinator/.test(role) ? 'group_head' : 'member'};
+  }).filter(r=>r.name);
+  const key = r => norm(r.name) + '|' + String(r.phone||'').replace(/\D/g,'');
+  const have = new Set(Object.values(S.members).map(key));
+  const seen = new Set(); let dupes = 0;
+  for (const r of rows) { const k = key(r); r.dupe = have.has(k) || seen.has(k); if (r.dupe) dupes++; seen.add(k); }
+  const gNames = new Set(rows.map(r=>norm(r.group)).filter(Boolean));
+  const newGroups = [...gNames].filter(n=>!groupsTop().some(g=>norm(g.name)===n)).length;
+  const cols = [['Name',iName>=0||iFirst>=0],['Phone',iPhone>=0],['Group',iGroup>=0],['Subgroup',iSub>=0],['Role',iRole>=0]].filter(c=>c[1]).map(c=>c[0]).join(', ');
+  return {file:file.name, rows, dupes, newGroups, cols};
+}
+async function doImport(){
+  const imp = ui.importRows; ui.importRows = null; if (!imp) return;
+  const pending = [], byShard = {};
+  for (const r of imp.rows) { if (r.dupe) continue;
+    const g = findOrMakeGroup(r.group, '', pending), s = g ? findOrMakeGroup(r.subgroup, g, pending) : '';
+    const m = {id: uid('m'), name: r.name, phone: r.phone, group: g || unpairedGroup(), subgroup: s, role: r.role};
+    (byShard[shardOf(m.id)] ||= {})[m.id] = m; S.members[m.id] = m; }
+  for (const g of pending) S.groups[g.id] = g;
+  render(); toast('Importing…');
+  try {
+    for (const g of pending) saveGroup(g);
+    for (const mm of Object.values(byShard)) for (const m of Object.values(mm)) saveMember(m);
+    toast(`Imported ${imp.rows.length - imp.dupes} people.`);
+  } catch(e) {}
+}
+
+function setHead(gid, role, memberId){
+  const isSub = role==='subgroup_head';
+  for (const m of members()) {
+    const inScope = isSub ? m.subgroup===gid : m.group===gid;
+    if (inScope && m.role===role && m.id!==memberId) { m.role='member'; saveMember(m); }
+  }
+  if (memberId) { const m = S.members[memberId]; m.role = role; saveMember(m); }
+  render();
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act, id = b.dataset.id;
+  if (a!=='delG' && a!=='delM' && a!=='end' && a!=='delMeeting') ui.confirm = null;
+  const twoStep = key => { if (ui.confirm===key) { ui.confirm=null; return true; } ui.confirm=key; render(); return false; };
+  if (a==='reg') register(id);
+  else if (a==='undo') unregister(id);
+  else if (a==='reopen') { meeting().endedAt = null; saveMeeting(S.current); render(); }
+  else if (a==='end') { if (twoStep('end')) { const m = meeting(); m.endedAt = Date.now(); m.totalAtEnd = Object.keys(S.members).length; saveMeeting(S.current); render(); toast('Meeting ended. The absent list is final.'); } }
+  else if (a==='print') window.print();
+  else if (a==='lock') lock('');
+  else if (a==='copyAbsent') { const t = absentList().map(p=>[p.name, p.phone, gName(p.group), gName(p.subgroup)].filter(Boolean).join(' — ')).join('\n');
+    navigator.clipboard?.writeText(t).then(()=>toast('Absent list copied.'), ()=>toast('Copy was blocked by the browser.')); }
+  else if (a==='dlAbsent') { const m = meeting(); saveFile(`absent-${slug(m.title)}-${m.date}.csv`, toCsv([['Name','Phone','Group','Subgroup','Group head'], ...absentList().map(p=>[p.name,p.phone,gName(p.group),gName(p.subgroup),headOf(p.group,'group_head')?.name||''])])); }
+  else if (a==='dlAll') { const m = meeting(), pres = presentMap(m); saveFile(`attendance-${slug(m.title)}-${m.date}.csv`, toCsv([['Name','Phone','Group','Subgroup','Role','Status','Time registered'], ...members().map(p=>[p.name,p.phone,gName(p.group),gName(p.subgroup),ROLE[p.role]||'Member',pres[p.id]?'Present':'Absent',pres[p.id]?fmtTime(pres[p.id]):''])])); }
+  else if (a==='tpl') saveFile('rollcall-template.csv', toCsv([['Name','Phone','Group','Subgroup','Role'],['Ada Obi','08031234567','Choir','Sopranos','Group head'],['Tunde Bello','08039876543','Choir','Tenors','Subgroup head'],['Ngozi Eze','','Ushering','','Member']]));
+  else if (a==='add' || a==='addFromSearch') { ui.edit = {id: uid('m'), name: a==='addFromSearch'?ui.q:'', phone:'', group:'', subgroup:'', role:'member'}; if (a==='addFromSearch') { e.preventDefault(); location.hash='members'; } render(); $('#fName')?.focus(); }
+  else if (a==='edit') { ui.edit = {...S.members[id]}; render(); scrollTo({top:0, behavior:'smooth'}); $('#fName')?.focus(); }
+  else if (a==='cancelEdit') { ui.edit = null; render(); }
+  else if (a==='delM') { if (twoStep('m'+id)) { delete S.members[id]; dropMember(id); render(); } }
+  else if (a==='pick') $('#file').click();
+  else if (a==='doImport') doImport();
+  else if (a==='cancelImport') { ui.importRows = null; render(); }
+  else if (a==='renameG') { ui.renaming = id; const el = b.closest('div,li'); const g = S.groups[id];
+    const f = document.createElement('form'); f.className='row'; f.innerHTML = `<input value="${esc(g.name)}" aria-label="Group name" required><button class="solid">Save</button>`;
+    (b.closest('li') || b.closest('.row.sp')).replaceWith(f); f.querySelector('input').select();
+    f.onsubmit = ev => { ev.preventDefault(); const v = f.querySelector('input').value.trim(); if (v) { g.name = v; saveGroup(g); } render(); }; }
+  else if (a==='delG') { if (twoStep('g'+id)) { delete S.groups[id]; dropGroup(id); render(); } }
+  else if (a==='open') { S.current = id; setCurrent(id); location.hash='checkin'; render(); }
+  else if (a==='delMeeting') { if (twoStep('x'+id)) { enqueue({t:'meeting', op:'del', data:{id}}); if (S.current===id) setCurrent(null); delete S.meetings[id]; render(); } }
+});
+
+document.addEventListener('input', e => {
+  if (e.target.id==='q') { ui.q = e.target.value; ui.sel = 0; ui.flash = null; const pos = e.target.selectionStart; renderList(); }
+  if (e.target.id==='mq') { ui.mq = e.target.value; ui.mqFocus = true; render(); }
+  if (e.target.id==='nmTitle') ui.nmTitle = e.target.value;
+});
+function renderList(){ const tmp = document.createElement('div'); tmp.innerHTML = vCheckin(); const n = tmp.querySelector('#res'); if (n && $('#res')) $('#res').replaceWith(n); }
+document.addEventListener('keydown', e => {
+  if (e.target.id !== 'q') return;
+  const res = search(ui.q);
+  if (e.key==='ArrowDown') { ui.sel = Math.min(ui.sel+1, res.length-1); renderList(); e.preventDefault(); }
+  else if (e.key==='ArrowUp') { ui.sel = Math.max(ui.sel-1, 0); renderList(); e.preventDefault(); }
+  else if (e.key==='Enter' && res[ui.sel]) { e.preventDefault(); register(res[ui.sel].id); render(); }
+  else if (e.key==='Escape') { ui.q=''; render(); }
+});
+document.addEventListener('change', async e => {
+  const t = e.target;
+  if (t.id==='file' && t.files[0]) { try { ui.importRows = await readFile(t.files[0]); } catch(err){ toast(err.message==='noname' ? 'Could not find a Name column in that file.' : 'Could not read that file.'); } t.value=''; render(); }
+  if (t.dataset.head) setHead(t.dataset.head, t.dataset.role, t.value);
+  if (ui.edit && (t.id==='fGroup' || t.id==='fSub')) {
+    ui.edit.name = $('#fName').value; ui.edit.phone = $('#fPhone').value; ui.edit.role = $('#fRole').value;
+    if (t.value==='__new') { const isSub = t.id==='fSub'; const box = document.createElement('div'); box.className='row'; box.style.gridColumn='1/-1';
+      box.innerHTML = `<input id="newG" placeholder="${isSub?'Subgroup':'Group'} name" aria-label="New ${isSub?'subgroup':'group'} name"><button type="button" class="solid" id="newGok">Create</button>`;
+      t.closest('label').after(box); $('#newG').focus();
+      $('#newGok').onclick = () => { const v = $('#newG').value.trim(); if (!v) return; const g = {id: uid('g'), name: v, parent: isSub ? ui.edit.group : ''}; S.groups[g.id] = g; saveGroup(g);
+        if (isSub) ui.edit.subgroup = g.id; else { ui.edit.group = g.id; ui.edit.subgroup = ''; } render(); };
+      return; }
+    if (t.id==='fGroup') { ui.edit.group = t.value; ui.edit.subgroup = ''; } else ui.edit.subgroup = t.value;
+    render();
+  }
+});
+document.addEventListener('submit', e => {
+  const f = e.target; e.preventDefault();
+  if (f.id==='login') { pass = $('#pc').value.trim(); state.loginMsg = ''; api('/login').then(() => { store.set('pass', pass); ready = false; cursor = 0; S.members = {}; S.groups = {}; S.meetings = {}; S.current = null; render(); pull(); }).catch(err => { pass = ''; state.loginMsg = err.auth ? err.msg : "Can't reach the server. Check the internet connection."; render(); }); }
+  else if (f.id==='changePass') { const v = $('#np').value.trim(); api('/passcode', {method:'POST', body: JSON.stringify({passcode: v})}).then(() => { pass = v; store.set('pass', v); f.reset(); toast('Passcode changed. Other desks will need the new one.'); }).catch(err => toast(err.msg || err.message || 'Could not change the passcode.')); }
+  else if (f.id==='quickAdd')
+ quickAdd(ui.q, $('#qaPhone').value);
+  else if (f.id==='newMeeting') startMeeting($('#nmTitle').value.trim() || 'Meeting', $('#nmDate').value || today());
+  else if (f.id==='addGroup') { const v = f.querySelector('input').value.trim(); if (v) { const g = {id: uid('g'), name: v, parent:''}; S.groups[g.id] = g; saveGroup(g); render(); } }
+  else if (f.dataset.addsub) { const v = f.querySelector('input').value.trim(); if (v) { const g = {id: uid('g'), name: v, parent: f.dataset.addsub}; S.groups[g.id] = g; saveGroup(g); render(); } }
+  else if (f.id==='mform') { const m = {...ui.edit, name: $('#fName').value.trim(), phone: $('#fPhone').value.trim(), role: $('#fRole').value};
+    if (!m.name) return; if (m.group==='__new') m.group=''; if (m.subgroup==='__new') m.subgroup='';
+    const isNew = !S.members[m.id]; S.members[m.id] = m; saveMember(m);
+    if (m.role!=='member') { const gid = m.role==='group_head'?m.group:m.subgroup; if (gid) setHead(gid, m.role, m.id); }
+    ui.edit = isNew ? {id: uid('m'), name:'', phone:'', group:m.group, subgroup:m.subgroup, role:'member'} : null;
+    toast(isNew ? `Added ${m.name}.` : `Saved ${m.name}.`); render(); if (isNew) $('#fName')?.focus(); }
+});
+window.addEventListener('hashchange', () => { ui.confirm = null; ui.mqFocus = false; render(); scrollTo(0,0); });
+
+/* ---------- connect ---------- */
+render();
+pull();
+setInterval(() => { if (document.visibilityState === 'visible') pull(); }, 3000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pull(); });
+window.addEventListener('online', pull);
+}
+</script>
+</body>
+</html>

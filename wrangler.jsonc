@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ccrw",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./public", "run_worker_first": ["/api/*"] },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "ccrw", "database_id": "b0c8f95a-a563-4b16-982c-52e30c8e9b5c" }
+  ],
+  "observability": { "enabled": true }
+}

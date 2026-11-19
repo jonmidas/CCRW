@@ -246,6 +246,20 @@ a.hcard:hover{border-color:var(--ink3)}
 .chk:has(input:checked){border-color:var(--brand);background:var(--brand2);color:var(--brandink)}
 .chk input{accent-color:var(--brand);margin:0}
 
+/* removing people */
+.unit li .rm{flex:none;border:0;background:none;width:24px;height:24px;border-radius:6px;display:grid;place-items:center;color:var(--ink3);cursor:pointer;opacity:0;margin-right:-6px}
+.unit li:hover .rm,.unit li .rm:focus-visible{opacity:1}.unit li .rm:hover{background:var(--nobg);color:var(--no)}.unit li .rm .ico{width:14px;height:14px}
+@media (hover:none){.unit li .rm{opacity:.6}}
+.cb{width:16px;height:16px;accent-color:var(--brand);margin:0;cursor:pointer;vertical-align:middle}
+.tbl tr.picked td{background:var(--brand2)}
+.bulk{position:fixed;left:50%;bottom:calc(20px + var(--safe));transform:translateX(-50%);z-index:45;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 8px 8px 16px;border-radius:12px;background:var(--panel);box-shadow:var(--pop);max-width:calc(100vw - 24px)}
+.bulk select{height:32px;width:auto;font-size:13px}
+body:has(#bulk) .toast{bottom:calc(84px + var(--safe))}
+.mlist2{border:1px solid var(--line);border-radius:var(--r);max-height:240px;overflow:auto}
+.mrow{display:flex;align-items:center;gap:8px;padding:2px 4px 2px 12px;border-top:1px solid var(--line2);font-weight:500}.mrow:first-child{border:0}
+.mrow.gone>span:first-child{text-decoration:line-through;color:var(--ink3)}
+@media (max-width:860px){.bulk{bottom:calc(84px + var(--safe))}body:has(#bulk) .toast{bottom:calc(148px + var(--safe))}}
+
 /* empty */
 .empty{display:grid;justify-items:center;text-align:center;gap:8px;padding:56px 16px}
 .empty svg.art{width:min(280px,70%);height:auto;margin-bottom:6px}
@@ -424,7 +438,7 @@ const saveMeeting = id => { const m = S.meetings[id]; enqueue({t:'meeting', op:'
 
 
 /* ---------- state & derived ---------- */
-const ui = {q:'', sel:0, last:null, dq:'', dtab:'all', dg:'all', dlimit:150, rtab:'summary', rm:'', rf:'all', rg:'all', rq:'', rsort:'group', rexp:new Set(), rexpAll:false, gf:'all', fq:''};
+const ui = {q:'', sel:0, last:null, dq:'', dtab:'all', dg:'all', dlimit:150, rtab:'summary', rm:'', rf:'all', rg:'all', rq:'', rsort:'group', rexp:new Set(), rexpAll:false, sel2:new Set(), gf:'all', fq:''};
 const state = {msg:'', loginMsg:''};
 const UNPAIRED = 'Not paired yet';
 const members = () => Object.values(S.members).sort(byName);
@@ -653,7 +667,7 @@ function vGroup(gid){
       <div class="row sp" style="margin-bottom:12px"><div class="seg" role="group" aria-label="Show">${[['all','Everyone'],['here','Here'],['away','Not here']].map(([k,l]) => `<button data-act="gf" data-v="${k}" aria-pressed="${ui.gf===k}">${l}</button>`).join('')}</div></div>` : '')
     + `<div class="gdetail">${units.map(u => { const uh = u.list.filter(p => pres[p.id]).length, vis = u.list.filter(show).sort((a,b) => (!!pres[b.id] - !!pres[a.id]) || byName(a,b));
       return `<section class="card unit"><div class="ch"><div><h2>${esc(u.label)}</h2><div class="sub">${u.head ? 'Head: ' + esc(u.head.name) : 'No unit head'}</div></div>${m ? `<span class="badge ${uh === u.list.length && uh ? 'ok' : ''} num">${uh}/${u.list.length}</span>` : `<span class="badge num">${u.list.length}</span>`}</div>
-        <ul>${vis.map(p => `<li>${m ? `<span class="st ${pres[p.id]?'ok':''}" title="${pres[p.id]?'Here':'Not here'}"></span>` : ''}<a href="#" data-act="editP" data-id="${p.id}" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</a>${leadsGroups(p).some(x => x.id === gid) ? '<span class="badge brand" style="height:20px">Leader</span>' : ''}${p.role !== 'member' && p.role !== 'group_head' ? `<span class="badge brand" style="height:20px">${ROLE_LABEL[p.role].replace('Assistant unit head','Assistant')}</span>` : ''}<span class="t num">${pres[p.id] ? fmtTime(pres[p.id]) : ''}</span></li>`).join('') || `<li class="faint small">No one ${ui.gf === 'here' ? 'here yet' : 'missing'}</li>`}</ul></section>`; }).join('')}</div>`;
+        <ul>${vis.map(p => `<li>${m ? `<span class="st ${pres[p.id]?'ok':''}" title="${pres[p.id]?'Here':'Not here'}"></span>` : ''}<a href="#" data-act="editP" data-id="${p.id}" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</a>${leadsGroups(p).some(x => x.id === gid) ? '<span class="badge brand" style="height:20px">Leader</span>' : ''}${p.role !== 'member' && p.role !== 'group_head' ? `<span class="badge brand" style="height:20px">${ROLE_LABEL[p.role].replace('Assistant unit head','Assistant')}</span>` : ''}<span class="t num">${pres[p.id] ? fmtTime(pres[p.id]) : ''}</span><button class="rm" data-act="unpair" data-id="${p.id}" title="Remove ${esc(p.name)} from ${esc(g.name)}" aria-label="Remove ${esc(p.name)} from ${esc(g.name)}">${I('x')}</button></li>`).join('') || `<li class="faint small">No one ${ui.gf === 'here' ? 'here yet' : 'missing'}</li>`}</ul></section>`; }).join('')}</div>`;
 }
 
 /* ---------- directory ---------- */
@@ -678,12 +692,20 @@ function dirBody(){
       <td><a href="#" class="person" data-act="editP" data-id="${p.id}"><span class="av">${esc(initials(p.name))}</span><b>${esc(p.name)}</b></a></td><td class="hide-sm num muted">${esc(firstPhone(p))}</td>${m ? `<td class="hide-sm">${pres[p.id] ? '<span class="badge ok">Here</span>' : ''}</td>` : ''}
       <td><div class="pairsel"><select class="input" data-pairg="${p.id}" aria-label="Group for ${esc(p.name)}"><option value="">Group</option>${gopts}</select><select class="input" data-pairu="${p.id}" aria-label="Unit for ${esc(p.name)}" disabled><option value="">Unit</option></select><button class="btn sm" data-act="pair" data-id="${p.id}">Pair</button></div></td></tr>`).join('')}</tbody></table></div>${more(list)}`;
   }
-  return `<div class="tblwrap"><table class="tbl"><thead><tr><th>Person</th><th class="hide-sm">Phone</th><th>Group</th><th class="hide-sm">Role</th>${m ? '<th class="hide-sm">Today</th>' : ''}</tr></thead><tbody>${shown.map(p => `<tr class="click" data-act="editP" data-id="${p.id}">
-    <td><span class="person"><span class="av">${esc(initials(p.name))}</span><b>${esc(p.name)}</b></span></td><td class="hide-sm num muted">${esc(firstPhone(p))}</td><td>${isPaired(p) ? `<span class="small">${esc(gName(p.group))}${S.groups[p.subgroup] ? `<span class="muted">, ${esc(unitShort(p.subgroup))}</span>` : ''}</span>` : `<span class="badge warn">${UNPAIRED}</span>`}</td>
+  const allSel = shown.length && shown.every(p => ui.sel2.has(p.id));
+  return `<div class="tblwrap"><table class="tbl"><thead><tr><th style="width:36px"><input type="checkbox" class="cb" id="selAll" aria-label="Select everyone shown" ${allSel ? 'checked' : ''}></th><th>Person</th><th class="hide-sm">Phone</th><th>Group</th><th class="hide-sm">Role</th>${m ? '<th class="hide-sm">Today</th>' : ''}</tr></thead><tbody>${shown.map(p => `<tr class="click ${ui.sel2.has(p.id) ? 'picked' : ''}" data-act="editP" data-id="${p.id}">
+    <td><input type="checkbox" class="cb" data-pick="${p.id}" aria-label="Select ${esc(p.name)}" ${ui.sel2.has(p.id) ? 'checked' : ''}></td><td><span class="person"><span class="av">${esc(initials(p.name))}</span><b>${esc(p.name)}</b></span></td><td class="hide-sm num muted">${esc(firstPhone(p))}</td><td>${isPaired(p) ? `<span class="small">${esc(gName(p.group))}${S.groups[p.subgroup] ? `<span class="muted">, ${esc(unitShort(p.subgroup))}</span>` : ''}</span>` : `<span class="badge warn">${UNPAIRED}</span>`}</td>
     <td class="hide-sm">${badges(p)}</td>${m ? `<td class="hide-sm">${pres[p.id] ? `<span class="badge ok"><span class="dot"></span>Here</span>` : '<span class="faint small">–</span>'}</td>` : ''}</tr>`).join('')}</tbody></table></div>${more(list)}`;
 }
 const more = list => list.length > ui.dlimit ? `<div style="text-align:center;margin-top:14px"><button class="btn" data-act="more">Show ${Math.min(150, list.length - ui.dlimit)} more of ${list.length}</button></div>` : '';
-const renderDir = () => { const b = $('#dirBody'); if (b) b.innerHTML = dirBody(); };
+const renderDir = () => { const b = $('#dirBody'); if (b) b.innerHTML = dirBody(); renderBulk(); };
+function renderBulk(){
+  let el = $('#bulk'); const n = ui.sel2.size;
+  if (!n || route().n !== 'directory') { el?.remove(); return; }
+  if (!el) { el = document.createElement('div'); el.id = 'bulk'; el.className = 'bulk'; document.body.appendChild(el); }
+  el.innerHTML = `<b class="num">${n} selected</b><select class="input" id="bulkMove" aria-label="Move selected people to a group"><option value="">Move to group…</option>${realGroups().map(g => `<optgroup label="${esc(g.name)}"><option value="${g.id}|">${esc(g.name)}, no unit</option>${subsOf(g.id).map(u => `<option value="${g.id}|${u.id}">${esc(g.name)}, ${esc(unitShort(u.id))}</option>`).join('')}</optgroup>`).join('')}</select>
+    <button class="btn sm" data-act="bulkUnpair">Remove from group</button><button class="btn sm danger" data-act="bulkDelete">Delete</button><button class="btn ghost sm" data-act="bulkClear" aria-label="Clear selection">${I('x')}</button>`;
+}
 
 /* ---------- reports ---------- */
 /* ---------- settings ---------- */
@@ -739,7 +761,7 @@ function personPanel(id){
         <label class="field">Unit<select class="input" name="subgroup" id="pfUnit">${unitOptions(p.group, p.subgroup)}</select></label></div>
       <label class="field">Role in their unit<select class="input" name="role">${Object.entries(ROLE_LABEL).filter(([k]) => k !== 'group_head').map(([k,l]) => `<option value="${k}" ${p.role===k?'selected':''}>${l}</option>`).join('')}</select></label>
       <fieldset class="field" style="border:0;padding:0;margin:0"><legend style="padding:0;margin-bottom:6px">Leads these groups</legend><div class="chkgrid">${realGroups().map(g => `<label class="chk"><input type="checkbox" name="lead" value="${g.id}" ${leadsGroups(p).some(x => x.id === g.id) ? 'checked' : ''}><span>${esc(g.name)}</span></label>`).join('')}</div><span class="hint">A group can have several leaders, and they can be seated in any group.</span></fieldset></div>
-    <div class="df">${isNew ? '' : `<button type="button" class="btn danger l" data-act="delP" data-id="${p.id}">Remove</button>`}<button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary">${isNew ? 'Add person' : 'Save changes'}</button></div></form>`);
+    <div class="df">${isNew ? '' : `<span class="l row" style="gap:6px">${isPaired(p) ? `<button type="button" class="btn" data-act="unpair" data-id="${p.id}">Remove from group</button>` : ''}<button type="button" class="btn ghost danger" data-act="delP" data-id="${p.id}">Delete</button></span>`}${isNew ? '<button type="button" class="btn" data-act="close">Cancel</button>' : ''}<button class="btn primary">${isNew ? 'Add person' : 'Save'}</button></div></form>`);
 }
 const leaderChip = p => `<span class="chip2"><input type="hidden" name="leader" value="${p.id}">${esc(p.name)}<button type="button" data-act="rmLeader" aria-label="Remove ${esc(p.name)}">${I('x')}</button></span>`;
 function groupPanel(gid){
@@ -750,6 +772,8 @@ function groupPanel(gid){
       <label class="field">Group name<input class="input" name="name" required value="${g ? esc(g.name) : ''}" autocomplete="off"></label>
       ${g ? `<div class="field">Group leaders<div class="chips" id="leadChips">${leadersOf(g.id).map(p => leaderChip(p)).join('')}</div>
         <select class="input" id="addLeader" aria-label="Add a group leader"><option value="">Add a leader…</option><optgroup label="In ${esc(g.name)}">${list.filter(p => !leadersOf(g.id).includes(p)).map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</optgroup><optgroup label="From other groups">${members().filter(p => p.group !== g.id).map(p => `<option value="${p.id}">${esc(p.name)}, ${esc(where(p))}</option>`).join('')}</optgroup></select></div>
+      <div class="field">Members<span class="hint">Removing someone moves them to “${UNPAIRED}”. They stay on the register.</span>
+        <div class="mlist2">${list.map(p => `<div class="mrow"><span class="grow" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)} <span class="faint small">${S.groups[p.subgroup] ? esc(unitShort(p.subgroup)) : ''}</span></span><input type="checkbox" name="keep" value="${p.id}" checked class="hide"><button type="button" class="btn ghost sm" data-act="toggleKeep" aria-label="Remove ${esc(p.name)} from this group">${I('x')}</button></div>`).join('') || '<span class="hint">No one in this group yet.</span>'}</div></div>
       <div class="field">Units and their heads
         ${units.map(u => `<div class="two" style="gap:8px"><input class="input" name="u_${u.id}" value="${esc(u.name)}" aria-label="Unit name" required><select class="input" name="h_${u.id}" aria-label="Head of ${esc(u.name)}">${opts(list.filter(p => p.subgroup === u.id), headOf(u.id,'subgroup_head')?.id)}</select></div>`).join('') || '<span class="hint">No units yet.</span>'}
         <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px"><input class="input" name="newUnit" placeholder="New unit, e.g. ${esc(g.name)}${'ABCDEF'[units.length] || ''}" aria-label="New unit name"><button type="button" class="btn" data-act="addUnit">Add unit</button></div></div>` : ''}</div>
@@ -777,6 +801,10 @@ function unpairedGroup(){
   let g = Object.values(S.groups).find(x => !x.parent && isUnp(x));
   if (!g) { g = {id: uid('g'), name: UNPAIRED, parent: ''}; S.groups[g.id] = g; saveGroup(g); }
   return g.id;
+}
+function unpair(ids){
+  const up = unpairedGroup();
+  for (const id of ids) { const m = S.members[id]; if (!m) continue; m.group = up; m.subgroup = ''; if (m.role !== 'member') m.role = 'member'; saveMember(m); }
 }
 function quickAdd(name, phone){
   if (!name.trim()) return;
@@ -1107,6 +1135,7 @@ function doImport(imp){
 document.addEventListener('click', e => {
   if (e.target.matches('[data-scrim]')) { closePanel(); return; }
   const go = e.target.closest('tr[data-go]'); if (go && !e.target.closest('button,a,select')) { location.hash = go.dataset.go; return; }
+  if (e.target.matches('.cb')) return;
   const b = e.target.closest('[data-act]'); if (!b) return;
   const a = b.dataset.act, id = b.dataset.id;
   if (b.tagName === 'A' && a !== 'needsPairing' && a !== 'toAbsent') e.preventDefault();
@@ -1146,8 +1175,13 @@ document.addEventListener('click', e => {
     if (!g) { toast('Choose a group first.'); $(`[data-pairg="${id}"]`).focus(); return; }
     const before = {...p}; p.group = g; p.subgroup = u; saveMember(p); renderDir(); render(true);
     toast(`${p.name} paired with ${where(p)}.`, () => { S.members[id] = before; saveMember(before); renderDir(); render(true); }); }
-  else if (a === 'delP') { const p = S.members[id]; confirmPanel(`Remove ${esc(p.name)}?`, 'They come off the register and every attendance list.', 'Remove person', () => { delete S.members[id]; dropMember(id); render(); toast(`${p.name} removed.`); }); }
+  else if (a === 'delP') { const p = S.members[id]; confirmPanel(`Delete ${esc(p.name)}?`, 'They come off the register and every attendance list. To keep them but take them out of their group, use Remove from group instead.', 'Delete person', () => { delete S.members[id]; dropMember(id); ui.sel2.delete(id); render(); toast(`${p.name} deleted.`); }); }
   else if (a === 'rmLeader') b.closest('.chip2').remove();
+  else if (a === 'toggleKeep') { const row = b.closest('.mrow'), cb = row.querySelector('input'); cb.checked = !cb.checked; row.classList.toggle('gone', !cb.checked); b.setAttribute('aria-label', (cb.checked ? 'Remove ' : 'Keep ') + row.querySelector('span').textContent.trim()); b.innerHTML = cb.checked ? I('x') : '<span class="small">Undo</span>'; }
+  else if (a === 'unpair') { const p = S.members[id], before = {...p}, gname = gName(p.group); unpair([id]); if ($('.drawer')) closePanel(); render(); toast(`${p.name} removed from ${gname}.`, () => { S.members[id] = before; saveMember(before); render(); }); }
+  else if (a === 'bulkClear') { ui.sel2.clear(); renderDir(); }
+  else if (a === 'bulkUnpair') { const ids = [...ui.sel2].filter(x => S.members[x] && isPaired(S.members[x])), before = ids.map(x => ({...S.members[x]})); unpair(ids); ui.sel2.clear(); render(); renderBulk(); toast(`${ids.length} ${ids.length === 1 ? 'person' : 'people'} moved to ${UNPAIRED}.`, () => { before.forEach(m => { S.members[m.id] = m; saveMember(m); }); render(); }); }
+  else if (a === 'bulkDelete') { const ids = [...ui.sel2].filter(x => S.members[x]); confirmPanel(`Delete ${ids.length} ${ids.length === 1 ? 'person' : 'people'}?`, `They come off the register and every attendance list. ${ids.slice(0,4).map(x => esc(S.members[x].name)).join(', ')}${ids.length > 4 ? ` and ${ids.length - 4} more` : ''}.`, `Delete ${ids.length}`, () => { ids.forEach(x => { delete S.members[x]; dropMember(x); }); ui.sel2.clear(); render(); renderBulk(); toast(`${ids.length} deleted.`); }); }
   else if (a === 'addG') groupPanel();
   else if (a === 'editG') groupPanel(id);
   else if (a === 'addUnit') { const f = $('#gform'), v = f.newUnit.value.trim(); if (!v) return; const u = {id: uid('g'), name: v, parent: f.dataset.id}; S.groups[u.id] = u; saveGroup(u); groupPanel(f.dataset.id); }
@@ -1174,6 +1208,9 @@ document.addEventListener('input', e => {
 document.addEventListener('change', async e => {
   const t = e.target;
   if (t.id === 'file' && t.files[0]) { try { importPanel(await readFile(t.files[0])); } catch(err) { toast(err.message === 'noname' ? "That file doesn't have a Name column." : "That file couldn't be read."); } t.value = ''; }
+  else if (t.dataset.pick) { t.checked ? ui.sel2.add(t.dataset.pick) : ui.sel2.delete(t.dataset.pick); t.closest('tr').classList.toggle('picked', t.checked); renderBulk(); }
+  else if (t.id === 'selAll') { document.querySelectorAll('[data-pick]').forEach(c => { c.checked = t.checked; t.checked ? ui.sel2.add(c.dataset.pick) : ui.sel2.delete(c.dataset.pick); c.closest('tr').classList.toggle('picked', t.checked); }); renderBulk(); }
+  else if (t.id === 'bulkMove' && t.value) { const [g, u] = t.value.split('|'), ids = [...ui.sel2].filter(x => S.members[x]); ids.forEach(x => { const m = S.members[x]; m.group = g; m.subgroup = u; if (m.role !== 'member' && m.role !== 'group_head') m.role = 'member'; saveMember(m); }); ui.sel2.clear(); render(); renderBulk(); toast(`${ids.length} moved to ${gName(g)}${u ? ', ' + unitShort(u) : ''}.`); }
   else if (t.id === 'dg') { ui.dg = t.value; ui.dlimit = 150; renderDir(); }
   else if (t.id === 'rm') { ui.rm = t.value; render(); }
   else if (t.id === 'rg') { ui.rg = t.value; render(); }
@@ -1205,12 +1242,13 @@ document.addEventListener('submit', e => {
     const g = S.groups[gid], L = [...new Set([...f.querySelectorAll('input[name=leader]')].map(x => x.value))];
     for (const m of Object.values(S.members)) if (m.role === 'group_head' && m.group === gid) { m.role = 'member'; saveMember(m); }
     g.name = name; g.leaders = L; saveGroup(g);
+    const gone = [...f.querySelectorAll('input[name=keep]')].filter(x => !x.checked).map(x => x.value); if (gone.length) unpair(gone);
     for (const u of subsOf(gid)) { const nn = f['u_' + u.id].value.trim(); if (nn && nn !== u.name) { u.name = nn; saveGroup(u); } setHead(u.id, 'subgroup_head', f['h_' + u.id].value); }
     const nu = f.newUnit.value.trim(); if (nu) { const u = {id: uid('g'), name: nu, parent: gid}; S.groups[u.id] = u; saveGroup(u); }
     closePanel(); render(); toast('Changes saved.');
   }
 });
-window.addEventListener('hashchange', () => { closePanel(); render(); document.querySelector('.panel')?.scrollIntoView?.({block:'start'}); scrollTo(0, 0); });
+window.addEventListener('hashchange', () => { closePanel(); if (route().n !== 'directory') { ui.sel2.clear(); $('#bulk')?.remove(); } render(); document.querySelector('.panel')?.scrollIntoView?.({block:'start'}); scrollTo(0, 0); });
 
 /* ---------- start ---------- */
 render();

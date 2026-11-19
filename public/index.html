@@ -4,264 +4,298 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#ffffff">
 <title>CCRW Rollcall</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..800&display=swap" rel="stylesheet">
 <style>
-/* VOICE: a calm, fast registration desk — plain words, big targets, nothing in the way.
-   IDEA: the church's printed attendance register, made live: a strict left edge, big tallies, ticks.
-   PICTURE: the working check-in list itself; the arrival card that says where to send someone.
-   COLOUR and TYPE: white, ink, one signal red for "not here" and focus; Archivo wide 800 for numbers.
-   LAYOUT: sidebar on laptops, bottom tabs on phones; one job per screen, edits in sheets. */
+/* VOICE: calm, competent SaaS; plain sentence-case words.
+   IDEA: a live strength board for 13 groups x 4 units, the one bold element.
+   PICTURE: the board on Overview, the arrival banner on Check-in.
+   COLOUR and TYPE: cool grey canvas, white work surface, cobalt #2F45FF; green/red/amber only for here/absent/unpaired. Geist throughout.
+   LAYOUT: sidebar + inset work panel on laptops, top bar + bottom bar on phones. */
 :root{color-scheme:light dark;
-  --bg:light-dark(#fff,#0d0d0e);--ink:light-dark(#0c0c0d,#f2f2f3);--ink2:light-dark(#55575c,#a3a5ab);
-  --line:light-dark(#e6e7ea,#26272b);--soft:light-dark(#f4f5f7,#17181b);--soft2:light-dark(#eceef1,#1f2024);
-  --red:#e4002b;--redsoft:light-dark(#fdecef,#2a1015);--ok:light-dark(#0c0c0d,#f2f2f3);
-  --r:14px;--side:244px;--bar:64px;--safe-b:env(safe-area-inset-bottom,0px)}
+  --canvas:light-dark(#f4f4f6,#0b0b0d);--panel:light-dark(#ffffff,#131316);--raised:light-dark(#ffffff,#18181c);
+  --ink:light-dark(#18181b,#f4f4f5);--ink2:light-dark(#62626b,#a1a1aa);--ink3:light-dark(#8e8e98,#71717a);
+  --line:light-dark(#e6e6ea,#26262b);--line2:light-dark(#efeff2,#1e1e22);--hover:light-dark(#f4f4f6,#1d1d21);
+  --brand:#2f45ff;--brand2:light-dark(#eef0ff,#1b1f45);--brandink:light-dark(#2433d6,#9aa6ff);
+  --ok:light-dark(#12a150,#3ccf7a);--okbg:light-dark(#e7f7ee,#0f2a1a);--no:light-dark(#e5484d,#ff6b70);--nobg:light-dark(#fdecec,#33161a);
+  --warn:light-dark(#b76e00,#f5b546);--warnbg:light-dark(#fff4dc,#30230b);
+  --r:10px;--rl:14px;--side:252px;--safe:env(safe-area-inset-bottom,0px);
+  --sh:0 1px 2px rgb(16 16 24 / 6%),0 0 0 1px var(--line);--pop:0 12px 40px rgb(16 16 24 / 18%),0 0 0 1px var(--line)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Archivo,system-ui,sans-serif;overflow-x:clip}
+body{margin:0;background:var(--canvas);color:var(--ink);font:15px/1.5 Geist,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:clip}
 button,input,select{font:inherit;color:inherit}
-a{color:inherit}
-.wide{font-stretch:115%;font-weight:800;letter-spacing:-.015em}
+a{color:inherit;text-decoration:none}
+h1,h2,h3{margin:0;letter-spacing:-.02em;line-height:1.2}
 .num{font-variant-numeric:tabular-nums;white-space:nowrap}
-.muted{color:var(--ink2)}.small{font-size:14px}.tiny{font-size:13px}
+.muted{color:var(--ink2)}.faint{color:var(--ink3)}.small{font-size:13px}.xs{font-size:12px}
 .hide{display:none!important}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.sp{justify-content:space-between}
+.grow{flex:1}
 
 /* controls */
-input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
-input,select{font-size:16px;min-height:46px;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);width:100%}
-input:focus-visible,select:focus-visible{outline:none;border-color:var(--ink)}
-button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--red);outline-offset:2px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:10px 18px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);font-weight:650;cursor:pointer;white-space:nowrap;text-decoration:none}
-.btn:hover{border-color:var(--ink2)}
-.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--bg)}
-.btn.primary:hover{opacity:.9}
-.btn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,transparent)}
-.btn.ghost{border-color:transparent;background:transparent;padding-inline:12px}
-.btn.ghost:hover{background:var(--soft)}
-.btn.sm{min-height:38px;padding:6px 12px;font-size:14px}
-.btn:disabled{opacity:.4;cursor:default}
-label.f{display:grid;gap:6px;font-size:14px;font-weight:600}
-.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.row.sp{justify-content:space-between}
-.stack{display:grid;gap:14px}
-.seg{display:inline-flex;background:var(--soft);border-radius:12px;padding:4px;gap:2px;max-width:100%;overflow-x:auto}
-.seg button{border:0;background:none;min-height:40px;padding:6px 16px;border-radius:9px;font-weight:650;color:var(--ink2);cursor:pointer;white-space:nowrap}
-.seg button[aria-pressed=true]{background:var(--bg);color:var(--ink);box-shadow:0 1px 3px #0002}
-.chip{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:650;background:var(--soft2);white-space:nowrap}
-.chip.head{background:var(--ink);color:var(--bg)}
-.chip.unp{background:var(--redsoft);color:var(--red)}
-.card{border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg)}
-.bar{height:8px;background:light-dark(#dfe1e6,#2c2d32);border-radius:99px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--ink);border-radius:99px}
-.empty{display:grid;justify-items:center;text-align:center;gap:6px;padding:40px 16px}
-.empty svg{width:min(320px,80%);height:auto;margin-bottom:8px}
-.empty h2{margin:0;font-size:24px}
-.note{background:var(--soft);border-radius:12px;padding:14px 16px}
-.note.warn{background:var(--redsoft)}
+input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
+.input,select.input{height:38px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--raised);font-size:14px;width:100%;transition:border-color .12s,box-shadow .12s}
+.input:focus,select.input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 18%,transparent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--raised);font-size:14px;font-weight:550;cursor:pointer;white-space:nowrap;box-shadow:0 1px 1px rgb(16 16 24 / 4%)}
+.btn:hover{background:var(--hover)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 1px 2px rgb(47 69 255 / 30%),inset 0 1px 0 rgb(255 255 255 / 15%)}
+.btn.primary:hover{background:#2639e6}
+.btn.danger{color:var(--no)}
+.btn.ghost{border-color:transparent;background:none;box-shadow:none}.btn.ghost:hover{background:var(--hover)}
+.btn.sm{height:32px;padding:0 10px;font-size:13px}
+.btn.lg{height:44px;padding:0 18px;font-size:15px}
+.btn:disabled{opacity:.45;cursor:default}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.ico{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.badge{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:550;background:var(--hover);color:var(--ink2);white-space:nowrap}
+.badge.ok{background:var(--okbg);color:var(--ok)}.badge.no{background:var(--nobg);color:var(--no)}.badge.warn{background:var(--warnbg);color:var(--warn)}.badge.brand{background:var(--brand2);color:var(--brandink)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.livedot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent);flex:none}
+.livedot.off{background:var(--ink3);box-shadow:none}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 0 16px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:10px 12px;margin-bottom:-1px;font-size:14px;font-weight:550;color:var(--ink2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;gap:7px;align-items:center}
+.tabs button[aria-selected=true]{color:var(--ink);border-color:var(--ink)}
+.tabs .count{font-size:12px;color:var(--ink3);font-weight:500}
+.bar{height:6px;border-radius:99px;background:var(--line2);overflow:hidden}.bar i{display:block;height:100%;border-radius:99px;background:var(--brand)}
+.av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:650;background:var(--hover);color:var(--ink2);flex:none}
+.av.ok{background:var(--okbg);color:var(--ok)}
 
-/* shell */
-.app{min-height:100dvh;display:grid;grid-template-columns:var(--side) minmax(0,1fr)}
-.side{position:sticky;top:0;height:100dvh;border-right:1.5px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:6px}
-.brand{display:flex;align-items:center;gap:10px;padding:0 10px 18px}
-.brand .mark{width:42px;height:42px;border-radius:11px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:900;font-size:11px;letter-spacing:.04em;font-stretch:90%;flex:none}
-.brand b{display:block;line-height:1.1}
-.nav a{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;border-radius:10px;text-decoration:none;font-weight:650;color:var(--ink2)}
-.nav a:hover{background:var(--soft);color:var(--ink)}
-.nav a[aria-current]{background:var(--soft2);color:var(--ink)}
-.nav a[aria-current]::before{content:"";width:4px;height:20px;border-radius:4px;background:var(--red);margin:-2px 0 -2px -6px}
-.nav a span:first-child{flex:1}
-.nav .n{font-size:13px;color:var(--ink2);font-weight:600}
-.side .foot{margin-top:auto;display:grid;gap:8px;padding:0 6px}
-.sync{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
-.dot{width:8px;height:8px;border-radius:50%;background:#1a9e55;flex:none}
-.dot.off{background:var(--red)}.dot.busy{background:#d89a00}
-main{min-width:0;display:flex;flex-direction:column}
-.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1.5px solid var(--line);display:flex;align-items:center;gap:16px;padding:12px clamp(16px,3vw,36px);min-height:72px}
-.meet{display:flex;align-items:center;gap:12px;border:0;background:none;padding:6px 10px 6px 6px;margin-left:-6px;border-radius:12px;cursor:pointer;text-align:left;min-width:0}
-.meet:hover{background:var(--soft)}
-.meet .t{font-weight:750;font-size:17px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.meet .s{font-size:13px;color:var(--ink2);display:flex;align-items:center;gap:6px}
-.meet .caret{width:10px;height:10px;border-right:2px solid var(--ink2);border-bottom:2px solid var(--ink2);transform:rotate(45deg) translateY(-3px);flex:none}
-.live{display:inline-flex;align-items:center;gap:6px}
-.live i{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 2s infinite}
-.live.ended i{background:var(--ink2);animation:none}
-@keyframes pulse{50%{opacity:.35}}
-.count{margin-left:auto;text-align:right;line-height:1.05}
-.count b{font-size:30px;display:block}
-.count span{font-size:13px;color:var(--ink2)}
-.content{padding:clamp(18px,3vw,36px);padding-bottom:calc(clamp(18px,3vw,36px) + 20px);width:100%;max-width:1180px}
-.h1{font-size:clamp(26px,3vw,34px);line-height:1.1;margin:0}
-.lead{margin:6px 0 0;color:var(--ink2)}
-.tabs{display:none}
+/* app frame */
+.app{display:grid;grid-template-columns:var(--side) minmax(0,1fr);min-height:100dvh}
+.side{position:sticky;top:0;height:100dvh;display:flex;flex-direction:column;gap:4px;padding:14px 12px}
+.ws{display:flex;align-items:center;gap:10px;padding:6px 8px 14px}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;letter-spacing:-.04em;box-shadow:inset 0 1px 0 rgb(255 255 255 / 20%)}
+.ws b{font-size:14px;display:block;line-height:1.2}.ws span{font-size:12px;color:var(--ink2)}
+.mswitch{display:flex;align-items:center;gap:10px;width:100%;padding:10px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel);cursor:pointer;text-align:left;box-shadow:0 1px 2px rgb(16 16 24 / 4%);margin-bottom:14px}
+.mswitch:hover{border-color:var(--ink3)}
+.mswitch .t{font-weight:600;font-size:13.5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mswitch .s{font-size:12px;color:var(--ink2)}
+.nav{display:grid;gap:1px}
+.nav .lbl{font-size:12px;color:var(--ink3);padding:14px 10px 6px;font-weight:500}
+.nav a{display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:8px;font-size:14px;font-weight:500;color:var(--ink2)}
+.nav a:hover{background:var(--hover);color:var(--ink)}
+.nav a[aria-current]{background:var(--panel);color:var(--ink);box-shadow:var(--sh)}
+.nav a .n{margin-left:auto;font-size:12px;color:var(--ink3)}
+.nav a .n.warn{color:var(--warn);font-weight:600}
+.side .foot{margin-top:auto;display:grid;gap:2px}
+.sync{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);padding:6px 10px}
+.sync .dot{color:var(--ok)}.sync.off .dot{color:var(--no)}.sync.busy .dot{color:var(--warn)}
+.main{padding:8px 8px 8px 0;min-width:0}
+.panel{background:var(--panel);border-radius:var(--rl);box-shadow:var(--sh);min-height:calc(100dvh - 16px);display:flex;flex-direction:column}
+.head{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--line);min-height:62px;position:sticky;top:8px;background:var(--panel);border-radius:var(--rl) var(--rl) 0 0;z-index:5}
+.crumbs{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;min-width:0}
+.crumbs a{color:var(--ink2);font-weight:500}.crumbs a:hover{color:var(--ink)}
+.crumbs .sep{color:var(--ink3)}
+.head .acts{margin-left:auto;display:flex;gap:8px;align-items:center}
+.kbd{font-size:11px;border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--ink3);font-weight:500}
+.page{padding:28px 24px 48px;width:100%;max-width:1240px;margin:0 auto}
+.ptitle{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:22px}
+.ptitle h1{font-size:24px;font-weight:650}
+.ptitle p{margin:4px 0 0;color:var(--ink2);font-size:14px}
+.mob{display:none}
+
+/* cards & sections */
+.card{background:var(--raised);border:1px solid var(--line);border-radius:var(--rl)}
+.card>.ch{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line2)}
+.card>.ch h2{font-size:14px;font-weight:600}
+.card>.cb{padding:16px}
+.grid2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--rl);background:var(--raised);margin-bottom:16px}
+.stat{padding:16px 18px;border-left:1px solid var(--line2)}.stat:first-child{border:0}
+.stat .l{font-size:13px;color:var(--ink2);display:flex;align-items:center;gap:6px}
+.stat .v{font-size:28px;font-weight:650;letter-spacing:-.03em;margin-top:6px;line-height:1.1}
+.stat .v small{font-size:14px;color:var(--ink3);font-weight:500;letter-spacing:0;margin-left:4px}
+.stat .d{font-size:12px;color:var(--ink3);margin-top:4px}
+.grid2>.card{display:flex;flex-direction:column}.grid2>.card>.cb{flex:1;display:flex;flex-direction:column}
+.chart{flex:1;min-height:200px;display:flex;align-items:flex-end;gap:4px;padding-top:8px}
+.chart .c{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%}
+.chart .c .b{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}.chart .c i{display:block;width:100%;max-width:28px;border-radius:5px 5px 2px 2px;background:var(--brand);min-height:2px}
+.chart .c.zero i{background:var(--line)}
+.chart .c span{font-size:11px;color:var(--ink3);white-space:nowrap}
+.chart .c b{font-size:11px;font-weight:600;color:var(--ink2)}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line2)}
+.feed li:last-child{border:0}
+.feed .w{min-width:0;flex:1}.feed .w b{display:block;font-size:14px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.feed .w span{font-size:12px;color:var(--ink2)}
+
+/* strength board — the one bold element */
+.board{display:grid;grid-template-columns:minmax(120px,1.1fr) repeat(var(--cols,4),minmax(0,1fr)) minmax(150px,1.4fr);gap:6px;align-items:stretch}
+.board .hd{font-size:12px;color:var(--ink3);padding:0 4px 2px;font-weight:500}
+.board .gname{display:flex;flex-direction:column;justify-content:center;padding:0 4px;border-radius:8px;cursor:pointer}
+.board .gname b{font-size:14px;font-weight:600}.board .gname span{font-size:12px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.board .gname:hover b{color:var(--brandink)}
+.cell{height:46px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink);background:color-mix(in srgb,var(--brand) calc(var(--p) * .9%),var(--line2));cursor:pointer;border:0;transition:transform .12s}
+.cell.hi{color:#fff}
+.cell:hover{transform:translateY(-1px);box-shadow:0 0 0 2px var(--brand)}
+.cell.none{background:none;border:1px dashed var(--line);color:var(--ink3);cursor:default}.cell.none:hover{transform:none;box-shadow:none}
+.cell small{font-weight:500;opacity:.7;margin-left:1px}
+.gtot{display:flex;align-items:center;gap:10px;padding:0 6px}
+.gtot .bar{flex:1}
+.gtot span{font-size:13px;font-weight:600;min-width:56px;text-align:right}
+.legend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink3)}
+.legend i{width:80px;height:8px;border-radius:99px;background:linear-gradient(90deg,var(--line2),var(--brand))}
 
 /* check-in */
-.ci{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:28px;align-items:start}
-.searchbox{position:relative}
-.searchbox input{min-height:64px;font-size:21px;padding:12px 56px 12px 52px;border:2px solid var(--ink);border-radius:14px}
-.searchbox svg{position:absolute;left:18px;top:50%;transform:translateY(-50%);width:20px;height:20px;pointer-events:none}
-.searchbox .clr{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:0;background:none;border-radius:10px;cursor:pointer;font-size:22px;color:var(--ink2)}
-.searchbox .clr:hover{background:var(--soft)}
-.hint{font-size:13px;color:var(--ink2);margin:8px 4px 0}
-.results{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
-.res{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 12px 12px 14px;border:1.5px solid var(--line);border-radius:var(--r);cursor:pointer}
-.res:hover{border-color:var(--ink2)}
-.res.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
-.res.here{background:var(--soft)}
-.av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;background:var(--soft2)}
-.res.here .av{background:var(--ink);color:var(--bg)}
-.res.here .av::after{content:"";width:15px;height:8px;border-left:3px solid var(--bg);border-bottom:3px solid var(--bg);transform:rotate(-45deg) translate(1px,-2px)}
-.res .nm{font-size:18px;font-weight:700;line-height:1.25}
-.res .meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:3px;font-size:14px;color:var(--ink2)}
-.res .act{display:flex;align-items:center;gap:6px}
-.res .when{font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px}
-.tick{width:20px;height:20px;border-radius:50%;background:var(--ink);display:inline-grid;place-items:center}
-.tick::after{content:"";width:9px;height:5px;border-left:2.5px solid var(--bg);border-bottom:2.5px solid var(--bg);transform:rotate(-45deg) translate(1px,-1px)}
-.arrived{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center;padding:18px;border-radius:var(--r);background:var(--ink);color:var(--bg);margin-top:14px}
-.arrived .big{width:52px;height:52px;border-radius:50%;background:var(--bg);display:grid;place-items:center}
-.arrived .big::after{content:"";width:20px;height:11px;border-left:4px solid var(--ink);border-bottom:4px solid var(--ink);transform:rotate(-45deg) translate(2px,-2px)}
-.arrived .nm{font-size:20px;font-weight:800;line-height:1.2}
-.arrived .go{font-size:15px;opacity:.85;margin-top:2px}
-.arrived .go b{opacity:1}
-.arrived .btn{border-color:color-mix(in srgb,var(--bg) 40%,transparent);background:transparent;color:var(--bg)}
-@media (prefers-reduced-motion:no-preference){.arrived{animation:pop .35s ease-out}@keyframes pop{from{transform:translateY(-6px);opacity:0}}}
-.add{border:1.5px dashed var(--ink2);border-radius:var(--r);padding:16px;margin-top:14px}
-.add h3{margin:0 0 4px;font-size:17px}
-.add form{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto;gap:10px;margin-top:12px}
-.panel{position:sticky;top:96px}
-.panel h3{font-size:15px;margin:0 0 10px}
-.feed{list-style:none;margin:0;padding:0}
-.feed li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
-.feed .who{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.feed .where{font-size:13px;color:var(--ink2);grid-column:1}
-.feed .t{grid-row:1/span 2;grid-column:2;text-align:right;font-size:13px;color:var(--ink2)}
-.stat{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:end;margin-bottom:22px}
-.stat b{font-size:48px;line-height:.9}
+.desk{max-width:760px;margin:0 auto}
+.sbox{position:relative}
+.sbox .ico{position:absolute;left:18px;top:50%;transform:translateY(-50%);width:20px;height:20px;color:var(--ink3)}
+.sbox input{width:100%;height:60px;border-radius:var(--rl);border:1px solid var(--line);background:var(--raised);padding:0 96px 0 50px;font-size:18px;box-shadow:0 1px 2px rgb(16 16 24 / 5%),0 4px 16px rgb(16 16 24 / 4%)}
+.sbox input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 15%,transparent)}
+.sbox .right{position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;gap:6px;align-items:center}
+.sbox .clr{border:0;background:var(--hover);width:28px;height:28px;border-radius:7px;cursor:pointer;color:var(--ink2);font-size:16px}
+.deskmeta{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--ink2);margin:10px 2px 0}
+.list{list-style:none;margin:16px 0 0;padding:0;border:1px solid var(--line);border-radius:var(--rl);background:var(--raised);overflow:hidden}
+.list>li{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line2)}
+.list>li:first-child{border-top:0}
+.list>li.sel{background:var(--brand2)}
+.list>li:not(.sel) .btn.primary{background:var(--raised);color:var(--brandink);border-color:color-mix(in srgb,var(--brand) 35%,var(--line));box-shadow:none}.list>li:not(.sel) .btn.primary:hover{background:var(--brand2)}
+.list .who{flex:1;min-width:0}
+.list .who b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list .who .m{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:3px;font-size:13px;color:var(--ink2)}
+.list .done{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ok);font-weight:600}
+.banner{display:flex;align-items:center;gap:14px;margin-top:16px;padding:14px 16px;border-radius:var(--rl);background:var(--okbg);border:1px solid color-mix(in srgb,var(--ok) 30%,transparent)}
+.banner .chk{width:36px;height:36px;border-radius:50%;background:var(--ok);display:grid;place-items:center;color:#fff;flex:none}
+.banner .chk .ico{width:20px;height:20px;stroke-width:2.4}
+.banner b{display:block;font-size:15px}
+.banner .go{font-size:14px;color:var(--ink2)}
+.banner .go strong{color:var(--ink);font-weight:600}
+@media (prefers-reduced-motion:no-preference){.banner{animation:in .25s ease-out}@keyframes in{from{opacity:0;transform:translateY(-4px)}}}
+.addnew{margin-top:16px;padding:16px;border-radius:var(--rl);border:1px dashed var(--line);background:var(--raised)}
+.addnew form{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:8px;margin-top:12px}
+.tip{display:flex;align-items:center;gap:8px;justify-content:center;color:var(--ink3);font-size:13px;margin-top:28px}
 
-/* live */
-.kpis{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(2,minmax(0,1fr));gap:12px;margin:22px 0}
-.kpi{padding:18px;border-radius:var(--r);background:var(--soft)}
-.kpi.main{background:var(--ink);color:var(--bg)}
-.kpi b{display:block;font-size:clamp(30px,4vw,44px);line-height:1}
-.kpi span{font-size:14px;opacity:.8}
-.kpi .bar{margin-top:14px;background:color-mix(in srgb,var(--bg) 25%,transparent)}
-.kpi .bar i{background:var(--bg)}
-.glist{display:grid;gap:10px;margin-top:18px}
-.g{border:1.5px solid var(--line);border-radius:var(--r);overflow:hidden}
-.gh{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 92px 22px;gap:16px;align-items:center;padding:14px 16px;cursor:pointer;width:100%;border:0;background:none;text-align:left}
-.gh:hover{background:var(--soft)}
-.gh>span,.uh>span{display:block;min-width:0}.gh .hd,.uh .hd{display:block;margin-top:1px}
-.gh .gn{font-weight:800;font-size:18px}
-.gh .hd,.uh .hd{font-size:13px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gh .ct{text-align:right;font-size:15px}
-.gh .ct b{font-size:20px}
-.chev{width:9px;height:9px;border-right:2px solid var(--ink2);border-bottom:2px solid var(--ink2);transform:rotate(-45deg);justify-self:center;transition:transform .15s}
-.open>.gh .chev,.open>.uh .chev{transform:rotate(45deg)}
-.units{border-top:1.5px solid var(--line);background:var(--soft)}
-.u{border-bottom:1px solid var(--line)}.u:last-child{border:0}
-.uh{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 92px 22px;gap:16px;align-items:center;padding:12px 16px 12px 28px;width:100%;border:0;background:none;text-align:left;cursor:pointer}
-.uh:hover{background:var(--soft2)}
-.uh .gn{font-weight:700}
-.ppl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 24px;padding:4px 16px 16px 28px}
-.ppl h4{margin:10px 0 4px;font-size:13px;color:var(--ink2);font-weight:650}
-.ppl ul{list-style:none;margin:0;padding:0}
-.ppl li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
-.ppl .no{color:var(--red)}
-.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:18px}
-.abs h3{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:26px 0 2px;font-size:20px;padding-top:12px;border-top:2px solid var(--ink)}
-.abs .lead2{font-size:14px;color:var(--ink2);margin-bottom:6px}
-.abs ul{list-style:none;padding:0;margin:0;columns:2 300px;column-gap:32px}
-.abs li{break-inside:avoid;display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+/* tables */
+.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
+.tbl th{text-align:left;font-weight:500;font-size:12.5px;color:var(--ink2);padding:10px 14px;border-bottom:1px solid var(--line);background:var(--canvas);white-space:nowrap;position:sticky;top:70px;z-index:1}
+.tbl th:first-child{border-top-left-radius:var(--rl)}.tbl th:last-child{border-top-right-radius:var(--rl)}
+.tbl td{padding:10px 14px;border-bottom:1px solid var(--line2);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr.click{cursor:pointer}.tbl tbody tr.click:hover td{background:var(--hover)}
+.tbl .r{text-align:right}
+.tblwrap{border:1px solid var(--line);border-radius:var(--rl);background:var(--raised)}
+.person{display:flex;align-items:center;gap:10px}.person b{font-weight:550}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.toolbar .input{width:auto}
+.sinput{position:relative;flex:1 1 240px;max-width:360px}.sinput .ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink3)}.sinput .input{padding-left:34px;width:100%}
+.pairsel{display:flex;gap:6px}.pairsel select{height:32px;font-size:13px;padding:0 8px;width:auto;min-width:110px}
 
-/* people */
-.filters{display:grid;grid-template-columns:minmax(0,1fr) 220px auto;gap:10px;margin-top:18px}
-.plist{list-style:none;margin:14px 0 0;padding:0;border:1.5px solid var(--line);border-radius:var(--r);overflow:hidden}
-.plist li{display:grid;grid-template-columns:40px minmax(0,1.4fr) minmax(0,1fr) auto;gap:14px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer}
-.plist li:last-child{border:0}
-.plist li:hover{background:var(--soft)}
-.plist .av{width:40px;height:40px;font-size:14px}
-.plist .nm{font-weight:650}
-.gcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:18px}
-.gc{padding:16px;display:grid;gap:10px;align-content:start}
-.gc h3{margin:0;font-size:19px}
-.gc ul{list-style:none;margin:0;padding:0;font-size:14px}
-.gc li{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+/* groups */
+.gdetail{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.unit .ch .sub{font-size:12px;color:var(--ink2);font-weight:400;margin-top:2px}
+.unit ul{list-style:none;margin:0;padding:6px 0}
+.unit li{display:flex;align-items:center;gap:10px;padding:7px 16px;font-size:14px}
+.unit li .t{margin-left:auto;font-size:12px;color:var(--ink3)}
+.st{width:8px;height:8px;border-radius:50%;flex:none;background:var(--no)}.st.ok{background:var(--ok)}
+.seg{display:inline-flex;padding:3px;border-radius:9px;background:var(--hover);gap:2px}
+.seg button{border:0;background:none;height:28px;padding:0 10px;border-radius:7px;font-size:13px;font-weight:550;color:var(--ink2);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--raised);color:var(--ink);box-shadow:var(--sh)}
 
-/* meetings */
-.mgrid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;margin-top:22px;align-items:start}
-.mcard{padding:20px}
-.mcard h2{margin:0 0 4px;font-size:22px}
-.mtable{width:100%;border-collapse:collapse;font-size:15px}
-.mtable td{padding:12px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
-.mtable tr:last-child td{border:0}
+/* reports */
+.absgroup{margin-top:18px}
+.absgroup h3{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;margin-bottom:8px}
+.absgroup .ppl{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0 24px;border-top:1px solid var(--line2)}
+.absgroup .ppl div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line2);font-size:14px}.absgroup .ppl div>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.callout{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:var(--r);background:var(--hover);font-size:14px;color:var(--ink2);margin-bottom:14px}
 
-/* sheet */
-.scrim{position:fixed;inset:0;background:#0007;z-index:30;display:grid;place-items:center;padding:16px}
-.sheet{background:var(--bg);border-radius:18px;width:min(560px,100%);max-height:min(88dvh,820px);overflow:auto;padding:22px;box-shadow:0 20px 60px #0005}
-.sheet h2{margin:0 0 4px;font-size:22px}
-.sheet .x{float:right;width:40px;height:40px;border-radius:10px;border:0;background:var(--soft);cursor:pointer;font-size:20px;margin:-6px -6px 0 0}
-.sheet .foot{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-top:22px}
-.sheet .foot .left{margin-right:auto}
-.mlist{list-style:none;margin:10px 0 0;padding:0}
-.mlist li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
-@media (prefers-reduced-motion:no-preference){.scrim{animation:fade .15s}.sheet{animation:up .2s ease-out}@keyframes fade{from{opacity:0}}@keyframes up{from{transform:translateY(16px);opacity:.6}}}
+/* empty */
+.empty{display:grid;justify-items:center;text-align:center;gap:8px;padding:56px 16px}
+.empty svg.art{width:min(280px,70%);height:auto;margin-bottom:6px}
+.empty h2{font-size:18px;font-weight:650}
+.empty p{margin:0;color:var(--ink2);max-width:420px}
 
-.toast{position:fixed;left:50%;bottom:calc(24px + var(--safe-b));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 12px 12px 18px;border-radius:12px;display:flex;gap:14px;align-items:center;z-index:40;box-shadow:0 10px 30px #0004;max-width:calc(100vw - 24px)}
-.toast button{border:1.5px solid color-mix(in srgb,var(--bg) 40%,transparent);background:none;color:var(--bg);border-radius:8px;min-height:36px;padding:4px 12px;font-weight:650;cursor:pointer}
+/* overlays */
+.scrim{position:fixed;inset:0;background:rgb(10 10 14 / 40%);z-index:50;backdrop-filter:blur(2px)}
+.drawer{position:fixed;top:8px;right:8px;bottom:8px;width:min(440px,calc(100vw - 16px));background:var(--panel);border-radius:var(--rl);box-shadow:var(--pop);z-index:51;display:flex;flex-direction:column}
+.drawer.center{top:50%;left:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);width:min(480px,calc(100vw - 24px));max-height:calc(100dvh - 24px)}
+.drawer .dh{display:flex;align-items:flex-start;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line2)}
+.drawer .dh h2{font-size:17px;font-weight:650}
+.drawer .dh p{margin:3px 0 0;font-size:13px;color:var(--ink2)}
+.drawer .dh .x{margin-left:auto}
+.drawer .db{padding:20px;overflow:auto;flex:1;display:grid;gap:16px;align-content:start}
+.drawer .df{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--line2);justify-content:flex-end}
+.drawer .df .l{margin-right:auto}
+.field{display:grid;gap:6px;font-size:13px;font-weight:550}
+.field .hint{font-weight:400;color:var(--ink3);font-size:12px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.mlist{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--r)}
+.mlist li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--line2);font-size:14px}.mlist li:first-child{border:0}
+@media (prefers-reduced-motion:no-preference){.drawer:not(.center){animation:slide .2s ease-out}.drawer.center{animation:pop .15s ease-out}@keyframes slide{from{transform:translateX(16px);opacity:.5}}@keyframes pop{from{opacity:0;transform:translate(-50%,-48%)}}}
+.toast{position:fixed;bottom:calc(20px + var(--safe));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:10px 10px 10px 16px;background:var(--ink);color:var(--panel);border-radius:10px;font-size:14px;z-index:60;box-shadow:var(--pop);max-width:calc(100vw - 24px)}
+.toast button{border:0;background:rgb(255 255 255 / 15%);color:inherit;height:28px;padding:0 10px;border-radius:6px;font-weight:600;cursor:pointer}
 
 /* login */
-.login{min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:40px;padding:clamp(24px,6vw,80px);max-width:1200px;margin:auto}
-.login form{display:grid;gap:14px;max-width:420px}
-.login svg{width:100%;height:auto}
+.login{min-height:100dvh;display:grid;place-items:center;padding:24px}
+.login .card{width:min(400px,100%);padding:28px;box-shadow:var(--pop);border:0}
+.login h1{font-size:20px;font-weight:650;margin:18px 0 4px}
+.login form{display:grid;gap:12px;margin-top:20px}
 
-@media (max-width:1100px){.ci{grid-template-columns:minmax(0,1fr)}.panel{position:static}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi.main{grid-column:1/-1}.mgrid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1100px){.grid2{grid-template-columns:minmax(0,1fr)}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat:nth-child(3){border-left:0}.stat:nth-child(n+3){border-top:1px solid var(--line2)}}
 @media (max-width:860px){
   .app{grid-template-columns:minmax(0,1fr)}
   .side{display:none}
-  .tabs{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bg);border-top:1.5px solid var(--line);padding-bottom:var(--safe-b)}
-  .tabs a{display:grid;justify-items:center;gap:2px;padding:9px 4px 10px;text-decoration:none;font-size:12.5px;font-weight:650;color:var(--ink2);position:relative}
-  .tabs a b{font-size:15px;color:inherit}
-  .tabs a[aria-current]{color:var(--ink)}
-  .tabs a[aria-current]::before{content:"";position:absolute;top:-1.5px;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--red)}
-  .content{padding-bottom:calc(96px + var(--safe-b))}
-  .toast{bottom:calc(84px + var(--safe-b))}
-  .top{min-height:64px;padding-block:8px}
-  .count b{font-size:24px}
-  .scrim{place-items:end stretch;padding:0}
-  .sheet{border-radius:20px 20px 0 0;width:100%;max-height:92dvh;padding-bottom:calc(22px + var(--safe-b))}
-  .login{grid-template-columns:minmax(0,1fr)}.login svg{order:-1;max-width:340px}
+  .main{padding:0}
+  .panel{border-radius:0;box-shadow:none;min-height:100dvh;padding-bottom:calc(70px + var(--safe))}
+  .head{top:0;border-radius:0;padding:10px 16px;min-height:56px}
+  .desk-only{display:none!important}
+  .mob{display:flex}
+  .page{padding:20px 16px 32px}
+  .bnav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(5,1fr);background:var(--panel);border-top:1px solid var(--line);padding:6px 4px calc(6px + var(--safe))}
+  .bnav a,.bnav button{display:grid;justify-items:center;gap:3px;font-size:11px;font-weight:550;color:var(--ink3);padding:4px 0;border:0;background:none;cursor:pointer}
+  .bnav .ico{width:20px;height:20px}
+  .bnav [aria-current]{color:var(--ink)}
+  .bnav .primary{color:#fff}.bnav .primary span:first-child{width:46px;height:34px;border-radius:12px;background:var(--brand);display:grid;place-items:center;box-shadow:0 2px 8px rgb(47 69 255 / 35%)}
+  .bnav .primary span:last-child{color:var(--ink)}
+  .tbl th{top:56px}
+  .toast{bottom:calc(84px + var(--safe))}
+  .drawer,.drawer.center{top:auto;left:0;right:0;bottom:0;transform:none;width:100%;max-height:92dvh;border-radius:18px 18px 0 0}
+  .drawer .df{padding-bottom:calc(14px + var(--safe))}
+  @media (prefers-reduced-motion:no-preference){.drawer,.drawer.center{animation:up .22s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
 }
-@media (max-width:600px){
-  .searchbox input{min-height:58px;font-size:19px}
-  .res{grid-template-columns:minmax(0,1fr) auto;padding:12px}
-  .res .av{display:none}
-  .res .nm{font-size:17px}
-  .add form{grid-template-columns:minmax(0,1fr)}
-  .arrived{grid-template-columns:auto minmax(0,1fr)}.arrived .btn{grid-column:1/-1}
-  .gh,.uh{grid-template-columns:minmax(0,1fr) 84px 18px}.gh .hdw,.uh .hdw{display:none}
-  .gh .hd2{display:block}
-  .ppl{grid-template-columns:minmax(0,1fr)}
-  .filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.filters .btn{grid-column:1/-1}
-  .plist li{grid-template-columns:minmax(0,1fr) auto}.plist .av,.plist .gcol{display:none}
-  .kpi b{font-size:30px}
-  .meet .t{font-size:16px;max-width:52vw}
+@media (max-width:640px){
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat{padding:12px 14px}.stat .v{font-size:22px}
+  .board{grid-template-columns:minmax(74px,1fr) repeat(var(--cols,4),minmax(0,1fr));gap:4px}.board .gname span{display:none}.board .gtot,.board .tot-h{display:none}
+  .cell{height:40px;font-size:12px}.cell small{display:none}
+  .addnew form{grid-template-columns:minmax(0,1fr)}
+  .sbox input{height:54px;font-size:17px}
+  .hide-sm{display:none}
+  .tbl td,.tbl th{padding:10px}
+  .two{grid-template-columns:minmax(0,1fr)}
+  .pairsel{flex-wrap:wrap}
 }
-.gh .hd2,.uh .hd2{display:none}
-@media (max-width:600px){.gh .hd2,.uh .hd2{display:block}}
-@media print{.side,.tabs,.top,.toolbar,.toast,.seg,.btn{display:none!important}.app{display:block}.content{padding:0}.abs ul{columns:2}body{font-size:12px}}
+@media print{.side,.head,.bnav,.toast,.toolbar,.tabs,.btn{display:none!important}.app{display:block}.main{padding:0}.panel{box-shadow:none}body{background:#fff}}
 </style>
 </head>
 <body>
 <div id="root"></div>
-<div id="sheetHost"></div>
+<div id="overlay"></div>
 <div id="toastHost" aria-live="polite"></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-  <g id="person"><ellipse cx="0" cy="96" rx="30" ry="6" fill="currentColor" opacity=".12"/><path d="M-26 92 C-26 52 -16 40 0 40 C16 40 26 52 26 92 Z"/><circle cx="0" cy="22" r="15"/><path d="M-9 14 A12 12 0 0 1 12 12" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3"/></g>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-desk" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+  <symbol id="i-groups" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></symbol>
+  <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.8c1.6.8 2.6 2.5 3 5.2"/></symbol>
+  <symbol id="i-report" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 17v-3M12 17v-6M15 17v-2"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m10 7 5 5-5 5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7" rx="1"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V5a1 1 0 0 1 1-1h11"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <g id="person"><ellipse cx="0" cy="96" rx="30" ry="6" fill="currentColor" opacity=".1"/><path d="M-26 92 C-26 52 -16 40 0 40 C16 40 26 52 26 92 Z"/><circle cx="0" cy="22" r="15"/></g>
 </defs></svg>
 <script>
 {
@@ -271,8 +305,10 @@ const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowe
 const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const fmtTime = t => new Date(t).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
 const fmtDate = d => d ? new Date(d + 'T12:00').toLocaleDateString([], {weekday:'short', day:'numeric', month:'short', year:'numeric'}) : '';
+const fmtShort = d => d ? new Date(d + 'T12:00').toLocaleDateString([], {day:'numeric', month:'short'}) : '';
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
 const byName = (a,b) => a.name.localeCompare(b.name, undefined, {numeric:true, sensitivity:'base'});
+const I = (n, cls='') => `<svg class="ico ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 let canWrite = true, ready = false, downloads = true;
 const S = {members:{}, groups:{}, meetings:{}, current:null};
 const store = {get(k,d){ try { const v = localStorage.getItem('ccrw.'+k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }, set(k,v){ try { localStorage.setItem('ccrw.'+k, JSON.stringify(v)); } catch(e){} }};
@@ -294,8 +330,8 @@ async function api(path, opts = {}){
 function setOnline(v){ online = v; syncBadge(); }
 function syncBadge(){
   const st = !online ? 'off' : queue.length ? 'busy' : '';
-  const txt = !online ? `Offline${queue.length?` · ${queue.length} waiting`:''}` : queue.length ? 'Saving…' : 'All changes saved';
-  document.querySelectorAll('.syncslot').forEach(el => { el.innerHTML = `<span class="dot ${st}"></span><span>${txt}</span>`; el.title = txt; });
+  const txt = !online ? `Offline${queue.length?`, ${queue.length} waiting`:''}` : queue.length ? 'Saving…' : 'All changes saved';
+  document.querySelectorAll('.syncslot').forEach(el => { el.className = 'sync syncslot ' + st; el.innerHTML = `<span class="dot"></span><span>${txt}</span>`; });
 }
 function enqueue(op){ queue.push(op); persist(); syncBadge(); flush(); }
 let flushing = false;
@@ -326,7 +362,7 @@ function lock(msg){ pass = ''; store.set('pass', ''); store.set('cache', null); 
 let pendingRender = false;
 function softRender(){
   const a = document.activeElement;
-  if (a && /INPUT|SELECT|TEXTAREA/.test(a.tagName) && a.id !== 'q' && a.id !== 'pq') { pendingRender = true; render(true); return; }
+  if (a && /INPUT|SELECT|TEXTAREA/.test(a.tagName) && a.id !== 'q' && a.id !== 'dq' && a.id !== 'fq') { pendingRender = true; render(true); return; }
   render();
 }
 document.addEventListener('focusout', () => setTimeout(() => { const a = document.activeElement; if (pendingRender && !(a && /INPUT|SELECT|TEXTAREA/.test(a.tagName))) { pendingRender = false; render(); } }, 250));
@@ -339,298 +375,359 @@ const setCurrent = id => { S.current = id; enqueue({t:'current', op:'put', data:
 const saveMeeting = id => { const m = S.meetings[id]; enqueue({t:'meeting', op:'put', data:{id, title:m.title, date:m.date, createdAt:m.createdAt, endedAt:m.endedAt||null, totalAtEnd:m.totalAtEnd||null}}); };
 
 
-/* ---------- derived ---------- */
-const ui = {q:'', sel:0, last:null, pq:'', pf:'all', plimit:120, peopleTab:'people', liveTab:'groups', absG:'all', openG:new Set(), openU:new Set()};
+/* ---------- state & derived ---------- */
+const ui = {q:'', sel:0, last:null, dq:'', dtab:'all', dg:'all', dlimit:150, rtab:'absent', absG:'all', gf:'all', fq:''};
 const state = {msg:'', loginMsg:''};
+const UNPAIRED = 'Not paired yet';
 const members = () => Object.values(S.members).sort(byName);
-const isUnp = g => norm(g.name) === norm(UNPAIRED);
+const isUnp = g => !!g && norm(g.name) === norm(UNPAIRED);
 const groupsTop = () => Object.values(S.groups).filter(g => !g.parent).sort((a,b) => (isUnp(a)-isUnp(b)) || byName(a,b));
+const realGroups = () => groupsTop().filter(g => !isUnp(g));
 const subsOf = gid => Object.values(S.groups).filter(g => g.parent === gid).sort(byName);
 const gName = id => S.groups[id]?.name || '';
 const meeting = () => S.meetings[S.current] || null;
 const presentMap = m => { const out = {}; if (m) for (const [k,v] of Object.entries(m.present||{})) if (v && S.members[k]) out[k] = v; return out; };
-const inGroup = (gid) => members().filter(m => m.group === gid);
+const inGroup = gid => members().filter(m => m.group === gid);
 const headOf = (gid, role) => Object.values(S.members).find(m => m.role === role && (role === 'group_head' ? m.group === gid : m.subgroup === gid));
-const where = p => S.groups[p.group] ? (isUnp(S.groups[p.group]) ? UNPAIRED : [gName(p.group), S.groups[p.subgroup] ? unitLabel(p.subgroup) : ''].filter(Boolean).join(' · ')) : UNPAIRED;
-// "Group 4B" under "Group 4" reads as "Unit 4B"
+const isPaired = p => S.groups[p.group] && !isUnp(S.groups[p.group]);
 const unitLabel = id => { const u = S.groups[id]; if (!u) return ''; const g = S.groups[u.parent]; return g && /^group\s/i.test(u.name) && u.name.startsWith(g.name) && u.name.length > g.name.length ? 'Unit ' + u.name.replace(/^group\s*/i, '') : u.name; };
-const initials = n => (n.replace(/^(pst|pastor|rev|reverend|apst|apstl|apostle|ap|evang|evangelist|mrs|mr|dr|prof|hon|sis|bro|elder|eld|min|minister|deac|barr|prophet)\.?\s+/i,'').match(/\p{L}/gu) || ['?']).slice(0,1).concat((n.split(/\s+/).slice(-1)[0].match(/\p{L}/u)||[''])).join('').toUpperCase().slice(0,2);
+const unitShort = id => unitLabel(id).replace(/^Unit /, '');
+const where = p => isPaired(p) ? [gName(p.group), S.groups[p.subgroup] ? unitLabel(p.subgroup) : ''].filter(Boolean).join(', ') : UNPAIRED;
+const initials = n => { const w = n.replace(/^(pst|pastor|rev|reverend|apst|apstl|apost|apostle|ap|evang|evangelist|mrs|mr|dr|prof|hon|sis|bro|elder|eld|min|minister|deac|barr|prophet|past)\.?\s+/i,'').split(/[\s,]+/).filter(Boolean); return ((w[0]||'?')[0] + (w.length > 1 ? w[w.length-1][0] : '')).toUpperCase(); };
 const pct = (a,b) => b ? Math.round(a/b*100) : 0;
-const pctTxt = (a,b) => a && pct(a,b) === 0 ? '<1' : String(pct(a,b));
+const pctTxt = (a,b) => a && pct(a,b) === 0 ? '<1%' : pct(a,b) + '%';
 const ROLE_LABEL = {group_head:'Group head', subgroup_head:'Unit head', assistant_head:'Assistant unit head', member:'Member'};
-const roleChip = r => r && r !== 'member' ? `<span class="chip head">${ROLE_LABEL[r]}</span>` : '';
+const roleBadge = r => r && r !== 'member' ? `<span class="badge brand">${ROLE_LABEL[r]}</span>` : '';
+const whereBadge = p => isPaired(p) ? `<span class="badge">${esc(where(p))}</span>` : `<span class="badge warn">${UNPAIRED}</span>`;
 const isPhoneQ = q => /^\+?[\d\s-]{6,}$/.test(q.trim());
 const titleCase = s => s.trim().replace(/\s+/g,' ').replace(/(^|[\s\-'])(\p{L})/gu, (a,b,c) => b + c.toUpperCase());
-const UNPAIRED = 'Not paired yet';
+const firstPhone = p => (p.phone||'').split(',')[0].trim();
 
-function search(q){
+function search(q, limit=30){
   const toks = norm(q).split(/\s+/).filter(Boolean); if (!toks.length) return [];
   const digits = q.replace(/\D/g,'');
   const out = [];
   for (const m of Object.values(S.members)) {
     const n = norm(m.name), words = n.split(/[\s\-',.()]+/);
     let ok = toks.every(t => words.some(w => w.startsWith(t)) || n.includes(t));
-    if (!ok && digits.length >= 4) ok = (m.phone||'').replace(/\D/g,'').includes(digits.replace(/^0/, '')) ;
+    if (!ok && digits.length >= 4) ok = (m.phone||'').replace(/\D/g,'').includes(digits.replace(/^0/, ''));
     if (ok) out.push([words.some(w => w.startsWith(toks[0])) ? 0 : 1, m]);
   }
-  return out.sort((a,b) => a[0]-b[0] || byName(a[1], b[1])).slice(0, 30).map(x => x[1]);
+  return out.sort((a,b) => a[0]-b[0] || byName(a[1], b[1])).slice(0, limit).map(x => x[1]);
 }
+const crowd = (n=5) => `<svg class="art" viewBox="-40 0 ${n*70+10} 110" role="img" aria-label="People arriving">${Array.from({length:n},(_,i)=>`<g transform="translate(${i*70+(i%2?0:6)},${i%2?6:0}) scale(${i%2?.92:1})" fill="${i===2?'var(--brand)':'var(--line)'}"><use href="#person"/></g>`).join('')}</svg>`;
 
-/* ---------- pictures ---------- */
-const crowd = (n=5) => `<svg viewBox="-40 0 ${n*70+10} 110" role="img" aria-label="People arriving">${Array.from({length:n},(_,i)=>`<g transform="translate(${i*70+(i%2?0:6)},${i%2?6:0}) scale(${i%2?.92:1})" fill="${i===2?'var(--red)':'currentColor'}" style="color:var(--ink)"><use href="#person"/></g>`).join('')}</svg>`;
-const searchIcon = `<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="6" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M13 13l5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`;
-
-/* ---------- shell ---------- */
-const TABS = [['checkin','Check in'],['live','Live'],['people','People'],['meetings','Meetings']];
-function route(){ const h = location.hash.slice(1); return TABS.some(t => t[0] === h) ? h : 'checkin'; }
+/* ---------- routing & shell ---------- */
+const NAV = [['overview','Overview','home'],['checkin','Check-in','desk'],['groups','Groups','groups'],['directory','Directory','people'],['reports','Reports','report']];
+function route(){ const [n, id] = location.hash.slice(1).split('/'); return {n: [...NAV.map(x=>x[0]), 'settings'].includes(n) ? n : 'checkin', id: id ? decodeURIComponent(id) : ''}; }
 
 function render(headerOnly){
   const root = $('#root');
   if (!pass) { root.innerHTML = vLogin(); $('#pc')?.focus(); return; }
-  if (!$('.app')) {
-    root.innerHTML = `<div class="app">
-      <aside class="side"><div class="brand"><div class="mark">CCRW</div><div><b>Rollcall</b><span class="tiny muted">Attendance register</span></div></div>
-        <nav class="nav" id="nav" aria-label="Sections"></nav>
-        <div class="foot"><div class="sync syncslot"></div><button class="btn ghost sm" data-act="lock" style="justify-content:flex-start;padding-inline:0">Lock this device</button></div></aside>
-      <main><header class="top" id="top"></header><div class="content" id="view"></div></main>
-      <nav class="tabs" id="tabs" aria-label="Sections"></nav></div>`;
-  }
-  const r = route(), m = meeting(), pres = presentMap(m), n = Object.keys(pres).length, total = Object.keys(S.members).length;
-  const counts = {live: m ? `${n}` : '', people: total || '', meetings: Object.values(S.meetings).filter(Boolean).length || ''};
-  $('#nav').innerHTML = TABS.map(([k,l]) => `<a href="#${k}" ${k===r?'aria-current="page"':''}><span>${l}</span><span class="n num">${counts[k]||''}</span></a>`).join('');
-  $('#tabs').innerHTML = TABS.map(([k,l]) => `<a href="#${k}" ${k===r?'aria-current="page"':''}><b>${l}</b></a>`).join('');
-  $('#top').innerHTML = `<button class="meet" data-act="meetingMenu" aria-haspopup="dialog">
-      <div><div class="t">${m ? esc(m.title) : 'No meeting running'}</div>
-      <div class="s">${m ? `<span class="live ${m.endedAt?'ended':''}"><i></i>${m.endedAt?'Ended':'Live'}</span><span>· ${fmtDate(m.date)}</span>` : '<span>Tap to start one</span>'}</div></div><span class="caret"></span></button>
-    ${m ? `<div class="count"><b class="wide num">${n}</b><span class="num">of ${total} here</span></div>` : ''}`;
+  if (!$('.app')) root.innerHTML = `<div class="app">
+    <aside class="side"><div class="ws"><div class="logo">CC</div><div><b>CCRW 2026</b><span>Rollcall</span></div></div>
+      <button class="mswitch" data-act="meetingMenu" id="mswitch" aria-haspopup="dialog"></button>
+      <nav class="nav" id="nav" aria-label="Main"></nav>
+      <div class="foot"><nav class="nav" id="nav2" aria-label="Settings"></nav><div class="sync syncslot"></div></div></aside>
+    <div class="main"><div class="panel"><header class="head" id="head"></header><div id="view"></div></div></div>
+    <nav class="bnav mob" id="bnav" aria-label="Main"></nav></div>`;
+  const r = route(), m = meeting(), pres = presentMap(m), here = Object.keys(pres).length, total = Object.keys(S.members).length;
+  const unpN = members().filter(p => !isPaired(p)).length;
+  $('#mswitch').innerHTML = m ? `<span class="livedot ${m.endedAt?'off':''}"></span><span class="grow" style="min-width:0"><span class="t" style="display:block">${esc(m.title)}</span><span class="s">${m.endedAt ? 'Ended' : 'Live'}, ${fmtShort(m.date)}</span></span>${I('chev')}`
+    : `<span class="livedot off"></span><span class="grow"><span class="t" style="display:block">No meeting open</span><span class="s">Start one</span></span>${I('chev')}`;
+  const count = {checkin: m && !m.endedAt ? `<span class="n num">${here}</span>` : '', directory: unpN ? `<span class="n warn num" title="${unpN} need pairing">${unpN}</span>` : ''};
+  $('#nav').innerHTML = `<div class="lbl">Workspace</div>` + NAV.map(([k,l,i]) => `<a href="#${k}" ${r.n===k?'aria-current="page"':''}>${I(i)}<span>${l}</span>${count[k]||''}</a>`).join('');
+  $('#nav2').innerHTML = `<a href="#settings" ${r.n==='settings'?'aria-current="page"':''}>${I('gear')}<span>Settings</span></a><a href="#" data-act="lock">${I('lock')}<span>Lock this device</span></a>`;
+  const bn = [['overview','Overview','home'],['groups','Groups','groups'],['checkin','Check in','check'],['directory','People','people'],['reports','Reports','report']];
+  $('#bnav').innerHTML = bn.map(([k,l,i]) => `<a href="#${k}" class="${k==='checkin'?'primary':''}" ${r.n===k?'aria-current="page"':''}><span>${I(i)}</span><span>${l}</span></a>`).join('');
+  $('#head').innerHTML = header(r, m, here, total);
   syncBadge();
   if (headerOnly) return;
   const v = $('#view');
-  if (!ready) { v.innerHTML = state.msg ? `<p class="note warn">${esc(state.msg)}</p>` : `<p class="muted">Loading the register…</p>`; return; }
-  if (r === 'checkin' && $('#q') && v.dataset.key === ciKey()) { renderCiBody(); renderPanel(); return; }
-  if (r === 'people' && ui.peopleTab === 'people' && $('#pq') && v.dataset.key === 'people') { renderPlist(); return; }
-  v.innerHTML = (state.msg ? `<p class="note warn">${esc(state.msg)}</p>` : '') + ({checkin:vCheckin, live:vLive, people:vPeople, meetings:vMeetings}[r])();
-  v.dataset.key = r === 'checkin' ? ciKey() : r === 'people' && ui.peopleTab === 'people' ? 'people' : r;
-  if (r === 'checkin') { const q = $('#q'); if (q && !q.disabled) { q.value = ui.q; if (matchMedia('(min-width:861px)').matches || ui.q) q.focus(); } }
-  if (r === 'people' && $('#pq')) $('#pq').value = ui.pq;
+  if (!ready) { v.innerHTML = `<div class="page">${state.msg ? `<div class="callout">${esc(state.msg)}</div>` : '<p class="muted">Loading the register…</p>'}</div>`; return; }
+  const key = r.n + '/' + r.id;
+  if (r.n === 'checkin' && $('#q') && v.dataset.key === key + ciKey()) { renderDesk(); return; }
+  if (r.n === 'directory' && $('#dq') && v.dataset.key === key + ui.dtab) { renderDir(); return; }
+  const views = {overview: vOverview, checkin: vCheckin, groups: r.id ? () => vGroup(r.id) : vGroups, directory: vDirectory, reports: vReports, settings: vSettings};
+  v.innerHTML = `<div class="page">${state.msg ? `<div class="callout">${esc(state.msg)}</div>` : ''}${views[r.n]()}</div>`;
+  v.dataset.key = key + (r.n === 'checkin' ? ciKey() : r.n === 'directory' ? ui.dtab : '');
+  if (r.n === 'checkin') { const q = $('#q'); if (q && !q.disabled) { q.value = ui.q; if (matchMedia('(min-width:861px)').matches || ui.q) q.focus(); } }
+  if (r.n === 'directory' && $('#dq')) $('#dq').value = ui.dq;
 }
-const ciKey = () => { const m = meeting(); return `ci:${S.current}:${m?.endedAt?1:0}:${Object.keys(S.members).length>0}`; };
-
+const ciKey = () => { const m = meeting(); return `:${S.current}:${m?.endedAt?1:0}:${Object.keys(S.members).length>0}`; };
+function header(r, m, here, total){
+  const label = {overview:'Overview', checkin:'Check-in', groups:'Groups', directory:'Directory', reports:'Reports', settings:'Settings'}[r.n];
+  const crumbs = r.n === 'groups' && r.id && S.groups[r.id] ? `<a href="#groups">Groups</a><span class="sep">/</span><span>${esc(S.groups[r.id].name)}</span>` : `<span>${label}</span>`;
+  return `<button class="btn ghost sm mob" data-act="meetingMenu" style="padding:0 6px;margin-left:-6px;max-width:62vw"><span class="livedot ${m && !m.endedAt ? '' : 'off'}"></span><span style="overflow:hidden;text-overflow:ellipsis">${m ? esc(m.title) : 'No meeting'}</span>${I('chev')}</button>
+    <nav class="crumbs desk-only" aria-label="Breadcrumb">${crumbs}</nav>
+    <div class="acts">${m ? `<span class="small muted desk-only num" style="margin-right:6px"><b style="color:var(--ink)">${here}</b> of ${total} here</span>` : ''}
+      <button class="btn sm" data-act="find" aria-label="Find a person">${I('search')}<span class="desk-only">Find a person</span><span class="kbd desk-only">/</span></button>
+      ${r.n !== 'checkin' ? `<a class="btn primary sm desk-only" href="#checkin">${I('check')}Check people in</a>` : ''}</div>`;
+}
 function vLogin(){
-  return `<div class="login"><form id="login"><div class="brand" style="padding:0"><div class="mark">CCRW</div><div><b>Rollcall</b><span class="tiny muted">Attendance register</span></div></div>
-    <h1 class="h1 wide">Enter the desk passcode</h1><p class="lead" style="margin:0">Ask the meeting organiser for it. You only need it once on this device.</p>
-    ${state.loginMsg ? `<p class="note warn" style="margin:0">${esc(state.loginMsg)}</p>` : ''}
-    <input id="pc" type="password" autocomplete="current-password" aria-label="Desk passcode" placeholder="Desk passcode" required>
-    <button class="btn primary">Unlock</button></form>${crowd()}</div>`;
+  return `<div class="login"><div class="card"><div class="logo">CC</div><h1>Sign in to CCRW Rollcall</h1><p class="muted" style="margin:0;font-size:14px">Enter the desk passcode from the meeting organiser. You only need it once on this device.</p>
+    <form id="login">${state.loginMsg ? `<div class="badge no" style="height:auto;padding:8px 10px;font-size:13px">${esc(state.loginMsg)}</div>` : ''}
+    <label class="field">Desk passcode<input class="input" id="pc" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary lg">Unlock</button></form></div></div>`;
+}
+const pageTitle = (h, p, acts='') => `<div class="ptitle"><div><h1>${h}</h1>${p ? `<p>${p}</p>` : ''}</div>${acts ? `<div class="row">${acts}</div>` : ''}</div>`;
+const startForm = (id='newMeeting') => `<form id="${id}" style="display:grid;gap:12px;width:100%;max-width:380px;text-align:left">
+    <label class="field">Meeting name<input class="input" name="title" required value="CCRW Meeting" autocomplete="off"></label>
+    <label class="field">Date<input class="input" name="date" type="date" value="${today()}" required></label>
+    <button class="btn primary">Start meeting</button></form>`;
+const noMeeting = what => `<div class="empty">${crowd()}<h2>No meeting is open</h2><p>${what}</p>${startForm()}</div>`;
+
+/* ---------- overview ---------- */
+function vOverview(){
+  const m = meeting();
+  if (!m) return noMeeting('Start a meeting to see live attendance, arrivals and group strength here.');
+  const pres = presentMap(m), all = members(), n = Object.keys(pres).length, total = all.length;
+  const unpHere = all.filter(p => !isPaired(p) && pres[p.id]).length;
+  return pageTitle(esc(m.title), `${fmtDate(m.date)}. ${m.endedAt ? `Ended at ${fmtTime(m.endedAt)}.` : 'Check-in is open on every desk.'}`,
+      `<button class="btn" data-act="report">${I('download')}Excel report</button>${m.endedAt ? '<button class="btn" data-act="reopen">Reopen check-in</button>' : '<button class="btn" data-act="end">End meeting</button>'}`)
+    + `<div class="stats">
+      <div class="stat"><div class="l"><span class="dot" style="color:var(--ok)"></span>Checked in</div><div class="v num">${n}<small>of ${total}</small></div><div class="d">${pctTxt(n,total)} of the register</div></div>
+      <div class="stat"><div class="l"><span class="dot" style="color:var(--no)"></span>${m.endedAt ? 'Absent' : 'Not here yet'}</div><div class="v num">${total - n}</div><div class="d"><a href="#reports" style="color:var(--brandink)">See who</a></div></div>
+      <div class="stat"><div class="l"><span class="dot" style="color:var(--warn)"></span>First-timers and unpaired</div><div class="v num">${unpHere}</div><div class="d">here today</div></div>
+      <div class="stat"><div class="l">Groups at 50% or more</div><div class="v num">${realGroups().filter(g => { const l = all.filter(p => p.group === g.id); return l.length && l.filter(p=>pres[p.id]).length / l.length >= .5; }).length}<small>of ${realGroups().length}</small></div><div class="d">${fullUnits(pres)} units fully here</div></div>
+    </div>
+    <div class="grid2" style="margin-bottom:16px">
+      <section class="card"><div class="ch"><h2>Arrivals</h2><span class="small faint">${n ? `First at ${fmtTime(Math.min(...Object.values(pres)))}` : ''}</span></div><div class="cb">${chart(pres)}</div></section>
+      <section class="card"><div class="ch"><h2>Latest arrivals</h2><a class="small" href="#checkin" style="color:var(--brandink);font-weight:550">Open check-in</a></div><div class="cb" style="padding-top:4px;padding-bottom:4px">${feed(pres, 6)}</div></section>
+    </div>
+    <section class="card"><div class="ch"><div><h2>Group strength</h2><div class="small muted" style="margin-top:2px">Who's here in each unit. Select a cell to see names.</div></div><div class="legend hide-sm">0%<i></i>100%</div></div><div class="cb">${board(pres)}</div></section>`;
+}
+const fullUnits = pres => realGroups().flatMap(g => subsOf(g.id)).filter(u => { const l = Object.values(S.members).filter(p => p.subgroup === u.id); return l.length && l.every(p => pres[p.id]); }).length;
+function chart(pres){
+  const m = meeting(), ts = Object.values(pres).sort((a,b)=>a-b);
+  if (!ts.length) return `<div class="empty" style="padding:30px 0"><p>Arrivals show up here as people are checked in.</p></div>`;
+  const end = Math.max(ts[ts.length-1], m && !m.endedAt ? Math.min(Date.now(), ts[0] + 6*36e5) : ts[ts.length-1]);
+  const span = Math.max(end - ts[0], 30*6e4);
+  const step = [5,10,15,30,60].map(x => x*6e4).find(s => span / s <= 16) || 36e5;
+  const start = Math.min(Math.floor(ts[0] / step) * step, Math.floor(end / step) * step - 11 * step), nb = Math.max(1, Math.ceil((end - start + 1) / step));
+  const bins = Array(nb).fill(0); ts.forEach(t => bins[Math.min(nb-1, Math.floor((t - start) / step))]++);
+  const max = Math.max(...bins), every = nb > 10 ? 2 : 1;
+  return `<div class="chart" role="img" aria-label="Arrivals over time">${bins.map((c,i) => `<div class="c ${c?'':'zero'}" title="${c} between ${fmtTime(start + i*step)} and ${fmtTime(start + (i+1)*step)}"><b>${c || ''}</b><span class="b"><i style="height:${c ? Math.max(3, c/max*100) + '%' : '2px'}"></i></span><span>${i % every ? '&nbsp;' : fmtTime(start + i*step).replace(/\s?[AP]M$/i,'')}</span></div>`).join('')}</div>`;
+}
+function feed(pres, n){
+  const recent = Object.entries(pres).sort((a,b) => b[1]-a[1]).slice(0, n);
+  if (!recent.length) return `<p class="muted small" style="margin:12px 0">No one has been checked in yet.</p>`;
+  return `<ul class="feed">${recent.map(([id,t]) => { const p = S.members[id]; return `<li><span class="av ok">${esc(initials(p.name))}</span><span class="w"><b>${esc(p.name)}</b><span>${esc(where(p))}</span></span><span class="small faint num">${fmtTime(t)}</span></li>`; }).join('')}</ul>`;
+}
+function board(pres){
+  const gs = realGroups(), cols = Math.min(6, Math.max(1, ...gs.map(g => subsOf(g.id).length)));
+  const letters = 'ABCDEF'.slice(0, cols).split('');
+  let h = `<div class="board" style="--cols:${cols}" role="table" aria-label="Group strength"><div class="hd">Group</div>${letters.map(l => `<div class="hd" style="text-align:center">Unit ${l}</div>`).join('')}<div class="hd tot-h">Whole group</div>`;
+  for (const g of gs) {
+    const units = subsOf(g.id), list = Object.values(S.members).filter(p => p.group === g.id), gh = list.filter(p => pres[p.id]).length, gh2 = headOf(g.id, 'group_head');
+    h += `<a class="gname" href="#groups/${g.id}"><b>${esc(g.name)}</b><span>${gh2 ? esc(gh2.name) : `${list.length} people`}</span></a>`;
+    for (let i = 0; i < cols; i++) { const u = units[i];
+      if (!u) { h += `<div class="cell none">–</div>`; continue; }
+      const ul = list.filter(p => p.subgroup === u.id), uh = ul.filter(p => pres[p.id]).length, p = pct(uh, ul.length);
+      h += `<a class="cell ${p > 55 ? 'hi' : ''}" style="--p:${p}" href="#groups/${g.id}" title="${esc(unitLabel(u.id))}: ${uh} of ${ul.length} here">${uh}<small>/${ul.length}</small></a>`; }
+    h += `<div class="gtot"><div class="bar"><i style="width:${pct(gh, list.length)}%"></i></div><span class="num">${gh}<span class="faint" style="font-weight:500">/${list.length}</span></span></div>`;
+  }
+  const unp = groupsTop().find(isUnp);
+  if (unp) { const list = Object.values(S.members).filter(p => !isPaired(p)), uh = list.filter(p => pres[p.id]).length;
+    h += `<a class="gname" href="#directory" data-act="needsPairing"><b>${UNPAIRED}</b><span>First-timers and others</span></a><div class="cell none" style="grid-column:span ${cols};justify-content:flex-start;padding-left:12px;border-style:dashed">${uh} here today. Pair them in Directory.</div><div class="gtot"><div class="bar"><i style="width:${pct(uh, list.length)}%;background:var(--warn)"></i></div><span class="num">${uh}<span class="faint" style="font-weight:500">/${list.length}</span></span></div>`; }
+  return h + `</div>`;
 }
 
-/* ---------- check in ---------- */
-function startForm(id='newMeeting'){
-  return `<form id="${id}" class="stack" style="width:100%;max-width:440px;text-align:left">
-    <label class="f">Meeting name<input name="title" required value="CCRW Meeting" autocomplete="off"></label>
-    <label class="f">Date<input name="date" type="date" value="${today()}" required></label>
-    <button class="btn primary">Start meeting</button></form>`;
-}
+/* ---------- check-in ---------- */
 function vCheckin(){
   const m = meeting();
-  if (!Object.keys(S.members).length) return `<div class="empty">${crowd()}<h2 class="wide">Add your people first</h2><p class="muted">Import your list on the People tab, then start a meeting.</p><a class="btn primary" href="#people">Go to People</a></div>`;
-  if (!m) return `<div class="empty">${crowd()}<h2 class="wide">No meeting is running</h2><p class="muted" style="margin:0 0 12px">Start one to open check-in. Every desk checks people into the same meeting.</p>${startForm()}</div>`;
-  return `<div class="ci"><section>
-    ${m.endedAt ? `<div class="note warn row sp" style="margin-bottom:14px"><span><b>This meeting has ended.</b> Check-in is closed.</span><button class="btn sm" data-act="reopen">Reopen</button></div>` : ''}
-    <div class="searchbox">${searchIcon}<input id="q" type="search" placeholder="Name or phone number" aria-label="Search by name or phone number" autocomplete="off" autocapitalize="words" enterkeyhint="go" ${m.endedAt?'disabled':''}><button class="clr ${ui.q?'':'hide'}" data-act="clearQ" aria-label="Clear search">×</button></div>
-    <div id="ciBody">${ciBody()}</div>
-  </section><aside class="panel" id="panel">${panel()}</aside></div>`;
+  if (!Object.keys(S.members).length) return `<div class="empty">${crowd()}<h2>Add your people first</h2><p>Import your register in Settings, then start a meeting.</p><a class="btn primary" href="#settings">Go to Settings</a></div>`;
+  if (!m) return noMeeting('Start one to open check-in. Every desk checks people into the same meeting.');
+  return `<div class="desk">${m.endedAt ? `<div class="callout"><span class="grow">This meeting has ended, so check-in is closed.</span><button class="btn sm" data-act="reopen">Reopen check-in</button></div>` : ''}
+    <div class="sbox">${I('search')}<input id="q" type="search" placeholder="Search by name or phone number" aria-label="Search by name or phone number" autocomplete="off" autocapitalize="words" enterkeyhint="go" ${m.endedAt?'disabled':''}>
+      <span class="right"><button class="clr ${ui.q?'':'hide'}" data-act="clearQ" aria-label="Clear search">×</button><span class="kbd desk-only">Enter</span></span></div>
+    <div id="deskBody">${deskBody()}</div></div>`;
 }
-function ciBody(){
+function deskBody(){
   const m = meeting(); if (!m) return '';
-  const pres = presentMap(m), res = search(ui.q); ui.sel = Math.min(ui.sel, Math.max(res.length-1, 0));
-  let h = '';
-  if (ui.last && !ui.q && S.members[ui.last] && pres[ui.last]) {
-    const p = S.members[ui.last], head = headOf(p.subgroup, 'subgroup_head') || headOf(p.group, 'group_head');
-    h += `<div class="arrived" role="status"><div class="big" aria-hidden="true"></div><div><div class="nm">${esc(p.name)} is checked in</div>
-      <div class="go">${S.groups[p.group] && !isUnp(S.groups[p.group]) ? `Send them to <b>${esc(where(p))}</b>${head && head.id !== p.id ? ` · ${head.role==='group_head'?'Group':'Unit'} head: ${esc(head.name)}` : ''}` : `<b>${UNPAIRED}</b> · pair them with a group later on the People tab`}</div></div>
+  const pres = presentMap(m), n = Object.keys(pres).length, total = Object.keys(S.members).length, res = search(ui.q);
+  ui.sel = Math.min(ui.sel, Math.max(res.length - 1, 0));
+  let h = `<div class="deskmeta"><span><b style="color:var(--ink)" class="num">${n}</b> of ${total} checked in</span><span class="desk-only">Use ↑ ↓ to choose, Enter to check in</span></div>`;
+  if (ui.last && !ui.q && pres[ui.last] && S.members[ui.last]) {
+    const p = S.members[ui.last], head = (S.groups[p.subgroup] && headOf(p.subgroup, 'subgroup_head')) || headOf(p.group, 'group_head');
+    h += `<div class="banner" role="status"><span class="chk">${I('check')}</span><div class="grow"><b>${esc(p.name)} is checked in</b>
+      <div class="go">${isPaired(p) ? `Send them to <strong>${esc(where(p))}</strong>${head && head.id !== p.id ? `. Their ${head.role === 'group_head' ? 'group' : 'unit'} head is ${esc(head.name)}.` : '.'}` : 'Not paired with a group yet. You can pair them later in Directory.'}</div></div>
       <button class="btn sm" data-act="undo" data-id="${p.id}">Undo</button></div>`;
   }
-  if (!ui.q) return h + `<p class="hint">${m.endedAt ? '' : 'Start typing a name or phone number. Press Enter to check in the highlighted person.'}</p>`;
-  if (res.length) h += `<ul class="results" role="listbox" aria-label="Matching people">${res.map((p,i) => { const t = pres[p.id];
-    return `<li class="res ${i===ui.sel?'sel':''} ${t?'here':''}" data-id="${p.id}" role="option" aria-selected="${i===ui.sel}">
-      <div class="av" aria-hidden="true">${t ? '' : esc(initials(p.name))}</div>
-      <div><div class="nm">${esc(p.name)}</div><div class="meta"><span class="${isUnp(S.groups[p.group]||{name:UNPAIRED})?'chip unp':'chip'}">${esc(where(p))}</span>${roleChip(p.role)}${p.phone?`<span class="num">${esc(p.phone.split(',')[0])}</span>`:''}</div></div>
-      <div class="act">${t ? `<span class="when"><span class="tick"></span><span class="num">${fmtTime(t)}</span></span><button class="btn ghost sm" data-act="undo" data-id="${p.id}" ${m.endedAt?'disabled':''}>Undo</button>`
-        : `<button class="btn primary" data-act="reg" data-id="${p.id}" ${m.endedAt?'disabled':''}>Check in</button>`}</div></li>`; }).join('')}</ul>`;
+  if (!ui.q) {
+    const recent = Object.entries(pres).sort((a,b)=>b[1]-a[1]).slice(0, 5);
+    return h + (recent.length ? `<div class="small muted" style="margin:22px 2px 0;font-weight:550">Recently checked in</div><ul class="list" style="margin-top:8px">${recent.map(([id,t]) => { const p = S.members[id];
+      return `<li><span class="av ok">${esc(initials(p.name))}</span><span class="who"><b>${esc(p.name)}</b><span class="m">${esc(where(p))}</span></span><span class="small faint num">${fmtTime(t)}</span><button class="btn ghost sm" data-act="undo" data-id="${p.id}" ${m.endedAt?'disabled':''}>Undo</button></li>`; }).join('')}</ul>` : `<div class="tip">Start typing a name or phone number to find someone.</div>`);
+  }
+  if (res.length) h += `<ul class="list" role="listbox" aria-label="Matching people">${res.map((p,i) => { const t = pres[p.id];
+    return `<li class="${i===ui.sel?'sel':''}" role="option" aria-selected="${i===ui.sel}"><span class="av ${t?'ok':''}">${esc(initials(p.name))}</span>
+      <span class="who"><b>${esc(p.name)}</b><span class="m">${whereBadge(p)}${roleBadge(p.role)}${firstPhone(p) ? `<span class="num">${esc(firstPhone(p))}</span>` : ''}</span></span>
+      ${t ? `<span class="done">${I('check')}<span class="num">${fmtTime(t)}</span></span><button class="btn ghost sm" data-act="undo" data-id="${p.id}" ${m.endedAt?'disabled':''}>Undo</button>`
+        : `<button class="btn primary" data-act="reg" data-id="${p.id}" ${m.endedAt?'disabled':''}>Check in</button>`}</li>`; }).join('')}</ul>`;
   if (ui.q.trim().length > 1 && !m.endedAt) {
     const phone = isPhoneQ(ui.q);
-    h += `<div class="add"><h3>${res.length ? 'Not the right person?' : phone ? 'No one with that number' : `No one called “${esc(ui.q.trim())}”`}</h3>
-      <div class="muted small">Add them as a first-timer. They'll go into “${UNPAIRED}” so you can pair them later.</div>
-      <form id="quickAdd"><input name="name" placeholder="Full name" aria-label="Full name" required value="${phone ? '' : esc(titleCase(ui.q))}">
-      <input name="phone" inputmode="tel" placeholder="Phone (optional)" aria-label="Phone" value="${phone ? esc(ui.q.trim()) : ''}">
-      <button class="btn ${res.length?'':'primary'}">Add &amp; check in</button></form></div>`;
+    h += `<div class="addnew"><b style="font-size:14px">${res.length ? 'Not on the list?' : phone ? 'No one has that number' : `No one called “${esc(ui.q.trim())}”`}</b>
+      <div class="small muted">Add them as a first-timer and check them in. They go into “${UNPAIRED}” until you pair them.</div>
+      <form id="quickAdd"><input class="input" name="name" placeholder="Full name" aria-label="Full name" required value="${phone ? '' : esc(titleCase(ui.q))}">
+      <input class="input" name="phone" inputmode="tel" placeholder="Phone (optional)" aria-label="Phone" value="${phone ? esc(ui.q.trim()) : ''}">
+      <button class="btn ${res.length ? '' : 'primary'}">${I('plus')}Add and check in</button></form></div>`;
   }
   return h;
 }
-function panel(){
-  const m = meeting(); if (!m) return '';
-  const pres = presentMap(m), n = Object.keys(pres).length, total = Object.keys(S.members).length;
-  const recent = Object.entries(pres).sort((a,b) => b[1]-a[1]).slice(0, 12);
-  return `<div class="stat"><b class="wide num">${n}</b><span class="muted small">checked in<br>${pctTxt(n,total)}% of ${total}</span></div>
-    <h3>Latest arrivals</h3><ul class="feed">${recent.map(([id,t]) => `<li><span class="who">${esc(S.members[id].name)}</span><span class="where">${esc(where(S.members[id]))}</span><span class="t num">${fmtTime(t)}</span></li>`).join('') || '<li class="muted small">No one yet.</li>'}</ul>
-    ${n ? '<p class="small" style="margin-top:12px"><a href="#live">See group strength →</a></p>' : ''}`;
-}
-const renderCiBody = () => { const b = $('#ciBody'); if (b) b.innerHTML = ciBody(); $('.searchbox .clr')?.classList.toggle('hide', !ui.q); };
-const renderPanel = () => { const p = $('#panel'); if (p) p.innerHTML = panel(); };
+const renderDesk = () => { const b = $('#deskBody'); if (b) b.innerHTML = deskBody(); $('.sbox .clr')?.classList.toggle('hide', !ui.q); };
 
-/* ---------- live ---------- */
-function vLive(){
-  const m = meeting();
-  if (!m) return `<div class="empty">${crowd()}<h2 class="wide">No meeting is running</h2><p class="muted">Live numbers appear once a meeting starts.</p><button class="btn primary" data-act="meetingMenu">Start a meeting</button></div>`;
-  const pres = presentMap(m), all = members(), n = Object.keys(pres).length, total = all.length;
-  const unpG = groupsTop().find(isUnp), unpHere = unpG ? all.filter(p => p.group === unpG.id && pres[p.id]).length : 0;
-  const last = Object.values(pres).sort((a,b)=>b-a)[0];
-  const absent = total - n;
-  return `<div class="row sp"><div><h1 class="h1 wide">${m.endedAt ? 'Attendance report' : 'Live attendance'}</h1><p class="lead">${m.endedAt ? `Final numbers for ${esc(m.title)}, ${fmtDate(m.date)}.` : 'Updates as each desk checks people in.'}</p></div><button class="btn" data-act="dlAll">Download Excel report</button></div>
-    <div class="kpis">
-      <div class="kpi main"><b class="wide num">${n} <span style="font-size:.45em;opacity:.7">of ${total}</span></b><span>checked in · ${pctTxt(n,total)}%${last ? ` · last arrival ${fmtTime(last)}` : ''}</span><div class="bar"><i style="width:${pct(n,total)}%"></i></div></div>
-      <div class="kpi"><b class="wide num">${absent}</b><span>${m.endedAt?'absent':'not here yet'}</span></div>
-      <div class="kpi"><b class="wide num">${unpHere}</b><span>first-timers &amp; unpaired here</span></div>
-    </div>
-    <div class="seg" role="group" aria-label="View"><button data-act="liveTab" data-v="groups" aria-pressed="${ui.liveTab==='groups'}">By group</button><button data-act="liveTab" data-v="absent" aria-pressed="${ui.liveTab==='absent'}">${m.endedAt?'Absent':'Not here'} <span class="muted num">${absent}</span></button></div>
-    ${ui.liveTab === 'absent' ? vAbsent() : vGroupsLive()}`;
+/* ---------- groups ---------- */
+function vGroups(){
+  const m = meeting(), pres = presentMap(m), gs = realGroups(), units = gs.reduce((a,g) => a + subsOf(g.id).length, 0), unpN = members().filter(p => !isPaired(p)).length;
+  return pageTitle('Groups', `${gs.length} groups and ${units} units`, `<button class="btn" data-act="addG">${I('plus')}Add group</button>`)
+    + `<div class="tblwrap"><table class="tbl"><thead><tr><th>Group</th><th class="hide-sm">Group head</th><th class="hide-sm">Units</th><th class="r">People</th>${m ? '<th style="width:28%">Here today</th>' : ''}<th style="width:36px"></th></tr></thead><tbody>
+    ${gs.map(g => { const l = Object.values(S.members).filter(p => p.group === g.id), h = l.filter(p => pres[p.id]).length, gh = headOf(g.id, 'group_head');
+      return `<tr class="click" data-go="#groups/${g.id}"><td><b>${esc(g.name)}</b></td><td class="hide-sm">${gh ? esc(gh.name) : '<span class="faint">Not set</span>'}</td><td class="hide-sm muted">${subsOf(g.id).map(u => unitShort(u.id)).join(', ') || '–'}</td><td class="r num">${l.length}</td>
+        ${m ? `<td><div class="row" style="flex-wrap:nowrap;gap:10px"><div class="bar grow"><i style="width:${pct(h,l.length)}%"></i></div><span class="num small" style="min-width:64px;text-align:right"><b>${h}</b> <span class="faint">(${pctTxt(h,l.length)})</span></span></div></td>` : ''}<td>${I('right','faint')}</td></tr>`; }).join('')}
+    </tbody></table></div>
+    ${unpN ? `<div class="callout" style="margin-top:16px"><span class="badge warn">${unpN}</span><span class="grow">people aren't in a group yet.</span><a class="btn sm" href="#directory" data-act="needsPairing">Pair them</a></div>` : ''}`;
 }
-function countRow(here, tot){ return `<span class="ct num"><b>${here}</b><span class="muted">/${tot}</span></span>`; }
-function vGroupsLive(){
-  const pres = presentMap(meeting()), all = members();
-  const peopleList = list => { const here = list.filter(p => pres[p.id]), away = list.filter(p => !pres[p.id]);
-    return `<div class="ppl"><div><h4>Here · ${here.length}</h4><ul>${here.map(p => `<li><span>${esc(p.name)} ${roleChip(p.role)}</span><span class="muted num">${fmtTime(pres[p.id])}</span></li>`).join('') || '<li class="muted">No one yet</li>'}</ul></div>
-      <div><h4>Not here · ${away.length}</h4><ul>${away.map(p => `<li><span>${esc(p.name)} ${roleChip(p.role)}</span><span class="muted num tiny">${esc((p.phone||'').split(',')[0])}</span></li>`).join('') || '<li class="muted">Everyone is here</li>'}</ul></div></div>`; };
-  return `<div class="glist">${groupsTop().map(g => {
-    const mem = all.filter(p => p.group === g.id), here = mem.filter(p => pres[p.id]).length, gh = headOf(g.id, 'group_head'), units = subsOf(g.id), open = ui.openG.has(g.id);
-    const loose = mem.filter(p => !S.groups[p.subgroup]);
-    return `<div class="g ${open?'open':''}"><button class="gh" data-act="toggleG" data-id="${g.id}" aria-expanded="${open}">
-        <span><span class="gn">${esc(g.name)}</span><span class="hd hd2">${gh ? 'Head: ' + esc(gh.name) : units.length ? units.length + ' units' : ''}</span><span class="hd hdw">${gh ? 'Head: ' + esc(gh.name) : isUnp(g) ? 'First-timers and anyone without a group' : 'No group head set'}</span></span>
-        <span class="hdw"><span class="bar"><i style="width:${pct(here, mem.length)}%"></i></span></span>${countRow(here, mem.length)}<span class="chev" aria-hidden="true"></span></button>
-      ${open ? `<div class="units">${units.map(u => { const um = mem.filter(p => p.subgroup === u.id), uh = headOf(u.id, 'subgroup_head'), uo = ui.openU.has(u.id);
-          return `<div class="u ${uo?'open':''}"><button class="uh" data-act="toggleU" data-id="${u.id}" aria-expanded="${uo}"><span><span class="gn">${esc(unitLabel(u.id))}</span><span class="hd hd2">${uh ? esc(uh.name) : ''}</span><span class="hd hdw">${uh ? 'Head: ' + esc(uh.name) : 'No unit head set'}</span></span>
-            <span class="hdw"><span class="bar"><i style="width:${pct(um.filter(p=>pres[p.id]).length, um.length)}%"></i></span></span>${countRow(um.filter(p=>pres[p.id]).length, um.length)}<span class="chev" aria-hidden="true"></span></button>${uo ? peopleList(um) : ''}</div>`; }).join('')}
-        ${loose.length ? (units.length ? `<div class="u open"><div class="uh" style="cursor:default"><span class="gn">Not in a unit</span><span class="hdw"></span>${countRow(loose.filter(p=>pres[p.id]).length, loose.length)}<span></span></div>${peopleList(loose)}</div>` : peopleList(loose)) : ''}</div>` : ''}</div>`;
-  }).join('') || '<p class="muted">No groups yet. Set them up on the People tab.</p>'}</div>`;
+function vGroup(gid){
+  const g = S.groups[gid]; if (!g) return `<div class="empty"><h2>That group doesn't exist</h2><a class="btn" href="#groups">Back to groups</a></div>`;
+  const m = meeting(), pres = presentMap(m), list = inGroup(gid), here = list.filter(p => pres[p.id]).length, gh = headOf(gid, 'group_head');
+  const units = subsOf(gid).map(u => ({id: u.id, label: unitLabel(u.id), head: headOf(u.id, 'subgroup_head'), list: list.filter(p => p.subgroup === u.id)}));
+  const loose = list.filter(p => !S.groups[p.subgroup]); if (loose.length) units.push({id:'', label: units.length ? 'Not in a unit' : 'Members', head: null, list: loose});
+  const show = p => ui.gf === 'all' || (ui.gf === 'here' ? !!pres[p.id] : !pres[p.id]);
+  return pageTitle(esc(g.name), `${gh ? `Group head: ${esc(gh.name)}${firstPhone(gh) ? `, ${esc(firstPhone(gh))}` : ''}` : 'No group head set yet'}. ${list.length} people in ${subsOf(gid).length} units.`,
+      `<button class="btn" data-act="editG" data-id="${gid}">${I('edit')}Edit group</button>`)
+    + (m ? `<div class="stats" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="stat"><div class="l">Here today</div><div class="v num">${here}<small>of ${list.length}</small></div></div><div class="stat"><div class="l">Not here</div><div class="v num">${list.length - here}</div></div><div class="stat"><div class="l">Attendance</div><div class="v num">${pctTxt(here, list.length)}</div></div></div>
+      <div class="row sp" style="margin-bottom:12px"><div class="seg" role="group" aria-label="Show">${[['all','Everyone'],['here','Here'],['away','Not here']].map(([k,l]) => `<button data-act="gf" data-v="${k}" aria-pressed="${ui.gf===k}">${l}</button>`).join('')}</div></div>` : '')
+    + `<div class="gdetail">${units.map(u => { const uh = u.list.filter(p => pres[p.id]).length, vis = u.list.filter(show).sort((a,b) => (!!pres[b.id] - !!pres[a.id]) || byName(a,b));
+      return `<section class="card unit"><div class="ch"><div><h2>${esc(u.label)}</h2><div class="sub">${u.head ? 'Head: ' + esc(u.head.name) : 'No unit head'}</div></div>${m ? `<span class="badge ${uh === u.list.length && uh ? 'ok' : ''} num">${uh}/${u.list.length}</span>` : `<span class="badge num">${u.list.length}</span>`}</div>
+        <ul>${vis.map(p => `<li>${m ? `<span class="st ${pres[p.id]?'ok':''}" title="${pres[p.id]?'Here':'Not here'}"></span>` : ''}<a href="#" data-act="editP" data-id="${p.id}" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</a>${p.role !== 'member' ? `<span class="badge brand" style="height:20px">${ROLE_LABEL[p.role].replace('Assistant unit head','Assistant')}</span>` : ''}<span class="t num">${pres[p.id] ? fmtTime(pres[p.id]) : ''}</span></li>`).join('') || `<li class="faint small">No one ${ui.gf === 'here' ? 'here yet' : 'missing'}</li>`}</ul></section>`; }).join('')}</div>`;
+}
+
+/* ---------- directory ---------- */
+function vDirectory(){
+  const all = members(), unp = all.filter(p => !isPaired(p)), leaders = all.filter(p => p.role !== 'member');
+  return pageTitle('Directory', `${all.length} people on the register`, `<input type="file" id="file" accept=".csv,.xlsx,.xls,text/csv" class="hide"><button class="btn" data-act="pick">${I('upload')}Import</button><button class="btn primary" data-act="addP">${I('plus')}Add person</button>`)
+    + `<div class="tabs" role="tablist">${[['all','All people',all.length],['pair','Needs pairing',unp.length],['leaders','Leaders',leaders.length]].map(([k,l,c]) => `<button role="tab" data-act="dtab" data-v="${k}" aria-selected="${ui.dtab===k}">${l}<span class="count num">${c}</span></button>`).join('')}</div>
+    <div class="toolbar"><div class="sinput">${I('search')}<input class="input" id="dq" type="search" placeholder="Search name or phone" aria-label="Search the directory" autocomplete="off"></div>
+      ${ui.dtab === 'all' ? `<select class="input" id="dg" aria-label="Filter by group" style="max-width:200px"><option value="all">All groups</option>${realGroups().map(g => `<option value="${g.id}" ${ui.dg===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select>` : ''}
+      ${ui.dtab === 'pair' ? '<span class="small muted">Choose a group and unit, then select Pair.</span>' : ''}</div>
+    <div id="dirBody">${dirBody()}</div>`;
+}
+function dirBody(){
+  const pres = presentMap(meeting()), m = meeting(), q = norm(ui.dq), digits = ui.dq.replace(/\D/g,'');
+  let list = members().filter(p => ui.dtab === 'pair' ? !isPaired(p) : ui.dtab === 'leaders' ? p.role !== 'member' : (ui.dg === 'all' || p.group === ui.dg));
+  if (q) list = list.filter(p => norm(p.name).includes(q) || (digits.length >= 3 && (p.phone||'').replace(/\D/g,'').includes(digits)));
+  if (!list.length) return `<div class="empty"><h2>${ui.dtab === 'pair' && !q ? 'Everyone is paired' : 'No one matches'}</h2><p>${ui.dtab === 'pair' && !q ? 'New first-timers will appear here.' : 'Try another name or number.'}</p></div>`;
+  const shown = list.slice(0, ui.dlimit);
+  if (ui.dtab === 'pair') {
+    const gopts = realGroups().map(g => `<option value="${g.id}">${esc(g.name)}</option>`).join('');
+    return `<div class="tblwrap"><table class="tbl"><thead><tr><th>Person</th><th class="hide-sm">Phone</th>${m ? '<th class="hide-sm">Today</th>' : ''}<th>Pair with</th></tr></thead><tbody>${shown.map(p => `<tr>
+      <td><a href="#" class="person" data-act="editP" data-id="${p.id}"><span class="av">${esc(initials(p.name))}</span><b>${esc(p.name)}</b></a></td><td class="hide-sm num muted">${esc(firstPhone(p))}</td>${m ? `<td class="hide-sm">${pres[p.id] ? '<span class="badge ok">Here</span>' : ''}</td>` : ''}
+      <td><div class="pairsel"><select class="input" data-pairg="${p.id}" aria-label="Group for ${esc(p.name)}"><option value="">Group</option>${gopts}</select><select class="input" data-pairu="${p.id}" aria-label="Unit for ${esc(p.name)}" disabled><option value="">Unit</option></select><button class="btn sm" data-act="pair" data-id="${p.id}">Pair</button></div></td></tr>`).join('')}</tbody></table></div>${more(list)}`;
+  }
+  return `<div class="tblwrap"><table class="tbl"><thead><tr><th>Person</th><th class="hide-sm">Phone</th><th>Group</th><th class="hide-sm">Role</th>${m ? '<th class="hide-sm">Today</th>' : ''}</tr></thead><tbody>${shown.map(p => `<tr class="click" data-act="editP" data-id="${p.id}">
+    <td><span class="person"><span class="av">${esc(initials(p.name))}</span><b>${esc(p.name)}</b></span></td><td class="hide-sm num muted">${esc(firstPhone(p))}</td><td>${isPaired(p) ? `<span class="small">${esc(gName(p.group))}${S.groups[p.subgroup] ? `<span class="muted">, ${esc(unitShort(p.subgroup))}</span>` : ''}</span>` : `<span class="badge warn">${UNPAIRED}</span>`}</td>
+    <td class="hide-sm">${roleBadge(p.role)}</td>${m ? `<td class="hide-sm">${pres[p.id] ? `<span class="badge ok"><span class="dot"></span>Here</span>` : '<span class="faint small">–</span>'}</td>` : ''}</tr>`).join('')}</tbody></table></div>${more(list)}`;
+}
+const more = list => list.length > ui.dlimit ? `<div style="text-align:center;margin-top:14px"><button class="btn" data-act="more">Show ${Math.min(150, list.length - ui.dlimit)} more of ${list.length}</button></div>` : '';
+const renderDir = () => { const b = $('#dirBody'); if (b) b.innerHTML = dirBody(); };
+
+/* ---------- reports ---------- */
+function vReports(){
+  const m = meeting();
+  return pageTitle('Reports', 'Absentees for the open meeting and every past meeting.', m ? `<button class="btn primary" data-act="report">${I('download')}Excel report</button>` : '')
+    + `<div class="tabs" role="tablist">${[['absent','Absentees'],['history','All meetings']].map(([k,l]) => `<button role="tab" data-act="rtab" data-v="${k}" aria-selected="${ui.rtab===k}">${l}</button>`).join('')}</div>`
+    + (ui.rtab === 'history' ? vHistory() : vAbsent());
 }
 const absentList = () => { const pres = presentMap(meeting()); return members().filter(p => !pres[p.id]); };
 function vAbsent(){
-  const m = meeting(), abs = absentList().filter(p => ui.absG === 'all' || p.group === ui.absG), byG = {};
-  for (const p of abs) (byG[S.groups[p.group] ? p.group : '_'] ||= []).push(p);
-  const order = [...groupsTop().map(g => g.id), '_'].filter(k => byG[k]);
-  return `<div class="toolbar"><select id="absG" aria-label="Filter by group" style="max-width:260px"><option value="all">All groups</option>${groupsTop().map(g => `<option value="${g.id}" ${ui.absG===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select>
-      <div class="row"><button class="btn sm" data-act="copyAbsent">Copy</button><button class="btn sm" data-act="print">Print</button><button class="btn sm" data-act="dlAll">Excel report</button>
-      ${m.endedAt ? '' : `<button class="btn sm primary" data-act="end">End meeting</button>`}</div></div>
-    ${m.endedAt ? '' : `<p class="note small" style="margin-top:14px">This list becomes the final absent list when you end the meeting.</p>`}
-    <div class="abs">${order.map(k => { const gh = k === '_' ? null : headOf(k, 'group_head');
-      return `<h3 class="wide"><span>${k === '_' ? UNPAIRED : esc(gName(k))}</span><span class="muted num" style="font-size:15px;font-weight:600;font-stretch:100%">${byG[k].length} ${m.endedAt?'absent':'not here'}</span></h3>
-        ${gh ? `<div class="lead2">Group head: ${esc(gh.name)}${gh.phone ? ' · ' + esc(gh.phone.split(',')[0]) : ''}</div>` : '<div class="lead2"></div>'}
-        <ul>${byG[k].map(p => `<li><span>${esc(p.name)}${S.groups[p.subgroup] ? `<span class="muted small"> · ${esc(unitLabel(p.subgroup))}</span>` : ''}</span><span class="muted small num">${esc((p.phone||'').split(',')[0])}</span></li>`).join('')}</ul>`; }).join('') || `<div class="empty">${crowd(3)}<h2 class="wide">Everyone is here</h2></div>`}</div>`;
+  const m = meeting(); if (!m) return `<div class="empty"><h2>No meeting is open</h2><p>Absentees show here once a meeting starts.</p></div>`;
+  const abs = absentList().filter(p => ui.absG === 'all' || p.group === ui.absG), byG = {};
+  for (const p of abs) (byG[isPaired(p) ? p.group : '_'] ||= []).push(p);
+  const order = [...realGroups().map(g => g.id), '_'].filter(k => byG[k]);
+  return `<div class="callout">${m.endedAt ? `This is the final list for ${esc(m.title)}. ${abs.length} ${abs.length === 1 ? 'person was' : 'people were'} absent.` : `${abs.length} people aren't here yet. The list becomes final when you end the meeting.`}</div>
+    <div class="toolbar"><select class="input" id="absG" aria-label="Filter by group" style="max-width:220px"><option value="all">All groups</option>${realGroups().map(g => `<option value="${g.id}" ${ui.absG===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select>
+      <span class="grow"></span><button class="btn sm" data-act="copyAbsent">${I('copy')}Copy</button><button class="btn sm" data-act="print">${I('print')}Print</button>${m.endedAt ? '' : '<button class="btn sm" data-act="end">End meeting</button>'}</div>
+    ${order.map(k => { const gh = k === '_' ? null : headOf(k, 'group_head');
+      return `<section class="absgroup"><h3>${k === '_' ? UNPAIRED : esc(gName(k))}<span class="badge no num">${byG[k].length} absent</span>${gh ? `<span class="small muted" style="font-weight:400">Follow up: ${esc(gh.name)}${firstPhone(gh) ? `, ${esc(firstPhone(gh))}` : ''}</span>` : ''}</h3>
+        <div class="ppl">${byG[k].map(p => `<div><span>${esc(p.name)}${S.groups[p.subgroup] ? `<span class="faint small">  ${esc(unitShort(p.subgroup))}</span>` : ''}</span><span class="muted small num">${esc(firstPhone(p))}</span></div>`).join('')}</div></section>`; }).join('') || `<div class="empty">${crowd(3)}<h2>Everyone is here</h2></div>`}`;
 }
-
-/* ---------- people ---------- */
-function vPeople(){
-  const total = Object.keys(S.members).length, unpG = groupsTop().find(isUnp), unpN = unpG ? inGroup(unpG.id).length : 0;
-  return `<div class="row sp"><div><h1 class="h1 wide">People</h1><p class="lead">${total} on the register${unpN ? ` · ${unpN} not paired yet` : ''}</p></div>
-      <div class="row"><input type="file" id="file" accept=".csv,.xlsx,.xls,text/csv" class="hide"><button class="btn" data-act="pick">Import spreadsheet</button><button class="btn primary" data-act="addP">Add person</button></div></div>
-    <div class="seg" role="group" aria-label="View" style="margin-top:18px"><button data-act="peopleTab" data-v="people" aria-pressed="${ui.peopleTab==='people'}">Everyone</button><button data-act="peopleTab" data-v="groups" aria-pressed="${ui.peopleTab==='groups'}">Groups &amp; units</button></div>
-    ${ui.peopleTab === 'groups' ? vGroupsAdmin() : !total ? `<div class="empty">${crowd()}<h2 class="wide">The register is empty</h2><p class="muted">Import a spreadsheet with columns <b>Name, Phone, Group, Subgroup, Role</b>, or add people one by one.</p><button class="btn" data-act="tpl">Download a template</button></div>` : `
-    <div class="filters"><input id="pq" type="search" placeholder="Search name or phone" aria-label="Search people" autocomplete="off">
-      <select id="pf" aria-label="Show"><option value="all">Everyone</option><option value="leaders" ${ui.pf==='leaders'?'selected':''}>Leaders only</option>${groupsTop().map(g => `<option value="${g.id}" ${ui.pf===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select>
-      <button class="btn" data-act="dlRoster">Export list</button></div>
-    <div id="plistWrap">${plist()}</div>`}`;
-}
-function plist(){
-  const q = norm(ui.pq), digits = ui.pq.replace(/\D/g,'');
-  const list = members().filter(m => (ui.pf === 'all' || (ui.pf === 'leaders' ? m.role !== 'member' : m.group === ui.pf)) &&
-    (!q || norm(m.name).includes(q) || (digits.length >= 3 && (m.phone||'').replace(/\D/g,'').includes(digits))));
-  return `<p class="small muted" style="margin:14px 2px 0">${list.length} ${list.length===1?'person':'people'}</p>
-    ${list.length ? `<ul class="plist">${list.slice(0, ui.plimit).map(p => `<li data-act="editP" data-id="${p.id}" tabindex="0" role="button">
-      <div class="av" aria-hidden="true">${esc(initials(p.name))}</div><div><div class="nm">${esc(p.name)}</div><div class="muted tiny num">${esc(p.phone || 'No phone')}</div></div>
-      <div class="gcol"><span class="${isUnp(S.groups[p.group]||{name:UNPAIRED})?'chip unp':'chip'}">${esc(where(p))}</span></div><div>${roleChip(p.role)}</div></li>`).join('')}</ul>
-      ${list.length > ui.plimit ? `<p style="text-align:center"><button class="btn" data-act="more">Show ${Math.min(120, list.length - ui.plimit)} more</button></p>` : ''}` : '<p class="muted">No one matches.</p>'}`;
-}
-const renderPlist = () => { const w = $('#plistWrap'); if (w) w.innerHTML = plist(); };
-function vGroupsAdmin(){
-  const all = members();
-  return `<div class="row sp" style="margin-top:18px"><p class="muted small" style="margin:0">Tap a group to rename it, set its heads, or add units.</p><button class="btn" data-act="addG">Add group</button></div>
-    <div class="gcards">${groupsTop().map(g => { const mem = all.filter(p => p.group === g.id), gh = headOf(g.id,'group_head'), units = subsOf(g.id);
-      return `<div class="card gc" ${isUnp(g)?'':`data-act="editG" data-id="${g.id}" role="button" tabindex="0" style="cursor:pointer"`}>
-        <div class="row sp"><h3 class="wide">${esc(g.name)}</h3><span class="muted num small">${mem.length} people</span></div>
-        <div class="small">${isUnp(g) ? '<span class="muted">First-timers and anyone without a group. Open a person to pair them.</span>' : gh ? `Group head: <b>${esc(gh.name)}</b>` : '<span class="muted">No group head set</span>'}</div>
-        ${units.length ? `<ul>${units.map(u => { const uh = headOf(u.id,'subgroup_head'); return `<li><span>${esc(unitLabel(u.id))} <span class="muted">· ${uh ? esc(uh.name) : 'no head'}</span></span><span class="muted num">${mem.filter(p=>p.subgroup===u.id).length}</span></li>`; }).join('')}</ul>` : ''}</div>`; }).join('')}</div>`;
-}
-
-/* ---------- meetings ---------- */
-function vMeetings(){
-  const m = meeting(), total = Object.keys(S.members).length;
+function vHistory(){
+  const total = Object.keys(S.members).length;
   const ms = Object.entries(S.meetings).filter(([,v]) => v && v.title).sort((a,b) => (b[1].date||'').localeCompare(a[1].date||'') || (b[1].createdAt||0)-(a[1].createdAt||0));
-  const here = v => Object.keys(presentMap(v)).length;
-  return `<h1 class="h1 wide">Meetings</h1><p class="lead">Every desk checks people into the meeting that's open here.</p>
-    <div class="mgrid">
-      <div class="card mcard">${m ? `<div class="muted small">Open now</div><h2 class="wide">${esc(m.title)}</h2><div class="muted">${fmtDate(m.date)} · ${m.endedAt ? 'Ended ' + fmtTime(m.endedAt) : 'Check-in open'}</div>
-        <div class="kpi" style="margin:16px 0;background:var(--soft)"><b class="wide num">${here(m)} <span style="font-size:.45em" class="muted">of ${total}</span></b><span class="muted">checked in</span></div>
-        <div class="row">${m.endedAt ? '<button class="btn" data-act="reopen">Reopen check-in</button>' : '<button class="btn primary" data-act="end">End meeting</button>'}<button class="btn" data-act="dlAll">Download Excel report</button></div>`
-        : `<h2 class="wide">No meeting is open</h2><p class="muted">Start one to open check-in.</p>`}</div>
-      <div class="card mcard"><h2 class="wide" style="font-size:19px">Start a new meeting</h2><p class="muted small" style="margin-top:0">It becomes the open meeting on every desk.</p>${startForm('newMeeting2')}</div>
-    </div>
-    <h2 style="font-size:18px;margin:32px 0 6px">History</h2>
-    ${ms.length ? `<div class="card" style="padding:4px 16px"><table class="mtable"><tbody>${ms.map(([id,v]) => `<tr><td class="num muted" style="width:130px">${fmtDate(v.date)}</td><td><b>${esc(v.title)}</b>${id===S.current?' <span class="chip">Open</span>':''}</td><td class="num" style="text-align:right">${here(v)} here</td>
-      <td style="text-align:right;white-space:nowrap"><button class="btn ghost sm" data-act="dlAll" data-id="${id}">Report</button>${id!==S.current?`<button class="btn sm" data-act="openM" data-id="${id}">Open</button>`:''}<button class="btn ghost sm" data-act="delM" data-id="${id}" aria-label="Delete ${esc(v.title)}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">No meetings yet.</p>'}
-    <h2 style="font-size:18px;margin:32px 0 6px">Desk access</h2>
-    <div class="card mcard"><form id="changePass" class="row"><input name="np" type="text" minlength="8" required placeholder="New passcode (8+ characters)" aria-label="New passcode" autocomplete="off" style="flex:1 1 240px;width:auto"><button class="btn">Change passcode</button></form>
-      <p class="muted small" style="margin:10px 0 0">Changing it locks every other desk until they enter the new one.</p>
-      <p style="margin:14px 0 0"><button class="btn ghost sm" data-act="lock" style="padding-inline:0">Lock this device</button></p></div>`;
+  if (!ms.length) return `<div class="empty"><h2>No meetings yet</h2><p>Meetings you run appear here with their attendance.</p></div>`;
+  return `<div class="tblwrap"><table class="tbl"><thead><tr><th>Meeting</th><th class="hide-sm">Date</th><th class="r">Present</th><th class="r hide-sm">Absent</th><th style="width:22%" class="hide-sm">Attendance</th><th></th></tr></thead><tbody>
+    ${ms.map(([id,v]) => { const n = Object.keys(presentMap(v)).length, t = v.totalAtEnd || total;
+      return `<tr><td><b>${esc(v.title)}</b> ${id === S.current ? `<span class="badge ${v.endedAt ? '' : 'ok'}">${v.endedAt ? 'Open' : 'Live'}</span>` : ''}<div class="small muted mob">${fmtDate(v.date)}</div></td><td class="hide-sm muted num">${fmtDate(v.date)}</td><td class="r num"><b>${n}</b></td><td class="r num hide-sm">${Math.max(0, t - n)}</td>
+        <td class="hide-sm"><div class="row" style="flex-wrap:nowrap;gap:10px"><div class="bar grow"><i style="width:${pct(n,t)}%"></i></div><span class="num small">${pctTxt(n,t)}</span></div></td>
+        <td class="r" style="white-space:nowrap"><button class="btn ghost sm" data-act="report" data-id="${id}" title="Download Excel report">${I('download')}<span class="hide-sm">Report</span></button>${id !== S.current ? `<button class="btn ghost sm" data-act="openM" data-id="${id}">Open</button>` : ''}<button class="btn ghost sm" data-act="delM" data-id="${id}" aria-label="Delete ${esc(v.title)}">${I('x')}</button></td></tr>`; }).join('')}
+    </tbody></table></div>`;
 }
 
-/* ---------- sheets ---------- */
-let sheetReturn = null;
-function openSheet(html, focusSel){
-  sheetReturn = document.activeElement;
-  $('#sheetHost').innerHTML = `<div class="scrim" data-scrim><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
-  setTimeout(() => ($(focusSel || '.sheet input:not([type=hidden]),.sheet select,.sheet button:not(.x)') || $('.sheet .x'))?.focus(), 30);
+/* ---------- settings ---------- */
+function vSettings(){
+  return pageTitle('Settings', 'Desk access and your register data.')
+    + `<div style="display:grid;gap:16px;max-width:760px">
+      <section class="card"><div class="ch"><div><h2>Desk passcode</h2><div class="small muted" style="margin-top:2px">Everyone checking people in uses this to unlock the app.</div></div></div>
+        <div class="cb"><form id="changePass" class="row"><input class="input" name="np" type="text" minlength="8" required placeholder="New passcode, at least 8 characters" aria-label="New passcode" autocomplete="off" style="flex:1 1 240px;width:auto"><button class="btn">Change passcode</button></form>
+        <p class="small muted" style="margin:10px 0 0">Changing it signs out every other desk until they enter the new one.</p></div></section>
+      <section class="card"><div class="ch"><div><h2>Register data</h2><div class="small muted" style="margin-top:2px">Import from a spreadsheet with Name, Phone, Group, Subgroup and Role columns.</div></div></div>
+        <div class="cb row"><input type="file" id="file" accept=".csv,.xlsx,.xls,text/csv" class="hide"><button class="btn" data-act="pick">${I('upload')}Import spreadsheet</button><button class="btn" data-act="tpl">${I('download')}Download template</button><button class="btn" data-act="dlRoster">${I('download')}Export register</button></div></section>
+      <section class="card"><div class="ch"><div><h2>This device</h2><div class="small muted" style="margin-top:2px">Changes are saved on the device first, then sent as soon as there's a connection.</div></div></div>
+        <div class="cb row sp"><div class="sync syncslot" style="padding:0"></div><button class="btn" data-act="lock">${I('lock')}Lock this device</button></div></section></div>`;
 }
-function closeSheet(){ $('#sheetHost').innerHTML = ''; if (pendingRender) { pendingRender = false; render(); } sheetReturn?.focus?.(); }
-const sheetHead = (title, sub) => `<button class="x" data-act="closeSheet" aria-label="Close">×</button><h2 class="wide">${title}</h2>${sub ? `<p class="muted" style="margin:0 0 16px">${sub}</p>` : '<div style="height:12px"></div>'}`;
-function confirmSheet(title, body, ok, fn, danger=true){
-  openSheet(`${sheetHead(title, body)}<div class="foot"><button class="btn" data-act="closeSheet">Cancel</button><button class="btn ${danger?'danger':'primary'}" id="okBtn">${ok}</button></div>`, '#okBtn');
-  $('#okBtn').onclick = () => { closeSheet(); fn(); };
+
+/* ---------- overlays ---------- */
+let returnFocus = null;
+function openPanel(html, {center=false, focus=null} = {}){
+  returnFocus = document.activeElement;
+  $('#overlay').innerHTML = `<div class="scrim" data-scrim></div><div class="drawer ${center ? 'center' : ''}" role="dialog" aria-modal="true">${html}</div>`;
+  setTimeout(() => ($(focus || '.drawer .db input:not([type=hidden]),.drawer .db select,.drawer .df .btn.primary') || $('.drawer .x'))?.focus(), 30);
 }
-function meetingSheet(){
-  const m = meeting(), others = Object.entries(S.meetings).filter(([id,v]) => v && v.title && id !== S.current).sort((a,b) => (b[1].date||'').localeCompare(a[1].date||'')).slice(0, 6);
-  openSheet(`${sheetHead(m ? esc(m.title) : 'Start a meeting', m ? `${fmtDate(m.date)} · ${m.endedAt ? 'Ended' : 'Check-in open'}` : 'Every desk checks people into the meeting that is open.')}
-    ${m ? `<div class="row">${m.endedAt ? '<button class="btn" data-act="reopen">Reopen check-in</button>' : '<button class="btn primary" data-act="end">End meeting</button>'}<button class="btn" data-act="dlAll">Download Excel report</button></div><h3 style="font-size:15px;margin:24px 0 8px">Start a new meeting</h3>` : ''}
-    ${startForm('newMeeting3')}
-    ${others.length ? `<h3 style="font-size:15px;margin:24px 0 0">Switch to an earlier meeting</h3><ul class="mlist">${others.map(([id,v]) => `<li><span><b>${esc(v.title)}</b> <span class="muted small">${fmtDate(v.date)}</span></span><button class="btn sm" data-act="openM" data-id="${id}">Open</button></li>`).join('')}</ul>` : ''}`);
+function closePanel(){ $('#overlay').innerHTML = ''; if (pendingRender) { pendingRender = false; render(); } returnFocus?.focus?.(); }
+const dh = (title, sub) => `<div class="dh"><div><h2>${title}</h2>${sub ? `<p>${sub}</p>` : ''}</div><button class="btn ghost sm x" data-act="close" aria-label="Close">${I('x')}</button></div>`;
+function confirmPanel(title, body, ok, fn, danger=true){
+  openPanel(`${dh(title)}<div class="db"><p style="margin:0" class="muted">${body}</p></div><div class="df"><button class="btn" data-act="close">Cancel</button><button class="btn ${danger ? 'danger' : 'primary'}" id="okBtn">${ok}</button></div>`, {center:true, focus:'#okBtn'});
+  $('#okBtn').onclick = () => { closePanel(); fn(); };
+}
+function meetingPanel(){
+  const m = meeting(), others = Object.entries(S.meetings).filter(([id,v]) => v && v.title && id !== S.current).sort((a,b) => (b[1].date||'').localeCompare(a[1].date||'')).slice(0, 5);
+  openPanel(`${dh(m ? esc(m.title) : 'Start a meeting', m ? `${fmtDate(m.date)}. ${m.endedAt ? 'Ended.' : 'Check-in is open.'}` : 'Every desk checks people into the open meeting.')}
+    <div class="db">${m ? `<div class="row">${m.endedAt ? '<button class="btn" data-act="reopen">Reopen check-in</button>' : '<button class="btn" data-act="end">End meeting</button>'}<button class="btn" data-act="report">${I('download')}Excel report</button></div>` : ''}
+      <div><div class="small" style="font-weight:600;margin-bottom:10px">${m ? 'Start a new meeting' : 'New meeting'}</div>${startForm('newMeeting2')}</div>
+      ${others.length ? `<div><div class="small" style="font-weight:600;margin-bottom:8px">Switch to an earlier meeting</div><ul class="mlist">${others.map(([id,v]) => `<li><span class="grow"><b style="font-weight:550">${esc(v.title)}</b><span class="small muted"> ${fmtShort(v.date)}</span></span><button class="btn sm" data-act="openM" data-id="${id}">Open</button></li>`).join('')}</ul></div>` : ''}</div>`, {center:true});
+}
+function findPanel(){
+  openPanel(`${dh('Find a person')}<div class="db"><div class="sinput" style="max-width:none">${I('search')}<input class="input" id="fq" type="search" placeholder="Name or phone number" autocomplete="off"></div><div id="fres"></div></div>`, {center:true, focus:'#fq'});
+}
+function findResults(){
+  const pres = presentMap(meeting()), res = search(ui.fq, 12);
+  $('#fres').innerHTML = ui.fq ? (res.length ? `<ul class="mlist">${res.map(p => `<li style="cursor:pointer" data-act="editP" data-id="${p.id}"><span class="av ${pres[p.id]?'ok':''}">${esc(initials(p.name))}</span><span class="grow" style="min-width:0"><b style="font-weight:550">${esc(p.name)}</b><div class="small muted">${esc(where(p))}</div></span>${pres[p.id] ? '<span class="badge ok">Here</span>' : ''}</li>`).join('')}</ul>` : '<p class="muted small">No one matches.</p>') : '';
 }
 function unitOptions(gid, sel){ return `<option value="">No unit</option>${subsOf(gid).map(u => `<option value="${u.id}" ${sel===u.id?'selected':''}>${esc(unitLabel(u.id))}</option>`).join('')}`; }
-function personSheet(id){
-  const isNew = !id, p = isNew ? {id: uid('m'), name:'', phone:'', group: (groupsTop().find(isUnp)||{}).id || '', subgroup:'', role:'member'} : {...S.members[id]};
-  openSheet(`${sheetHead(isNew ? 'Add a person' : esc(p.name), isNew ? '' : esc(where(p)))}
-    <form id="pform" data-id="${p.id}" class="stack">
-      <label class="f">Full name<input name="name" required value="${esc(p.name)}" autocomplete="off"></label>
-      <label class="f">Phone<input name="phone" inputmode="tel" value="${esc(p.phone)}" autocomplete="off"><span class="muted tiny" style="font-weight:400">Separate extra numbers with commas.</span></label>
-      <div class="row" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px">
-        <label class="f">Group<select name="group" id="pfGroup"><option value="">${UNPAIRED}</option>${groupsTop().filter(g=>!isUnp(g)).map(g => `<option value="${g.id}" ${p.group===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select></label>
-        <label class="f">Unit<select name="subgroup" id="pfUnit">${unitOptions(p.group, p.subgroup)}</select></label></div>
-      <label class="f">Role<select name="role">${Object.entries(ROLE_LABEL).map(([k,l]) => `<option value="${k}" ${p.role===k?'selected':''}>${l}</option>`).join('')}</select></label>
-      <div class="foot">${isNew ? '' : `<button type="button" class="btn danger left" data-act="delP" data-id="${p.id}">Remove</button>`}<button type="button" class="btn" data-act="closeSheet">Cancel</button><button class="btn primary">${isNew ? 'Add person' : 'Save'}</button></div>
-    </form>`);
+function personPanel(id){
+  const isNew = !id, p = isNew ? {id: uid('m'), name:'', phone:'', group:'', subgroup:'', role:'member'} : {...S.members[id]};
+  const m = meeting(), t = presentMap(m)[p.id];
+  openPanel(`${dh(isNew ? 'Add a person' : esc(p.name), isNew ? 'They go into “Not paired yet” unless you choose a group.' : esc(where(p)))}
+    <form id="pform" data-id="${p.id}" style="display:contents"><div class="db">
+      ${!isNew && m ? `<div class="callout" style="margin:0">${t ? `<span class="badge ok">Here</span><span class="grow">Checked in at ${fmtTime(t)}</span><button type="button" class="btn sm" data-act="undo" data-id="${p.id}">Undo</button>` : `<span class="badge">Not here</span><span class="grow">${esc(m.title)}</span>${m.endedAt ? '' : `<button type="button" class="btn sm primary" data-act="reg" data-id="${p.id}">Check in</button>`}`}</div>` : ''}
+      <label class="field">Full name<input class="input" name="name" required value="${esc(p.name)}" autocomplete="off"></label>
+      <label class="field">Phone<input class="input" name="phone" inputmode="tel" value="${esc(p.phone)}" autocomplete="off"><span class="hint">Separate extra numbers with commas.</span></label>
+      <div class="two"><label class="field">Group<select class="input" name="group" id="pfGroup"><option value="">${UNPAIRED}</option>${realGroups().map(g => `<option value="${g.id}" ${p.group===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select></label>
+        <label class="field">Unit<select class="input" name="subgroup" id="pfUnit">${unitOptions(p.group, p.subgroup)}</select></label></div>
+      <label class="field">Role<select class="input" name="role">${Object.entries(ROLE_LABEL).map(([k,l]) => `<option value="${k}" ${p.role===k?'selected':''}>${l}</option>`).join('')}</select></label></div>
+    <div class="df">${isNew ? '' : `<button type="button" class="btn danger l" data-act="delP" data-id="${p.id}">Remove</button>`}<button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary">${isNew ? 'Add person' : 'Save changes'}</button></div></form>`);
 }
-function groupSheet(gid){
-  const g = gid ? S.groups[gid] : null, mem = g ? inGroup(g.id) : [], units = g ? subsOf(g.id) : [];
-  const opts = (list, sel) => `<option value="">Not set</option>${list.map(p => `<option value="${p.id}" ${sel===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}`;
-  openSheet(`${sheetHead(g ? 'Edit ' + esc(g.name) : 'Add a group', g ? `${mem.length} people · ${units.length} units` : '')}
-    <form id="gform" data-id="${g ? g.id : ''}" class="stack">
-      <label class="f">Group name<input name="name" required value="${g ? esc(g.name) : ''}" autocomplete="off"></label>
-      ${g ? `<label class="f">Group head<select name="head">${opts(mem, headOf(g.id,'group_head')?.id)}</select></label>
-      <div><div class="f" style="font-size:14px;font-weight:600;margin-bottom:8px">Units</div>
-        ${units.map(u => { const um = mem.filter(p => p.subgroup === u.id); return `<div style="display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:8px;margin-bottom:8px">
-          <input name="u_${u.id}" value="${esc(u.name)}" aria-label="Unit name" required><select name="h_${u.id}" aria-label="Head of ${esc(u.name)}">${opts(um, headOf(u.id,'subgroup_head')?.id)}</select></div>`; }).join('') || '<p class="muted small" style="margin:0 0 8px">No units yet.</p>'}
-        <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px"><input name="newUnit" placeholder="New unit name, e.g. ${esc(g.name)}${'ABCDE'[units.length]||''}" aria-label="New unit name"><button type="button" class="btn" data-act="addUnit">Add unit</button></div></div>` : ''}
-      <div class="foot">${g ? `<button type="button" class="btn danger left" data-act="delG" data-id="${g.id}" ${mem.length ? 'disabled title="Move its people out first"' : ''}>Delete group</button>` : ''}<button type="button" class="btn" data-act="closeSheet">Cancel</button><button class="btn primary">${g ? 'Save' : 'Add group'}</button></div>
-    </form>`);
+function groupPanel(gid){
+  const g = gid ? S.groups[gid] : null, list = g ? inGroup(g.id) : [], units = g ? subsOf(g.id) : [];
+  const opts = (l, sel) => `<option value="">Not set</option>${l.map(p => `<option value="${p.id}" ${sel===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}`;
+  openPanel(`${dh(g ? 'Edit ' + esc(g.name) : 'Add a group', g ? `${list.length} people in ${units.length} units` : '')}
+    <form id="gform" data-id="${g ? g.id : ''}" style="display:contents"><div class="db">
+      <label class="field">Group name<input class="input" name="name" required value="${g ? esc(g.name) : ''}" autocomplete="off"></label>
+      ${g ? `<label class="field">Group head<select class="input" name="head">${opts(list, headOf(g.id,'group_head')?.id)}</select></label>
+      <div class="field">Units and their heads
+        ${units.map(u => `<div class="two" style="gap:8px"><input class="input" name="u_${u.id}" value="${esc(u.name)}" aria-label="Unit name" required><select class="input" name="h_${u.id}" aria-label="Head of ${esc(u.name)}">${opts(list.filter(p => p.subgroup === u.id), headOf(u.id,'subgroup_head')?.id)}</select></div>`).join('') || '<span class="hint">No units yet.</span>'}
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px"><input class="input" name="newUnit" placeholder="New unit, e.g. ${esc(g.name)}${'ABCDEF'[units.length] || ''}" aria-label="New unit name"><button type="button" class="btn" data-act="addUnit">Add unit</button></div></div>` : ''}</div>
+    <div class="df">${g ? `<button type="button" class="btn danger l" data-act="delG" data-id="${g.id}" ${list.length ? 'disabled title="Move its people out first"' : ''}>Delete group</button>` : ''}<button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary">${g ? 'Save changes' : 'Add group'}</button></div></form>`);
 }
 
 /* ---------- actions ---------- */
@@ -639,18 +736,17 @@ function toast(msg, undo){
   clearTimeout(toastT);
   $('#toastHost').innerHTML = `<div class="toast" role="status"><span>${esc(msg)}</span>${undo ? '<button id="tUndo">Undo</button>' : ''}</div>`;
   if (undo) $('#tUndo').onclick = () => { undo(); $('#toastHost').innerHTML = ''; };
-  toastT = setTimeout(() => $('#toastHost').innerHTML = '', 5000);
+  toastT = setTimeout(() => $('#toastHost').innerHTML = '', 4500);
 }
 function register(id){
-  const m = meeting(); if (!m || m.endedAt) return;
-  const p = S.members[id]; if (!p) return;
-  if (presentMap(m)[id]) { ui.last = id; ui.q = ''; afterCheckin(); return; }
-  const at = Date.now(); m.present = {...m.present, [id]: at};
-  enqueue({t:'checkin', op:'put', data:{meeting: S.current, member: id, at}});
-  ui.last = id; ui.q = ''; ui.sel = 0; afterCheckin();
+  const m = meeting(); if (!m || m.endedAt || !S.members[id]) return;
+  if (!presentMap(m)[id]) { const at = Date.now(); m.present = {...m.present, [id]: at}; enqueue({t:'checkin', op:'put', data:{meeting: S.current, member: id, at}}); }
+  ui.last = id; ui.q = ''; ui.sel = 0;
+  if ($('.drawer')) { closePanel(); toast(`${S.members[id].name} is checked in.`); }
+  const q = $('#q'); if (q) { q.value = ''; q.focus(); }
+  render();
 }
-function afterCheckin(){ const q = $('#q'); if (q) { q.value = ''; q.focus(); } render(); }
-function unregister(id){ const m = meeting(); if (!m) return; m.present = {...m.present, [id]: null}; enqueue({t:'checkin', op:'del', data:{meeting: S.current, member: id}}); if (ui.last === id) ui.last = null; render(); toast(`${S.members[id]?.name || 'Check-in'} undone.`); }
+function unregister(id){ const m = meeting(); if (!m) return; m.present = {...m.present, [id]: null}; enqueue({t:'checkin', op:'del', data:{meeting: S.current, member: id}}); if (ui.last === id) ui.last = null; if ($('.drawer')) closePanel(); render(); toast(`Check-in undone for ${S.members[id]?.name || 'that person'}.`); }
 function unpairedGroup(){
   let g = Object.values(S.groups).find(x => !x.parent && isUnp(x));
   if (!g) { g = {id: uid('g'), name: UNPAIRED, parent: ''}; S.groups[g.id] = g; saveGroup(g); }
@@ -671,27 +767,23 @@ function setHead(gid, role, memberId){
 function startMeeting(title, date){
   const id = uid('mt');
   S.meetings[id] = {title: title.trim() || 'CCRW Meeting', date, createdAt: Date.now(), endedAt: null, present: {}};
-  saveMeeting(id); setCurrent(id); ui.last = null; closeSheet(); location.hash = 'checkin'; render(); toast('Meeting started. Check-in is open.');
+  saveMeeting(id); setCurrent(id); ui.last = null; closePanel(); location.hash = 'checkin'; render(); toast('Meeting started. Check-in is open.');
 }
-function endMeeting(){ const m = meeting(); confirmSheet('End this meeting?', 'Check-in closes on every desk and the absent list becomes final. You can reopen it later.', 'End meeting', () => {
-  m.endedAt = Date.now(); m.totalAtEnd = Object.keys(S.members).length; saveMeeting(S.current); ui.liveTab = 'absent'; location.hash = 'live'; render(); toast('Meeting ended. The absent list is final.'); }, false); }
-
+function endMeeting(){ const m = meeting(); confirmPanel('End this meeting?', 'Check-in closes on every desk and the absentee list becomes final. You can reopen it later if you need to.', 'End meeting', () => {
+  m.endedAt = Date.now(); m.totalAtEnd = Object.keys(S.members).length; saveMeeting(S.current); ui.rtab = 'absent'; location.hash = 'reports'; render(); toast('Meeting ended. The absentee list is final.'); }, false); }
 function csvCell(v){ v = String(v ?? ''); return /[",\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }
 const toCsv = rows => rows.map(r => r.map(csvCell).join(',')).join('\r\n');
 function saveFile(name, text){
   const url = URL.createObjectURL(new Blob(['﻿' + text], {type:'text/csv;charset=utf-8'}));
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
-const slug = s => (s||'meeting').replace(/[^\w]+/g,'-').replace(/^-|-$/g,'').toLowerCase();
-const unitName = p => S.groups[p.subgroup] ? unitLabel(p.subgroup) : '';
-
+const unitName = p => S.groups[p.subgroup] ? unitShort(p.subgroup) : '';
 function findOrMakeGroup(name, parent, pending){
   const n = norm(name); if (!n) return '';
   const hit = Object.values(S.groups).concat(pending).find(g => !!g && norm(g.name) === n && (g.parent||'') === (parent||''));
   if (hit) return hit.id;
   const g = {id: uid('g'), name: name.trim(), parent: parent || ''}; pending.push(g); return g.id;
 }
-
 /* ---------- Excel report ---------- */
 function loadExcelJS(){
   return new Promise((ok, bad) => { if (window.ExcelJS) return ok(window.ExcelJS);
@@ -816,7 +908,6 @@ async function downloadReport(mid){
   const a = document.createElement('a'); a.href = url; a.download = `CCRW attendance - ${m.title} - ${m.date}.xlsx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
   toast('Report downloaded.');
 }
-
 /* ---------- import ---------- */
 function parseCsv(text){
   const rows = []; let row = [], cell = '', q = false;
@@ -868,13 +959,13 @@ async function readFile(file){
   const cols = [['Name', iName >= 0 || iFirst >= 0], ['Phone', iPhone >= 0], ['Group', iGroup >= 0], ['Unit', iSub >= 0], ['Role', iRole >= 0]].filter(c => c[1]).map(c => c[0]).join(', ');
   return {file: file.name, rows, dupes, newGroups, cols};
 }
-function importSheet(imp){
+function importPanel(imp){
   const fresh = imp.rows.length - imp.dupes;
-  openSheet(`${sheetHead('Import ' + esc(imp.file), `Found ${imp.rows.length} people. Columns read: ${esc(imp.cols)}.`)}
-    <ul class="mlist"><li><span>New people to add</span><b class="num">${fresh}</b></li><li><span>Already on the register (skipped)</span><b class="num">${imp.dupes}</b></li><li><span>New groups to create</span><b class="num">${imp.newGroups}</b></li></ul>
-    <p class="muted small">Anyone without a group goes into “${UNPAIRED}”.</p>
-    <div class="foot"><button class="btn" data-act="closeSheet">Cancel</button><button class="btn primary" id="okBtn" ${fresh ? '' : 'disabled'}>Import ${fresh}</button></div>`, '#okBtn');
-  $('#okBtn').onclick = () => { closeSheet(); doImport(imp); };
+  openPanel(`${dh('Import ' + esc(imp.file), `Found ${imp.rows.length} people. Columns read: ${esc(imp.cols)}.`)}<div class="db">
+    <ul class="mlist"><li><span class="grow">New people to add</span><b class="num">${fresh}</b></li><li><span class="grow">Already on the register, skipped</span><b class="num">${imp.dupes}</b></li><li><span class="grow">New groups to create</span><b class="num">${imp.newGroups}</b></li></ul>
+    <p class="small muted" style="margin:0">Anyone without a group goes into “${UNPAIRED}”.</p></div>
+    <div class="df"><button class="btn" data-act="close">Cancel</button><button class="btn primary" id="okBtn" ${fresh ? '' : 'disabled'}>Import ${fresh} people</button></div>`, {center:true, focus:'#okBtn'});
+  $('#okBtn').onclick = () => { closePanel(); doImport(imp); };
 }
 function doImport(imp){
   const pending = [], added = [];
@@ -889,61 +980,70 @@ function doImport(imp){
 
 /* ---------- events ---------- */
 document.addEventListener('click', e => {
-  if (e.target.matches('[data-scrim]')) { closeSheet(); return; }
+  if (e.target.matches('[data-scrim]')) { closePanel(); return; }
+  const go = e.target.closest('tr[data-go]'); if (go && !e.target.closest('button,a,select')) { location.hash = go.dataset.go; return; }
   const b = e.target.closest('[data-act]'); if (!b) return;
   const a = b.dataset.act, id = b.dataset.id;
+  if (b.tagName === 'A' && a !== 'needsPairing') e.preventDefault();
   if (a === 'reg') register(id);
   else if (a === 'undo') unregister(id);
-  else if (a === 'clearQ') { ui.q = ''; ui.sel = 0; const q = $('#q'); q.value = ''; q.focus(); renderCiBody(); }
-  else if (a === 'meetingMenu') meetingSheet();
-  else if (a === 'closeSheet') closeSheet();
-  else if (a === 'reopen') { meeting().endedAt = null; saveMeeting(S.current); closeSheet(); render(); toast('Check-in reopened.'); }
-  else if (a === 'end') { closeSheet(); endMeeting(); }
-  else if (a === 'openM') { setCurrent(id); ui.last = null; closeSheet(); render(); toast(`Opened ${S.meetings[id].title}.`); }
-  else if (a === 'delM') { const v = S.meetings[id]; confirmSheet(`Delete ${esc(v.title)}?`, `Its check-ins (${Object.keys(presentMap(v)).length}) are removed too. This can't be undone.`, 'Delete meeting', () => { enqueue({t:'meeting', op:'del', data:{id}}); if (S.current === id) setCurrent(null); delete S.meetings[id]; render(); }); }
-  else if (a === 'liveTab') { ui.liveTab = b.dataset.v; render(); }
-  else if (a === 'peopleTab') { ui.peopleTab = b.dataset.v; render(); }
-  else if (a === 'toggleG') { ui.openG.has(id) ? ui.openG.delete(id) : ui.openG.add(id); render(); }
-  else if (a === 'toggleU') { ui.openU.has(id) ? ui.openU.delete(id) : ui.openU.add(id); render(); }
+  else if (a === 'clearQ') { ui.q = ''; ui.sel = 0; const q = $('#q'); q.value = ''; q.focus(); renderDesk(); }
+  else if (a === 'meetingMenu') meetingPanel();
+  else if (a === 'find') { ui.fq = ''; findPanel(); }
+  else if (a === 'close') closePanel();
+  else if (a === 'reopen') { meeting().endedAt = null; saveMeeting(S.current); closePanel(); render(); toast('Check-in reopened.'); }
+  else if (a === 'end') { closePanel(); endMeeting(); }
+  else if (a === 'openM') { setCurrent(id); ui.last = null; closePanel(); render(); toast(`Opened ${S.meetings[id].title}.`); }
+  else if (a === 'delM') { const v = S.meetings[id]; confirmPanel(`Delete ${esc(v.title)}?`, `Its ${Object.keys(presentMap(v)).length} check-ins are deleted too. This can't be undone.`, 'Delete meeting', () => { enqueue({t:'meeting', op:'del', data:{id}}); if (S.current === id) setCurrent(null); delete S.meetings[id]; render(); toast('Meeting deleted.'); }); }
+  else if (a === 'report') { closePanel(); downloadReport(id); }
+  else if (a === 'rtab') { ui.rtab = b.dataset.v; render(); }
+  else if (a === 'dtab') { ui.dtab = b.dataset.v; ui.dlimit = 150; render(); }
+  else if (a === 'needsPairing') { ui.dtab = 'pair'; if (location.hash === '#directory') render(); }
+  else if (a === 'gf') { ui.gf = b.dataset.v; render(); }
   else if (a === 'print') window.print();
-  else if (a === 'lock') confirmSheet('Lock this device?', 'Anyone using it will need the desk passcode again.', 'Lock', () => lock(''), false);
-  else if (a === 'copyAbsent') { const t = absentList().filter(p => ui.absG === 'all' || p.group === ui.absG).map(p => [p.name, (p.phone||'').split(',')[0], where(p)].filter(Boolean).join(' — ')).join('\n');
-    navigator.clipboard?.writeText(t).then(() => toast('Absent list copied.'), () => toast('Copy was blocked by the browser.')); }
-  else if (a === 'dlAll' || a === 'dlAbsent') downloadReport(id);
-  else if (a === 'dlRoster') saveFile('ccrw-register.csv', toCsv([['Name','Phone','Group','Unit','Role'], ...members().map(p => [p.name, p.phone, gName(p.group), unitName(p), ROLE_LABEL[p.role] || 'Member'])]));
+  else if (a === 'lock') confirmPanel('Lock this device?', 'Anyone using it will need the desk passcode again.', 'Lock device', () => lock(''), false);
+  else if (a === 'copyAbsent') { const t = absentList().filter(p => ui.absG === 'all' || p.group === ui.absG).map(p => [p.name, firstPhone(p), where(p)].filter(Boolean).join(', ')).join('\n');
+    navigator.clipboard?.writeText(t).then(() => toast('Absentee list copied.'), () => toast('Your browser blocked copying.')); }
+  else if (a === 'dlRoster') saveFile('ccrw-register.csv', toCsv([['Name','Phone','Group','Unit','Role'], ...members().map(p => [p.name, p.phone, isPaired(p) ? gName(p.group) : UNPAIRED, unitName(p), ROLE_LABEL[p.role] || 'Member'])]));
   else if (a === 'tpl') saveFile('rollcall-template.csv', toCsv([['Name','Phone','Group','Subgroup','Role'],['Ada Obi','08031234567','Group 1','Group 1A','Unit head'],['Tunde Bello','08039876543','Group 1','Group 1B','Member'],['Ngozi Eze','','','','Member']]));
   else if (a === 'pick') $('#file').click();
-  else if (a === 'addP') personSheet();
-  else if (a === 'editP') personSheet(id);
-  else if (a === 'more') { ui.plimit += 120; renderPlist(); }
-  else if (a === 'delP') { const p = S.members[id]; confirmSheet(`Remove ${esc(p.name)}?`, 'They come off the register and every check-in list.', 'Remove', () => { delete S.members[id]; dropMember(id); render(); toast(`${p.name} removed.`); }); }
-  else if (a === 'addG') groupSheet();
-  else if (a === 'editG') groupSheet(id);
-  else if (a === 'addUnit') { const f = $('#gform'), v = f.newUnit.value.trim(); if (!v) return; const u = {id: uid('g'), name: v, parent: f.dataset.id}; S.groups[u.id] = u; saveGroup(u); groupSheet(f.dataset.id); }
-  else if (a === 'delG') { const g = S.groups[id]; confirmSheet(`Delete ${esc(g.name)}?`, 'Its units are deleted too.', 'Delete group', () => { for (const u of subsOf(id)) { delete S.groups[u.id]; dropGroup(u.id); } delete S.groups[id]; dropGroup(id); render(); }); }
+  else if (a === 'addP') personPanel();
+  else if (a === 'editP') personPanel(id);
+  else if (a === 'more') { ui.dlimit += 150; renderDir(); }
+  else if (a === 'pair') { const g = $(`[data-pairg="${id}"]`).value, u = $(`[data-pairu="${id}"]`).value, p = S.members[id];
+    if (!g) { toast('Choose a group first.'); $(`[data-pairg="${id}"]`).focus(); return; }
+    const before = {...p}; p.group = g; p.subgroup = u; saveMember(p); renderDir(); render(true);
+    toast(`${p.name} paired with ${where(p)}.`, () => { S.members[id] = before; saveMember(before); renderDir(); render(true); }); }
+  else if (a === 'delP') { const p = S.members[id]; confirmPanel(`Remove ${esc(p.name)}?`, 'They come off the register and every attendance list.', 'Remove person', () => { delete S.members[id]; dropMember(id); render(); toast(`${p.name} removed.`); }); }
+  else if (a === 'addG') groupPanel();
+  else if (a === 'editG') groupPanel(id);
+  else if (a === 'addUnit') { const f = $('#gform'), v = f.newUnit.value.trim(); if (!v) return; const u = {id: uid('g'), name: v, parent: f.dataset.id}; S.groups[u.id] = u; saveGroup(u); groupPanel(f.dataset.id); }
+  else if (a === 'delG') { const g = S.groups[id]; confirmPanel(`Delete ${esc(g.name)}?`, 'Its units are deleted too.', 'Delete group', () => { for (const u of subsOf(id)) { delete S.groups[u.id]; dropGroup(u.id); } delete S.groups[id]; dropGroup(id); location.hash = 'groups'; render(); }); }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && $('#sheetHost').innerHTML) { closeSheet(); return; }
-  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button][data-act]')) { e.preventDefault(); e.target.click(); return; }
-  if (e.key === '/' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName) && $('#q')) { e.preventDefault(); $('#q').focus(); return; }
+  if (e.key === 'Escape' && $('#overlay').innerHTML) { closePanel(); return; }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('tr[data-act],tr[data-go]')) { e.preventDefault(); e.target.click(); return; }
+  if (e.key === '/' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName) && pass) { e.preventDefault(); if ($('#q')) $('#q').focus(); else { ui.fq = ''; findPanel(); } return; }
   if (e.target.id !== 'q') return;
   const res = search(ui.q);
-  if (e.key === 'ArrowDown') { ui.sel = Math.min(ui.sel + 1, res.length - 1); renderCiBody(); e.preventDefault(); }
-  else if (e.key === 'ArrowUp') { ui.sel = Math.max(ui.sel - 1, 0); renderCiBody(); e.preventDefault(); }
+  if (e.key === 'ArrowDown') { ui.sel = Math.min(ui.sel + 1, res.length - 1); renderDesk(); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { ui.sel = Math.max(ui.sel - 1, 0); renderDesk(); e.preventDefault(); }
   else if (e.key === 'Enter') { e.preventDefault(); if (res[ui.sel]) register(res[ui.sel].id); }
-  else if (e.key === 'Escape') { ui.q = ''; e.target.value = ''; renderCiBody(); }
+  else if (e.key === 'Escape') { ui.q = ''; e.target.value = ''; renderDesk(); }
 });
 document.addEventListener('input', e => {
   const t = e.target;
-  if (t.id === 'q') { ui.q = t.value; ui.sel = 0; if (ui.q) ui.last = null; renderCiBody(); }
-  else if (t.id === 'pq') { ui.pq = t.value; ui.plimit = 120; renderPlist(); }
+  if (t.id === 'q') { ui.q = t.value; ui.sel = 0; if (ui.q) ui.last = null; renderDesk(); }
+  else if (t.id === 'dq') { ui.dq = t.value; ui.dlimit = 150; renderDir(); }
+  else if (t.id === 'fq') { ui.fq = t.value; findResults(); }
 });
 document.addEventListener('change', async e => {
   const t = e.target;
-  if (t.id === 'file' && t.files[0]) { try { importSheet(await readFile(t.files[0])); } catch(err) { toast(err.message === 'noname' ? 'Could not find a Name column in that file.' : 'Could not read that file.'); } t.value = ''; }
-  else if (t.id === 'pf') { ui.pf = t.value; ui.plimit = 120; renderPlist(); }
+  if (t.id === 'file' && t.files[0]) { try { importPanel(await readFile(t.files[0])); } catch(err) { toast(err.message === 'noname' ? "That file doesn't have a Name column." : "That file couldn't be read."); } t.value = ''; }
+  else if (t.id === 'dg') { ui.dg = t.value; ui.dlimit = 150; renderDir(); }
   else if (t.id === 'absG') { ui.absG = t.value; render(); }
   else if (t.id === 'pfGroup') $('#pfUnit').innerHTML = unitOptions(t.value, '');
+  else if (t.dataset.pairg) { const u = $(`[data-pairu="${t.dataset.pairg}"]`); u.innerHTML = `<option value="">Unit</option>` + subsOf(t.value).map(x => `<option value="${x.id}">${esc(unitShort(x.id))}</option>`).join(''); u.disabled = !t.value; }
 });
 document.addEventListener('submit', e => {
   const f = e.target; e.preventDefault();
@@ -952,26 +1052,26 @@ document.addEventListener('submit', e => {
       .catch(err => { pass = ''; state.loginMsg = err.auth ? err.msg : "Can't reach the server. Check the internet connection."; render(); }); }
   else if (/^newMeeting/.test(f.id)) startMeeting(f.title.value, f.date.value || today());
   else if (f.id === 'quickAdd') quickAdd(f.name.value, f.phone.value);
-  else if (f.id === 'changePass') { const v = f.np.value.trim(); api('/passcode', {method:'POST', body: JSON.stringify({passcode: v})}).then(() => { pass = v; store.set('pass', v); f.reset(); toast('Passcode changed. Other desks will need the new one.'); }).catch(err => toast(err.msg || err.message || 'Could not change the passcode.')); }
+  else if (f.id === 'changePass') { const v = f.np.value.trim(); api('/passcode', {method:'POST', body: JSON.stringify({passcode: v})}).then(() => { pass = v; store.set('pass', v); f.reset(); toast('Passcode changed. Other desks need the new one.'); }).catch(err => toast(err.msg || err.message || "The passcode couldn't be changed.")); }
   else if (f.id === 'pform') {
     const id = f.dataset.id, isNew = !S.members[id];
     const m = {id, name: f.name.value.trim(), phone: f.phone.value.trim(), group: f.group.value || unpairedGroup(), subgroup: f.group.value ? f.subgroup.value : '', role: f.role.value};
     if (!m.name) return;
     S.members[id] = m; saveMember(m);
     if (m.role === 'group_head') setHead(m.group, 'group_head', id); else if (m.role === 'subgroup_head' && m.subgroup) setHead(m.subgroup, 'subgroup_head', id);
-    closeSheet(); render(); toast(isNew ? `Added ${m.name}.` : `Saved ${m.name}.`);
+    closePanel(); render(); toast(isNew ? `${m.name} added.` : 'Changes saved.');
   }
   else if (f.id === 'gform') {
     const gid = f.dataset.id, name = f.name.value.trim(); if (!name) return;
-    if (!gid) { const g = {id: uid('g'), name, parent: ''}; S.groups[g.id] = g; saveGroup(g); closeSheet(); render(); groupSheet(g.id); return; }
+    if (!gid) { const g = {id: uid('g'), name, parent: ''}; S.groups[g.id] = g; saveGroup(g); closePanel(); location.hash = 'groups/' + g.id; render(); groupPanel(g.id); return; }
     const g = S.groups[gid]; if (g.name !== name) { g.name = name; saveGroup(g); }
     setHead(gid, 'group_head', f.head.value);
     for (const u of subsOf(gid)) { const nn = f['u_' + u.id].value.trim(); if (nn && nn !== u.name) { u.name = nn; saveGroup(u); } setHead(u.id, 'subgroup_head', f['h_' + u.id].value); }
     const nu = f.newUnit.value.trim(); if (nu) { const u = {id: uid('g'), name: nu, parent: gid}; S.groups[u.id] = u; saveGroup(u); }
-    closeSheet(); render(); toast(`Saved ${name}.`);
+    closePanel(); render(); toast('Changes saved.');
   }
 });
-window.addEventListener('hashchange', () => { render(); scrollTo(0, 0); });
+window.addEventListener('hashchange', () => { closePanel(); render(); document.querySelector('.panel')?.scrollIntoView?.({block:'start'}); scrollTo(0, 0); });
 
 /* ---------- start ---------- */
 render();

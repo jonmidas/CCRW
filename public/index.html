@@ -487,7 +487,7 @@ function vLive(){
   const unpG = groupsTop().find(isUnp), unpHere = unpG ? all.filter(p => p.group === unpG.id && pres[p.id]).length : 0;
   const last = Object.values(pres).sort((a,b)=>b-a)[0];
   const absent = total - n;
-  return `<div class="row sp"><div><h1 class="h1 wide">${m.endedAt ? 'Attendance report' : 'Live attendance'}</h1><p class="lead">${m.endedAt ? `Final numbers for ${esc(m.title)}, ${fmtDate(m.date)}.` : 'Updates as each desk checks people in.'}</p></div></div>
+  return `<div class="row sp"><div><h1 class="h1 wide">${m.endedAt ? 'Attendance report' : 'Live attendance'}</h1><p class="lead">${m.endedAt ? `Final numbers for ${esc(m.title)}, ${fmtDate(m.date)}.` : 'Updates as each desk checks people in.'}</p></div><button class="btn" data-act="dlAll">Download Excel report</button></div>
     <div class="kpis">
       <div class="kpi main"><b class="wide num">${n} <span style="font-size:.45em;opacity:.7">of ${total}</span></b><span>checked in · ${pctTxt(n,total)}%${last ? ` · last arrival ${fmtTime(last)}` : ''}</span><div class="bar"><i style="width:${pct(n,total)}%"></i></div></div>
       <div class="kpi"><b class="wide num">${absent}</b><span>${m.endedAt?'absent':'not here yet'}</span></div>
@@ -520,7 +520,7 @@ function vAbsent(){
   for (const p of abs) (byG[S.groups[p.group] ? p.group : '_'] ||= []).push(p);
   const order = [...groupsTop().map(g => g.id), '_'].filter(k => byG[k]);
   return `<div class="toolbar"><select id="absG" aria-label="Filter by group" style="max-width:260px"><option value="all">All groups</option>${groupsTop().map(g => `<option value="${g.id}" ${ui.absG===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select>
-      <div class="row"><button class="btn sm" data-act="copyAbsent">Copy</button><button class="btn sm" data-act="print">Print</button><button class="btn sm" data-act="dlAbsent">Download</button>
+      <div class="row"><button class="btn sm" data-act="copyAbsent">Copy</button><button class="btn sm" data-act="print">Print</button><button class="btn sm" data-act="dlAll">Excel report</button>
       ${m.endedAt ? '' : `<button class="btn sm primary" data-act="end">End meeting</button>`}</div></div>
     ${m.endedAt ? '' : `<p class="note small" style="margin-top:14px">This list becomes the final absent list when you end the meeting.</p>`}
     <div class="abs">${order.map(k => { const gh = k === '_' ? null : headOf(k, 'group_head');
@@ -571,13 +571,13 @@ function vMeetings(){
     <div class="mgrid">
       <div class="card mcard">${m ? `<div class="muted small">Open now</div><h2 class="wide">${esc(m.title)}</h2><div class="muted">${fmtDate(m.date)} · ${m.endedAt ? 'Ended ' + fmtTime(m.endedAt) : 'Check-in open'}</div>
         <div class="kpi" style="margin:16px 0;background:var(--soft)"><b class="wide num">${here(m)} <span style="font-size:.45em" class="muted">of ${total}</span></b><span class="muted">checked in</span></div>
-        <div class="row">${m.endedAt ? '<button class="btn" data-act="reopen">Reopen check-in</button>' : '<button class="btn primary" data-act="end">End meeting</button>'}<button class="btn" data-act="dlAll">Download report</button></div>`
+        <div class="row">${m.endedAt ? '<button class="btn" data-act="reopen">Reopen check-in</button>' : '<button class="btn primary" data-act="end">End meeting</button>'}<button class="btn" data-act="dlAll">Download Excel report</button></div>`
         : `<h2 class="wide">No meeting is open</h2><p class="muted">Start one to open check-in.</p>`}</div>
       <div class="card mcard"><h2 class="wide" style="font-size:19px">Start a new meeting</h2><p class="muted small" style="margin-top:0">It becomes the open meeting on every desk.</p>${startForm('newMeeting2')}</div>
     </div>
     <h2 style="font-size:18px;margin:32px 0 6px">History</h2>
     ${ms.length ? `<div class="card" style="padding:4px 16px"><table class="mtable"><tbody>${ms.map(([id,v]) => `<tr><td class="num muted" style="width:130px">${fmtDate(v.date)}</td><td><b>${esc(v.title)}</b>${id===S.current?' <span class="chip">Open</span>':''}</td><td class="num" style="text-align:right">${here(v)} here</td>
-      <td style="text-align:right;white-space:nowrap">${id!==S.current?`<button class="btn sm" data-act="openM" data-id="${id}">Open</button>`:''}<button class="btn ghost sm" data-act="delM" data-id="${id}" aria-label="Delete ${esc(v.title)}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">No meetings yet.</p>'}
+      <td style="text-align:right;white-space:nowrap"><button class="btn ghost sm" data-act="dlAll" data-id="${id}">Report</button>${id!==S.current?`<button class="btn sm" data-act="openM" data-id="${id}">Open</button>`:''}<button class="btn ghost sm" data-act="delM" data-id="${id}" aria-label="Delete ${esc(v.title)}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">No meetings yet.</p>'}
     <h2 style="font-size:18px;margin:32px 0 6px">Desk access</h2>
     <div class="card mcard"><form id="changePass" class="row"><input name="np" type="text" minlength="8" required placeholder="New passcode (8+ characters)" aria-label="New passcode" autocomplete="off" style="flex:1 1 240px;width:auto"><button class="btn">Change passcode</button></form>
       <p class="muted small" style="margin:10px 0 0">Changing it locks every other desk until they enter the new one.</p>
@@ -600,7 +600,7 @@ function confirmSheet(title, body, ok, fn, danger=true){
 function meetingSheet(){
   const m = meeting(), others = Object.entries(S.meetings).filter(([id,v]) => v && v.title && id !== S.current).sort((a,b) => (b[1].date||'').localeCompare(a[1].date||'')).slice(0, 6);
   openSheet(`${sheetHead(m ? esc(m.title) : 'Start a meeting', m ? `${fmtDate(m.date)} · ${m.endedAt ? 'Ended' : 'Check-in open'}` : 'Every desk checks people into the meeting that is open.')}
-    ${m ? `<div class="row">${m.endedAt ? '<button class="btn" data-act="reopen">Reopen check-in</button>' : '<button class="btn primary" data-act="end">End meeting</button>'}<button class="btn" data-act="dlAll">Download report</button></div><h3 style="font-size:15px;margin:24px 0 8px">Start a new meeting</h3>` : ''}
+    ${m ? `<div class="row">${m.endedAt ? '<button class="btn" data-act="reopen">Reopen check-in</button>' : '<button class="btn primary" data-act="end">End meeting</button>'}<button class="btn" data-act="dlAll">Download Excel report</button></div><h3 style="font-size:15px;margin:24px 0 8px">Start a new meeting</h3>` : ''}
     ${startForm('newMeeting3')}
     ${others.length ? `<h3 style="font-size:15px;margin:24px 0 0">Switch to an earlier meeting</h3><ul class="mlist">${others.map(([id,v]) => `<li><span><b>${esc(v.title)}</b> <span class="muted small">${fmtDate(v.date)}</span></span><button class="btn sm" data-act="openM" data-id="${id}">Open</button></li>`).join('')}</ul>` : ''}`);
 }
@@ -690,6 +690,131 @@ function findOrMakeGroup(name, parent, pending){
   const hit = Object.values(S.groups).concat(pending).find(g => !!g && norm(g.name) === n && (g.parent||'') === (parent||''));
   if (hit) return hit.id;
   const g = {id: uid('g'), name: name.trim(), parent: parent || ''}; pending.push(g); return g.id;
+}
+
+/* ---------- Excel report ---------- */
+function loadExcelJS(){
+  return new Promise((ok, bad) => { if (window.ExcelJS) return ok(window.ExcelJS);
+    const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+    s.onload = () => ok(window.ExcelJS); s.onerror = bad; document.head.appendChild(s); });
+}
+// people in register order: group by group, unit by unit, name by name
+function orderedPeople(){
+  const gi = new Map(groupsTop().map((g,i) => [g.id, i])), ui2 = new Map(); for (const g of groupsTop()) subsOf(g.id).forEach((u,i) => ui2.set(u.id, i));
+  return members().sort((a,b) => ((gi.get(a.group) ?? 999) - (gi.get(b.group) ?? 999)) || ((ui2.get(a.subgroup) ?? 99) - (ui2.get(b.subgroup) ?? 99)) || byName(a,b));
+}
+async function downloadReport(mid){
+  const m = S.meetings[mid || S.current]; if (!m) return;
+  toast('Preparing the Excel report…');
+  let X; try { X = await loadExcelJS(); } catch(e) { toast("Couldn't load the Excel tool. Check the internet connection."); return; }
+  const pres = presentMap(m), all = orderedPeople(), here = all.filter(p => pres[p.id]).length;
+  const C = {ink:'FF111111', white:'FFFFFFFF', grey:'FF6B6F76', line:'FFDADDE2', unit:'FFEDEFF2', soft:'FFF1F3F6',
+    okBg:'FFCFEFDB', okFg:'FF0F6B35', okTint:'FFF2FBF5', noBg:'FFFBD3DA', noFg:'FFAE0020', noTint:'FFFFF6F7', midBg:'FFFFEDC7', midFg:'FF8A5A00'};
+  const fill = c => ({type:'pattern', pattern:'solid', fgColor:{argb:c}});
+  const F = (o={}) => ({name:'Arial', size:11, ...o});
+  const thin = {bottom:{style:'thin', color:{argb:C.line}}};
+  const stat = list => { const h = list.filter(p => pres[p.id]).length; return {h, a: list.length - h, t: list.length, r: list.length ? h / list.length : 0}; };
+  const rateStyle = r => r >= .7 ? [C.okBg, C.okFg] : r >= .4 ? [C.midBg, C.midFg] : [C.noBg, C.noFg];
+  const status = m.endedAt ? `Final · ended ${fmtTime(m.endedAt)}` : `In progress · as of ${fmtTime(Date.now())}`;
+  const unitsOf = (g, list) => { const us = subsOf(g.id).map(u => ({label: unitLabel(u.id), head: headOf(u.id,'subgroup_head'), list: list.filter(p => p.subgroup === u.id)}));
+    const loose = list.filter(p => !S.groups[p.subgroup]); if (loose.length) us.push({label: us.length ? 'Not in a unit' : '', head: null, list: loose}); return us; };
+  const wb = new X.Workbook(); wb.creator = 'CCRW Rollcall'; wb.created = new Date();
+  const titleRows = (ws, cols, heading) => {
+    ws.pageSetup = {paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: {left:.4, right:.4, top:.5, bottom:.5, header:.2, footer:.2}};
+    ws.mergeCells(1, 1, 1, cols); Object.assign(ws.getCell(1,1), {value: heading, font: F({size:18, bold:true}), alignment:{horizontal:'left', vertical:'middle'}}); ws.getRow(1).height = 30;
+    ws.mergeCells(2, 1, 2, cols); Object.assign(ws.getCell(2,1), {value: `${m.title} · ${fmtDate(m.date)} · ${status}`, font: F({color:{argb:C.grey}})});
+  };
+  const headerRow = (ws, r, labels) => { const row = ws.getRow(r); row.values = labels; row.height = 22;
+    row.eachCell(c => { c.font = F({bold:true, color:{argb:C.white}}); c.fill = fill(C.ink); c.alignment = {vertical:'middle'}; }); };
+
+  /* 1. Summary */
+  const s = wb.addWorksheet('Summary', {views:[{showGridLines:false}]});
+  s.columns = [{width:36},{width:32},{width:12},{width:12},{width:12},{width:14}];
+  titleRows(s, 6, 'Attendance report');
+  const kp = [['Checked in', here], ['Absent', all.length - here], ['On the register', all.length], ['Attendance', all.length ? here / all.length : 0]];
+  s.mergeCells(4,3,4,4); s.mergeCells(5,3,5,4); s.mergeCells(4,5,4,6); s.mergeCells(5,5,5,6);
+  kp.forEach(([l, v], i) => { const col = [1,2,3,5][i], c1 = s.getCell(4, col), c2 = s.getCell(5, col);
+    c1.value = l; c1.font = F({color:{argb:C.grey}, size:10});
+    c2.value = v; c2.alignment = {horizontal:'left'}; c1.alignment = {horizontal:'left'}; c2.font = F({size:20, bold:true, color:{argb: i===0 ? C.okFg : i===1 ? C.noFg : C.ink}}); if (i === 3) c2.numFmt = '0%'; });
+  s.getRow(5).height = 30;
+  headerRow(s, 7, ['Group / unit', 'Head', 'Present', 'Absent', 'Total', 'Attendance']);
+  let r = 8;
+  for (const g of groupsTop()) {
+    const list = all.filter(p => p.group === g.id); if (!list.length) continue;
+    const st = stat(list), gh = headOf(g.id, 'group_head'), [bg, fg] = rateStyle(st.r);
+    const row = s.getRow(r++); row.values = [g.name, gh ? gh.name : '', st.h, st.a, st.t, st.r]; row.height = 22;
+    row.eachCell({includeEmpty:true}, c => { c.font = F({bold:true}); c.fill = fill(C.unit); c.alignment = {vertical:'middle'}; });
+    row.getCell(6).numFmt = '0%'; row.getCell(6).fill = fill(bg); row.getCell(6).font = F({bold:true, color:{argb:fg}});
+    row.getCell(3).font = F({bold:true, color:{argb:C.okFg}}); row.getCell(4).font = F({bold:true, color:{argb:C.noFg}});
+    for (const u of unitsOf(g, list)) { if (!u.label) continue;
+      const us = stat(u.list), [ub, uf] = rateStyle(us.r), ur = s.getRow(r++);
+      ur.values = ['    ' + u.label, u.head ? u.head.name : '', us.h, us.a, us.t, us.r];
+      ur.eachCell({includeEmpty:true}, c => { c.font = F(); c.border = thin; });
+      ur.getCell(6).numFmt = '0%'; ur.getCell(6).font = F({color:{argb:uf}, bold:true}); ur.getCell(6).fill = fill(ub);
+    }
+  }
+  const tot = s.getRow(r); tot.values = ['Total', '', here, all.length - here, all.length, all.length ? here / all.length : 0];
+  tot.eachCell({includeEmpty:true}, c => { c.font = F({bold:true}); c.border = {top:{style:'medium', color:{argb:C.ink}}}; }); tot.getCell(6).numFmt = '0%';
+  for (let i = 7; i <= r; i++) [3,4,5,6].forEach(c => s.getCell(i, c).alignment = {horizontal:'right', vertical:'middle'});
+  s.views = [{state:'frozen', ySplit:7, showGridLines:false}];
+
+  /* 2. By group: every person, grouped, colour-tagged */
+  const b = wb.addWorksheet('By group', {views:[{state:'frozen', ySplit:4, showGridLines:false}], properties:{outlineLevelRow:1}});
+  b.columns = [{width:36},{width:18},{width:12},{width:22},{width:12},{width:11}];
+  titleRows(b, 6, 'Attendance by group');
+  const lg = b.getRow(3); lg.getCell(1).value = 'Key:'; lg.getCell(1).font = F({color:{argb:C.grey}});
+  Object.assign(lg.getCell(2), {value:'Present', fill: fill(C.okBg), font: F({bold:true, color:{argb:C.okFg}}), alignment:{horizontal:'center'}});
+  Object.assign(lg.getCell(3), {value:'Absent', fill: fill(C.noBg), font: F({bold:true, color:{argb:C.noFg}}), alignment:{horizontal:'center'}});
+  headerRow(b, 4, ['Name', 'Phone', 'Unit', 'Role', 'Status', 'Time']);
+  r = 5;
+  for (const g of groupsTop()) {
+    const list = all.filter(p => p.group === g.id); if (!list.length) continue;
+    const st = stat(list), gh = headOf(g.id, 'group_head');
+    b.mergeCells(r, 1, r, 6);
+    Object.assign(b.getCell(r, 1), {value: `${g.name}   ·   ${st.h} of ${st.t} present (${Math.round(st.r*100)}%)${gh ? `   ·   Group head: ${gh.name}` : ''}`, font: F({bold:true, size:12, color:{argb:C.white}}), fill: fill(C.ink), alignment:{vertical:'middle', indent:1}});
+    b.getRow(r++).height = 26;
+    for (const u of unitsOf(g, list)) {
+      if (u.label) { const us = stat(u.list); b.mergeCells(r, 1, r, 6);
+        Object.assign(b.getCell(r, 1), {value: `${u.label}   ·   ${us.h} of ${us.t} present${u.head ? `   ·   Unit head: ${u.head.name}` : ''}`, font: F({bold:true}), fill: fill(C.unit), alignment:{vertical:'middle', indent:1}});
+        b.getRow(r++).height = 20; }
+      // present first, then absent
+      for (const p of [...u.list].sort((x,y) => (!!pres[y.id] - !!pres[x.id]) || byName(x,y))) {
+        const ok = !!pres[p.id], row = b.getRow(r++);
+        row.values = [p.name, (p.phone||'').split(',')[0].trim(), S.groups[p.subgroup] ? unitLabel(p.subgroup).replace(/^Unit /,'') : '', ROLE_LABEL[p.role] === 'Member' ? '' : ROLE_LABEL[p.role], ok ? 'Present' : 'Absent', ok ? fmtTime(pres[p.id]) : ''];
+        row.eachCell({includeEmpty:true}, c => { c.font = F(); c.fill = fill(ok ? C.okTint : C.noTint); c.border = thin; });
+        Object.assign(row.getCell(5), {fill: fill(ok ? C.okBg : C.noBg), font: F({bold:true, color:{argb: ok ? C.okFg : C.noFg}}), alignment:{horizontal:'center'}});
+        row.outlineLevel = 1;
+      }
+    }
+    r++;
+  }
+
+  /* 3 & 4. Flat Present / Absent lists, filterable, banded by group */
+  const flat = (name, list, ok) => {
+    const w = wb.addWorksheet(name, {views:[{state:'frozen', ySplit:4, showGridLines:false}]});
+    const cols = ok ? ['Name','Phone','Group','Unit','Role','Time'] : ['Name','Phone','Group','Unit','Role','Follow up with','Their phone'];
+    w.columns = (ok ? [36,18,18,12,22,11] : [36,18,18,12,22,30,18]).map(width => ({width}));
+    titleRows(w, cols.length, `${ok ? 'Present' : 'Absent'} · ${list.length} ${list.length === 1 ? 'person' : 'people'}`);
+    w.getCell(1,1).font = F({size:18, bold:true, color:{argb: ok ? C.okFg : C.noFg}});
+    headerRow(w, 4, cols);
+    let band = false, last = null, rr = 5;
+    for (const p of list) {
+      if (p.group !== last) { band = !band; last = p.group; }
+      const gh = (S.groups[p.subgroup] && headOf(p.subgroup, 'subgroup_head')) || headOf(p.group, 'group_head');
+      const row = w.getRow(rr++);
+      row.values = ok ? [p.name, (p.phone||'').split(',')[0].trim(), gName(p.group) || UNPAIRED, S.groups[p.subgroup] ? unitLabel(p.subgroup).replace(/^Unit /,'') : '', ROLE_LABEL[p.role] === 'Member' ? '' : ROLE_LABEL[p.role], fmtTime(pres[p.id])]
+        : [p.name, (p.phone||'').split(',')[0].trim(), gName(p.group) || UNPAIRED, S.groups[p.subgroup] ? unitLabel(p.subgroup).replace(/^Unit /,'') : '', ROLE_LABEL[p.role] === 'Member' ? '' : ROLE_LABEL[p.role], gh && gh.id !== p.id ? gh.name : '', gh && gh.id !== p.id ? (gh.phone||'').split(',')[0].trim() : ''];
+      row.eachCell({includeEmpty:true}, c => { c.font = F(); c.border = thin; if (band) c.fill = fill(C.soft); });
+    }
+    if (list.length) w.autoFilter = {from:{row:4, column:1}, to:{row:4 + list.length, column:cols.length}};
+  };
+  flat('Present', all.filter(p => pres[p.id]), true);
+  flat('Absent', all.filter(p => !pres[p.id]), false);
+
+  const buf = await wb.xlsx.writeBuffer();
+  const url = URL.createObjectURL(new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+  const a = document.createElement('a'); a.href = url; a.download = `CCRW attendance - ${m.title} - ${m.date}.xlsx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast('Report downloaded.');
 }
 
 /* ---------- import ---------- */
@@ -784,8 +909,7 @@ document.addEventListener('click', e => {
   else if (a === 'lock') confirmSheet('Lock this device?', 'Anyone using it will need the desk passcode again.', 'Lock', () => lock(''), false);
   else if (a === 'copyAbsent') { const t = absentList().filter(p => ui.absG === 'all' || p.group === ui.absG).map(p => [p.name, (p.phone||'').split(',')[0], where(p)].filter(Boolean).join(' — ')).join('\n');
     navigator.clipboard?.writeText(t).then(() => toast('Absent list copied.'), () => toast('Copy was blocked by the browser.')); }
-  else if (a === 'dlAbsent') { const m = meeting(); saveFile(`absent-${slug(m.title)}-${m.date}.csv`, toCsv([['Name','Phone','Group','Unit','Group head'], ...absentList().filter(p => ui.absG === 'all' || p.group === ui.absG).map(p => [p.name, p.phone, gName(p.group), unitName(p), headOf(p.group,'group_head')?.name || ''])])); }
-  else if (a === 'dlAll') { const m = meeting(), pres = presentMap(m); saveFile(`attendance-${slug(m.title)}-${m.date}.csv`, toCsv([['Name','Phone','Group','Unit','Role','Status','Time'], ...members().map(p => [p.name, p.phone, gName(p.group), unitName(p), ROLE_LABEL[p.role] || 'Member', pres[p.id] ? 'Present' : 'Absent', pres[p.id] ? fmtTime(pres[p.id]) : ''])])); }
+  else if (a === 'dlAll' || a === 'dlAbsent') downloadReport(id);
   else if (a === 'dlRoster') saveFile('ccrw-register.csv', toCsv([['Name','Phone','Group','Unit','Role'], ...members().map(p => [p.name, p.phone, gName(p.group), unitName(p), ROLE_LABEL[p.role] || 'Member'])]));
   else if (a === 'tpl') saveFile('rollcall-template.csv', toCsv([['Name','Phone','Group','Subgroup','Role'],['Ada Obi','08031234567','Group 1','Group 1A','Unit head'],['Tunde Bello','08039876543','Group 1','Group 1B','Member'],['Ngozi Eze','','','','Member']]));
   else if (a === 'pick') $('#file').click();

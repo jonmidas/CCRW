@@ -89,6 +89,12 @@ function statement(env, op, now) {
          updated_at = excluded.updated_at, deleted = 0`
       ).bind(meeting, member, Number(d.at) || now, now);
     }
+    case 'notdup': {
+      // two people a desk confirmed are different, so they stop showing as possible duplicates
+      const pair = str(d.pair, 140);
+      if (!/^[\w-]+\|[\w-]+$/.test(pair)) return null;
+      return env.DB.prepare('INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, ?)').bind('nd:' + pair, '1', now);
+    }
     case 'current':
       return env.DB.prepare("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('current_meeting', ?, ?)").bind(str(d.id, 64), now);
     default:
@@ -132,7 +138,10 @@ async function historyFor(env, ops, now, device) {
     if (o.t === 'member') {
       const cur = people.get(id);
       if (o.op === 'del') {
-        if (cur && !cur.deleted) add('person', id, cur.name, 'removed', '', [gName(cur.group_id), gName(cur.subgroup_id)].filter(Boolean).join(', '));
+        if (cur && !cur.deleted) {
+          if (d.mergedInto) add('person', id, cur.name, 'merged', '', cur.phone ? `${cur.name}, ${cur.phone}` : cur.name, str(d.mergedName, 160) || pName(str(d.mergedInto, 64)));
+          else add('person', id, cur.name, 'removed', '', [gName(cur.group_id), gName(cur.subgroup_id)].filter(Boolean).join(', '));
+        }
         if (cur) people.set(id, { ...cur, deleted: 1 });
         continue;
       }
@@ -183,12 +192,13 @@ async function handleApi(req, env, url) {
     const since = Math.max(0, (Number(url.searchParams.get('since')) || 0) - 3000);
     const now = Date.now();
     const q = (sql) => env.DB.prepare(sql).bind(since);
-    const [groups, members, meetings, checkins, current] = await env.DB.batch([
+    const [groups, members, meetings, checkins, current, notdup] = await env.DB.batch([
       q('SELECT id, name, parent, leaders, deleted FROM groups WHERE updated_at > ?'),
       q('SELECT id, name, phone, group_id AS "group", subgroup_id AS subgroup, role, joined_meeting AS joinedMeeting, created_at AS createdAt, deleted FROM members WHERE updated_at > ?'),
       q('SELECT id, title, date, created_at AS createdAt, ended_at AS endedAt, total_at_end AS totalAtEnd, deleted FROM meetings WHERE updated_at > ?'),
       q('SELECT meeting_id AS meeting, member_id AS member, at, deleted FROM checkins WHERE updated_at > ?'),
       env.DB.prepare("SELECT value FROM settings WHERE key = 'current_meeting'"),
+      q("SELECT key FROM settings WHERE key LIKE 'nd:%' AND updated_at > ?"),
     ]);
     return json({
       now,
@@ -197,6 +207,7 @@ async function handleApi(req, env, url) {
       meetings: meetings.results,
       checkins: checkins.results,
       current: current.results[0]?.value || null,
+      notdup: notdup.results.map((r) => r.key),
     });
   }
 

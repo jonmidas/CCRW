@@ -273,6 +273,9 @@ body:has(#bulk) .toast{bottom:calc(84px + var(--safe))}
 .hlist .hd2{flex:none;max-width:160px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-top:2px}
 .linkbtn{border:0;background:none;padding:0;color:var(--ink);cursor:pointer;text-align:left;font:inherit}.linkbtn:hover{color:var(--brandink);text-decoration:underline}
 @media (max-width:640px){.hlist li{flex-wrap:wrap;gap:4px 10px}.hlist .t{width:auto}.hlist .xhb{flex-basis:100%;order:3}.hlist .hd2{margin-left:auto}}
+.dupc{margin-bottom:12px}.duph{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line2);font-size:13px}
+.dupl{list-style:none;margin:0;padding:0}.dupl li{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line2)}.dupl li:last-child{border:0}
+.dupw{flex:1;min-width:0}.dupw .linkbtn{font-weight:600;font-size:14px}
 .empty{display:grid;justify-items:center;text-align:center;gap:8px;padding:56px 16px}
 .empty svg.art{width:min(280px,70%);height:auto;margin-bottom:6px}
 .empty h2{font-size:18px;font-weight:650}
@@ -385,10 +388,10 @@ const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOff
 const byName = (a,b) => a.name.localeCompare(b.name, undefined, {numeric:true, sensitivity:'base'});
 const I = (n, cls='') => `<svg class="ico ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 let canWrite = true, ready = false, downloads = true;
-const S = {members:{}, groups:{}, meetings:{}, current:null};
+const S = {members:{}, groups:{}, meetings:{}, current:null, notdup:{}};
 const store = {get(k,d){ try { const v = localStorage.getItem('ccrw.'+k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }, set(k,v){ try { localStorage.setItem('ccrw.'+k, JSON.stringify(v)); } catch(e){} }};
 let pass = store.get('pass', ''), queue = store.get('queue', []), cursor = 0, online = true;
-{ const c = store.get('cache', null); if (c && pass && c.v === 3) { Object.assign(S, c.S); cursor = c.cursor || 0; ready = true; } }
+{ const c = store.get('cache', null); if (c && pass && c.v === 3) { Object.assign(S, c.S); S.notdup ||= {}; cursor = c.cursor || 0; ready = true; } }
 const persist = () => { store.set('queue', queue); store.set('cache', {v: 3, S, cursor}); };
 
 /* ---------- server sync ---------- */
@@ -422,6 +425,7 @@ function apply(d){
   for (const m of d.members) { changed = true; if (m.deleted) delete S.members[m.id]; else S.members[m.id] = {id:m.id, name:m.name, phone:m.phone||'', group:m.group||'', subgroup:m.subgroup||'', role:m.role||'member', joinedMeeting:m.joinedMeeting||'', createdAt:m.createdAt||0}; }
   for (const m of d.meetings) { changed = true; if (m.deleted) delete S.meetings[m.id]; else S.meetings[m.id] = {...(S.meetings[m.id]||{present:{}}), title:m.title, date:m.date, createdAt:m.createdAt, endedAt:m.endedAt||null, totalAtEnd:m.totalAtEnd||null}; }
   for (const c of d.checkins) { changed = true; const mt = S.meetings[c.meeting] ||= {present:{}, title:'', date:''}; mt.present = {...mt.present, [c.member]: c.deleted ? null : c.at}; }
+  for (const k of d.notdup || []) { changed = true; S.notdup[k.replace(/^nd:/, '')] = 1; }
   const cur = d.current || null; if (cur !== S.current) { S.current = cur; changed = true; }
   return changed;
 }
@@ -694,13 +698,14 @@ function vGroup(gid){
 function vDirectory(){
   const all = members(), unp = all.filter(p => !isPaired(p)), leaders = all.filter(isLeader);
   return pageTitle('Directory', `${all.length} people on the register`, `<input type="file" id="file" accept=".csv,.xlsx,.xls,text/csv" class="hide"><button class="btn" data-act="pick">${I('upload')}Import</button><button class="btn primary" data-act="addP">${I('plus')}Add person</button>`)
-    + `<div class="tabs" role="tablist">${[['all','All people',all.length],['new','First-timers',all.filter(isNew).length],['pair','Needs pairing',unp.length],['leaders','Leaders',leaders.length]].map(([k,l,c]) => `<button role="tab" data-act="dtab" data-v="${k}" aria-selected="${ui.dtab===k}">${l}<span class="count num">${c}</span></button>`).join('')}</div>
+    + `<div class="tabs" role="tablist">${[['all','All people',all.length],['new','First-timers',all.filter(isNew).length],['pair','Needs pairing',unp.length],['leaders','Leaders',leaders.length],['dups','Possible duplicates',dupClusters().length]].map(([k,l,c]) => `<button role="tab" data-act="dtab" data-v="${k}" aria-selected="${ui.dtab===k}">${l}<span class="count num">${c}</span></button>`).join('')}</div>
     <div class="toolbar"><div class="sinput">${I('search')}<input class="input" id="dq" type="search" placeholder="Search name or phone" aria-label="Search the directory" autocomplete="off"></div>
       ${ui.dtab === 'all' ? `<select class="input" id="dg" aria-label="Filter by group" style="max-width:200px"><option value="all">All groups</option>${realGroups().map(g => `<option value="${g.id}" ${ui.dg===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select>` : ''}
       ${ui.dtab === 'pair' ? '<span class="small muted">Choose a group and unit, then select Pair.</span>' : ''}</div>
     <div id="dirBody">${dirBody()}</div>`;
 }
 function dirBody(){
+  if (ui.dtab === 'dups') return dupBody();
   const pres = presentMap(meeting()), m = meeting(), q = norm(ui.dq), digits = ui.dq.replace(/\D/g,'');
   let list = members().filter(p => ui.dtab === 'pair' ? !isPaired(p) : ui.dtab === 'leaders' ? isLeader(p) : ui.dtab === 'new' ? isNew(p) : (ui.dg === 'all' || p.group === ui.dg));
   if (q) list = list.filter(p => norm(p.name).includes(q) || (digits.length >= 3 && (p.phone||'').replace(/\D/g,'').includes(digits)));
@@ -1175,6 +1180,7 @@ const H_TABS = [
   ['move', 'Group moves', r => r.field === 'group' || r.field === 'unit'],
   ['added', 'Added', r => r.action === 'added'],
   ['removed', 'Removed', r => r.action === 'removed'],
+  ['merged', 'Merged', r => r.action === 'merged'],
 ];
 function hFiltered(){
   const f = (H_TABS.find(t => t[0] === ui.htab) || H_TABS[0])[2], q = norm(ui.hq);
@@ -1187,6 +1193,7 @@ function hWhat(r){
   if (r.action === 'added') return `Added${r.new ? ` to <b>${esc(r.new)}</b>` : who === 'person' ? ' to the register' : ''}`;
   if (r.action === 'removed') return `Removed${r.old ? ` from <b>${esc(r.old)}</b>` : ''}`;
   if (r.action === 'restored') return 'Brought back';
+  if (r.action === 'merged') return `Merged into <b>${esc(r.new)}</b>${r.old ? ` <span class="faint">(was ${esc(r.old)})</span>` : ''}`;
   const f = FIELD_LABEL[r.field] || r.field;
   const o = r.old ? `<s class="hold">${esc(r.old)}</s>` : '<span class="faint">none</span>';
   const n = r.new ? `<b>${esc(r.new)}</b>` : '<span class="faint">none</span>';
@@ -1232,7 +1239,7 @@ async function exportChanges(){
   const wb = new ExcelJS.Workbook(), ws = wb.addWorksheet('Changes', {views:[{state:'frozen', ySplit:1}]});
   ws.columns = [{header:'When', key:'when', width:20}, {header:'Person or group', key:'who', width:32}, {header:'What changed', key:'what', width:16}, {header:'From', key:'old', width:30}, {header:'To', key:'new', width:30}, {header:'Device', key:'dev', width:18}, {header:'Source', key:'src', width:14}];
   for (const r of rows) {
-    const what = r.action === 'edited' ? (FIELD_LABEL[r.field] || r.field) : r.action === 'added' ? 'Added' : r.action === 'removed' ? 'Removed' : 'Brought back';
+    const what = r.action === 'edited' ? (FIELD_LABEL[r.field] || r.field) : r.action === 'added' ? 'Added' : r.action === 'removed' ? 'Removed' : r.action === 'merged' ? 'Merged' : 'Brought back';
     ws.addRow({when: new Date(r.at - new Date(r.at).getTimezoneOffset() * 6e4), who: r.label + (r.kind === 'group' ? ' (group)' : ''), what, old: r.old, new: r.new, dev: r.device, src: r.source === 'recovered' ? 'Recovered' : r.source === 'sheet' ? 'Sheet update' : r.source === 'admin' ? 'Admin' : 'Desk'});
   }
   ws.getColumn('when').numFmt = 'd mmm yyyy, h:mm AM/PM';
@@ -1250,6 +1257,93 @@ function devicePanel(first){
   openPanel(`${dh(first ? 'Name this device' : 'Device name', 'The change log shows which device made each change.')}
     <form id="devForm"><div class="db"><label class="field">Device name<input class="input" name="dn" maxlength="40" required placeholder="For example, Front desk 1" value="${esc(deviceName())}" autocomplete="off"></label></div>
     <div class="df">${first ? '<button type="button" class="btn" data-act="close">Later</button>' : ''}<button class="btn primary">Save name</button></div></form>`, {center:true});
+}
+
+/* ---------- possible duplicates ---------- */
+// People who share a phone number, or have the same name once titles are dropped, are grouped for review.
+const TITLE_RE = /^(pst|pastor|rev|reverend|apst|apstl|apost|apostle|ap|evang|evangelist|evg|mrs|mr|dr|prof|hon|sis|bro|elder|eld|min|minister|deac|deacon|barr|prophet|past|amb)\.?\s+/i;
+const phoneKeys = p => (p.phone || '').split(',').map(x => x.replace(/\D/g, '')).filter(d => d.length >= 10).map(d => d.slice(-10));
+const nameKey = p => { let n = norm(p.name).replace(/\(.*?\)/g, ' '); for (let i = 0; i < 3; i++) n = n.replace(TITLE_RE, ''); const w = n.split(/[^a-z0-9]+/).filter(Boolean).sort(); return w.length >= 2 ? w.join(' ') : ''; };
+const pairKey = (a, b) => a < b ? a + '|' + b : b + '|' + a;
+const notDup = (a, b) => !!(S.notdup || {})[pairKey(a, b)];
+let dupCache = {sig: '', list: []};
+function dupClusters(){
+  const all = Object.values(S.members), sig = all.length + ':' + Object.keys(S.notdup || {}).length + ':' + (cursor || 0);
+  if (dupCache.sig === sig) return dupCache.list;
+  const byKey = new Map(), add = (k, id) => { if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(id); };
+  for (const p of all) { for (const k of phoneKeys(p)) add('p:' + k, p.id); const nk = nameKey(p); if (nk) add('n:' + nk, p.id); }
+  const parent = {}, find = x => parent[x] === x ? x : (parent[x] = find(parent[x]));
+  const reasons = {};
+  for (const [k, ids] of byKey) {
+    const uniq = [...new Set(ids)]; if (uniq.length < 2) continue;
+    for (let i = 0; i < uniq.length; i++) for (let j = i + 1; j < uniq.length; j++) {
+      const a = uniq[i], b = uniq[j]; if (notDup(a, b)) continue;
+      parent[a] ??= a; parent[b] ??= b; parent[find(a)] = find(b);
+      (reasons[a] ||= new Set()).add(k); (reasons[b] ||= new Set()).add(k);
+    }
+  }
+  const groups = new Map();
+  for (const id of Object.keys(parent)) { const r = find(id); if (!groups.has(r)) groups.set(r, []); groups.get(r).push(S.members[id]); }
+  const list = [...groups.values()].filter(g => g.length > 1).map(people => {
+    const keys = new Set(people.flatMap(p => [...(reasons[p.id] || [])]));
+    const why = [...keys].map(k => k.startsWith('p:') ? 'Same phone number' : 'Same name');
+    // suggest keeping whoever is already in a group, then whoever was on the register first
+    people.sort((a, b) => (isPaired(b) - isPaired(a)) || ((a.createdAt || 0) - (b.createdAt || 0)) || byName(a, b));
+    return {people, why: [...new Set(why)], newest: Math.max(...people.map(p => p.createdAt || 0))};
+  }).sort((a, b) => b.newest - a.newest);
+  dupCache = {sig, list};
+  return list;
+}
+function dupBody(){
+  const q = norm(ui.dq), digits = ui.dq.replace(/\D/g, '');
+  let list = dupClusters();
+  if (q) list = list.filter(c => c.people.some(p => norm(p.name).includes(q) || (digits.length >= 3 && (p.phone || '').replace(/\D/g, '').includes(digits))));
+  if (!list.length) return `<div class="empty"><h2>${q ? 'No one matches' : 'No possible duplicates'}</h2><p>${q ? 'Try another name or number.' : 'People who share a phone number or a name will show up here.'}</p></div>`;
+  const pres = presentMap(meeting());
+  return `<p class="small muted" style="margin:0 0 12px">Check each set. Choose who to keep. Their group stays, and the others' check-ins and phone numbers move to them before the others are removed.</p>`
+    + list.slice(0, ui.dlimit).map(c => `<section class="card dupc"><div class="duph"><b>${c.why.join(' and ')}</b><button class="btn sm ghost" data-act="notDup" data-ids="${c.people.map(p => p.id).join(',')}">Not the same person</button></div>
+      <ul class="dupl">${c.people.map((p, i) => `<li><div class="dupw"><button class="linkbtn" data-act="editP" data-id="${p.id}">${esc(p.name)}</button>
+        <div class="row" style="gap:6px;margin-top:4px">${whereBadge(p)}${roleBadge(p.role)}${pres[p.id] ? '<span class="badge ok"><span class="dot"></span>Here</span>' : ''}</div>
+        <div class="small muted" style="margin-top:4px">${esc(p.phone || 'No phone number')} · ${p.createdAt ? 'Added at a desk ' + (dayLabel(p.createdAt) === 'Today' ? 'today, ' + fmtTime(p.createdAt) : dayLabel(p.createdAt)) : 'On the register from the import'}</div></div>
+        <button class="btn sm ${i === 0 ? 'primary' : ''}" data-act="keepDup" data-id="${p.id}" data-ids="${c.people.map(x => x.id).join(',')}">Keep this one</button></li>`).join('')}</ul></section>`).join('')
+    + more(list);
+}
+function mergePeople(keepId, dropIds){
+  const k = S.members[keepId]; if (!k) return;
+  const leaderEdits = new Set();
+  for (const id of dropIds) {
+    const d = S.members[id]; if (!d || id === keepId) continue;
+    // phone numbers: keep every distinct number, the kept person's first
+    const seen = new Set(phoneKeys(k)), extra = (d.phone || '').split(',').map(x => x.trim()).filter(x => { const dg = x.replace(/\D/g, ''); const key = dg.length >= 10 ? dg.slice(-10) : dg; if (!dg || seen.has(key)) return false; seen.add(key); return true; });
+    if (extra.length) k.phone = [k.phone, ...extra].filter(Boolean).join(', ');
+    if (!isPaired(k) && isPaired(d)) { k.group = d.group; k.subgroup = d.subgroup; if (k.role === 'member') k.role = d.role; }
+    // someone already on the register isn't a first-timer
+    if (!d.joinedMeeting || !k.joinedMeeting) k.joinedMeeting = '';
+    if (d.createdAt && k.createdAt && d.createdAt < k.createdAt) k.createdAt = d.createdAt;
+    for (const g of Object.values(S.groups)) if ((g.leaders || []).includes(id)) { g.leaders = [...new Set(g.leaders.map(x => x === id ? keepId : x))]; leaderEdits.add(g.id); }
+    for (const [mid, mt] of Object.entries(S.meetings)) {
+      const t = mt?.present?.[id]; if (!t) continue;
+      if (!mt.present[keepId] || t < mt.present[keepId]) { mt.present = {...mt.present, [keepId]: t}; enqueue({t:'checkin', op:'put', data:{meeting: mid, member: keepId, at: t}}); }
+      mt.present = {...mt.present, [id]: null}; enqueue({t:'checkin', op:'del', data:{meeting: mid, member: id}});
+    }
+    delete S.members[id]; ui.sel2.delete(id);
+    enqueue({t:'member', op:'del', data:{id, mergedInto: keepId, mergedName: k.name}});
+  }
+  saveMember(k);
+  for (const gid of leaderEdits) saveGroup(S.groups[gid]);
+}
+function keepDup(keepId, ids){
+  const k = S.members[keepId], others = ids.filter(x => x !== keepId && S.members[x]);
+  if (!k || !others.length) return;
+  const names = others.map(x => esc(S.members[x].name)).join(', ');
+  confirmPanel(`Keep ${esc(k.name)}?`, `${names} will be merged into ${esc(k.name)}, who stays in ${esc(where(k))}${!isPaired(k) && others.some(x => isPaired(S.members[x])) ? ' (or takes the group from the merged record)' : ''}. Check-ins and phone numbers move across, then ${others.length === 1 ? 'the other record is' : 'the other records are'} removed. The Changes page records the merge.`, 'Merge', () => {
+    mergePeople(keepId, others); render(); toast(`Merged into ${k.name}.`);
+  }, false);
+}
+function dismissDup(ids){
+  S.notdup ||= {};
+  for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) { const key = pairKey(ids[i], ids[j]); S.notdup[key] = 1; enqueue({t:'notdup', op:'put', data:{pair: key}}); }
+  persist(); render(); toast('Marked as different people.');
 }
 function importPanel(imp){
   const fresh = imp.rows.length - imp.dupes;
@@ -1310,6 +1404,8 @@ document.addEventListener('click', e => {
   else if (a === 'pick') $('#file').click();
   else if (a === 'addP') personPanel();
   else if (a === 'editP') personPanel(id);
+  else if (a === 'keepDup') keepDup(id, b.dataset.ids.split(','));
+  else if (a === 'notDup') { const ids = b.dataset.ids.split(','); confirmPanel('Not the same person?', `${ids.map(x => esc(S.members[x]?.name || '')).join(', ')} will stop showing as possible duplicates on every desk.`, 'They\'re different people', () => dismissDup(ids), false); }
   else if (a === 'htab') { ui.htab = b.dataset.v; ui.hlimit = 200; document.querySelectorAll('[data-act="htab"]').forEach(x => x.setAttribute('aria-selected', x === b)); renderChanges(); }
   else if (a === 'hMore') { ui.hlimit += 300; renderChanges(); }
   else if (a === 'hRefresh') { H.loaded ? toast('Refreshing…') : 0; loadHistory(true); }
@@ -1367,7 +1463,7 @@ document.addEventListener('change', async e => {
 document.addEventListener('submit', e => {
   const f = e.target; e.preventDefault();
   if (f.id === 'login') { pass = $('#pc').value.trim(); state.loginMsg = ''; const btn = f.querySelector('button'); btn.disabled = true; btn.textContent = 'Checking…';
-    api('/login').then(() => { store.set('pass', pass); ready = false; cursor = 0; S.members = {}; S.groups = {}; S.meetings = {}; S.current = null; render(); pull(); })
+    api('/login').then(() => { store.set('pass', pass); ready = false; cursor = 0; S.members = {}; S.groups = {}; S.meetings = {}; S.notdup = {}; S.current = null; render(); pull(); })
       .catch(err => { pass = ''; state.loginMsg = err.auth ? err.msg : "Can't reach the server. Check the internet connection."; render(); }); }
   else if (/^newMeeting/.test(f.id)) startMeeting(f.title.value, f.date.value || today());
   else if (f.id === 'devForm') { const v = f.dn.value.trim().slice(0, 40); if (v) { store.set('device', v); closePanel(); render(); toast(`This device is now “${v}”.`); } }

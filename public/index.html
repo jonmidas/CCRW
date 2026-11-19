@@ -137,8 +137,8 @@ const persist = () => { store.set('queue', queue); store.set('cache', {S, cursor
 
 /* ---------- server sync ---------- */
 // On Cloudflare (or locally) the API lives on the same site. Any other host, such as Vercel, calls the Worker directly.
-const WORKER = 'https://ccrw.WORKERS_SUBDOMAIN.workers.dev';
-const API = /\.workers\.dev$|^localhost$|^127\./.test(location.hostname) || WORKER.includes('WORKERS_SUBDOMAIN') ? '/api' : WORKER + '/api';
+const WORKER = 'https://ccrw.jonmidas27.workers.dev';
+const API = /\.workers\.dev$|^localhost$|^127\./.test(location.hostname) ? '/api' : WORKER + '/api';
 async function api(path, opts = {}){
   const r = await fetch(API + path, {...opts, headers:{'content-type':'application/json', 'x-passcode': pass}});
   const body = await r.json().catch(()=>({}));

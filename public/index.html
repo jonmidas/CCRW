@@ -251,7 +251,7 @@ a.hcard:hover{border-color:var(--ink3)}
 .unit li .rm{flex:none;border:0;background:none;width:24px;height:24px;border-radius:6px;display:grid;place-items:center;color:var(--ink3);cursor:pointer;opacity:0;margin-right:-6px}
 .unit li:hover .rm,.unit li .rm:focus-visible{opacity:1}.unit li .rm:hover{background:var(--nobg);color:var(--no)}.unit li .rm .ico{width:14px;height:14px}
 @media (hover:none){.unit li .rm{opacity:.6}}
-.cb{width:16px;height:16px;accent-color:var(--brand);margin:0;cursor:pointer;vertical-align:middle}
+.pick{width:16px;height:16px;accent-color:var(--brand);margin:0;cursor:pointer;vertical-align:middle}
 .tbl tr.picked td{background:var(--brand2)}
 .bulk{position:fixed;left:50%;bottom:calc(20px + var(--safe));transform:translateX(-50%);z-index:45;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 8px 8px 16px;border-radius:12px;background:var(--panel);box-shadow:var(--pop);max-width:calc(100vw - 24px)}
 .bulk select{height:32px;width:auto;font-size:13px}
@@ -700,8 +700,8 @@ function dirBody(){
       <td><div class="pairsel"><select class="input" data-pairg="${p.id}" aria-label="Group for ${esc(p.name)}"><option value="">Group</option>${gopts}</select><select class="input" data-pairu="${p.id}" aria-label="Unit for ${esc(p.name)}" disabled><option value="">Unit</option></select><button class="btn sm" data-act="pair" data-id="${p.id}">Pair</button></div></td></tr>`).join('')}</tbody></table></div>${more(list)}`;
   }
   const allSel = shown.length && shown.every(p => ui.sel2.has(p.id));
-  return `<div class="tblwrap"><table class="tbl"><thead><tr><th style="width:36px"><input type="checkbox" class="cb" id="selAll" aria-label="Select everyone shown" ${allSel ? 'checked' : ''}></th><th>Person</th><th class="hide-sm">Phone</th><th>Group</th><th class="hide-sm">Tags</th>${m ? '<th class="hide-sm">Today</th>' : ''}</tr></thead><tbody>${shown.map(p => `<tr class="click ${ui.sel2.has(p.id) ? 'picked' : ''}" data-act="editP" data-id="${p.id}">
-    <td><input type="checkbox" class="cb" data-pick="${p.id}" aria-label="Select ${esc(p.name)}" ${ui.sel2.has(p.id) ? 'checked' : ''}></td><td><span class="person"><span class="av">${esc(initials(p.name))}</span><b>${esc(p.name)}</b></span></td><td class="hide-sm num muted">${esc(firstPhone(p))}</td><td>${isPaired(p) ? `<span class="small">${esc(gName(p.group))}${S.groups[p.subgroup] ? `<span class="muted">, ${esc(unitShort(p.subgroup))}</span>` : ''}</span>` : `<span class="badge warn">${UNPAIRED}</span>`}</td>
+  return `<div class="tblwrap"><table class="tbl"><thead><tr><th style="width:36px"><input type="checkbox" class="pick" id="selAll" aria-label="Select everyone shown" ${allSel ? 'checked' : ''}></th><th>Person</th><th class="hide-sm">Phone</th><th>Group</th><th class="hide-sm">Tags</th>${m ? '<th class="hide-sm">Today</th>' : ''}</tr></thead><tbody>${shown.map(p => `<tr class="click ${ui.sel2.has(p.id) ? 'picked' : ''}" data-act="editP" data-id="${p.id}">
+    <td><input type="checkbox" class="pick" data-pick="${p.id}" aria-label="Select ${esc(p.name)}" ${ui.sel2.has(p.id) ? 'checked' : ''}></td><td><span class="person"><span class="av">${esc(initials(p.name))}</span><b>${esc(p.name)}</b></span></td><td class="hide-sm num muted">${esc(firstPhone(p))}</td><td>${isPaired(p) ? `<span class="small">${esc(gName(p.group))}${S.groups[p.subgroup] ? `<span class="muted">, ${esc(unitShort(p.subgroup))}</span>` : ''}</span>` : `<span class="badge warn">${UNPAIRED}</span>`}</td>
     <td class="hide-sm">${badges(p)}</td>${m ? `<td class="hide-sm">${pres[p.id] ? `<span class="badge ok"><span class="dot"></span>Here</span>` : '<span class="faint small">–</span>'}</td>` : ''}</tr>`).join('')}</tbody></table></div>${more(list)}`;
 }
 const more = list => list.length > ui.dlimit ? `<div style="text-align:center;margin-top:14px"><button class="btn" data-act="more">Show ${Math.min(150, list.length - ui.dlimit)} more of ${list.length}</button></div>` : '';
@@ -1162,7 +1162,7 @@ function doImport(imp){
 document.addEventListener('click', e => {
   if (e.target.matches('[data-scrim]')) { closePanel(); return; }
   const go = e.target.closest('tr[data-go]'); if (go && !e.target.closest('button,a,select')) { location.hash = go.dataset.go; return; }
-  if (e.target.matches('.cb')) return;
+  if (e.target.matches('.pick')) return;
   const b = e.target.closest('[data-act]'); if (!b) return;
   const a = b.dataset.act, id = b.dataset.id;
   if (b.tagName === 'A' && a !== 'needsPairing' && a !== 'toAbsent' && a !== 'toNew') e.preventDefault();

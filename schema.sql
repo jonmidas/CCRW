@@ -7,3 +7,6 @@ CREATE INDEX IF NOT EXISTS groups_u ON groups(updated_at);
 CREATE INDEX IF NOT EXISTS members_u ON members(updated_at);
 CREATE INDEX IF NOT EXISTS meetings_u ON meetings(updated_at);
 CREATE INDEX IF NOT EXISTS checkins_u ON checkins(updated_at);
+CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER NOT NULL, kind TEXT NOT NULL, target TEXT NOT NULL, label TEXT NOT NULL DEFAULT '', action TEXT NOT NULL, field TEXT NOT NULL DEFAULT '', old TEXT NOT NULL DEFAULT '', new TEXT NOT NULL DEFAULT '', device TEXT NOT NULL DEFAULT '', source TEXT NOT NULL DEFAULT 'desk');
+CREATE INDEX IF NOT EXISTS history_at ON history(at);
+CREATE INDEX IF NOT EXISTS history_target ON history(target);

@@ -262,6 +262,17 @@ body:has(#bulk) .toast{bottom:calc(84px + var(--safe))}
 @media (max-width:860px){.bulk{bottom:calc(84px + var(--safe))}body:has(#bulk) .toast{bottom:calc(148px + var(--safe))}}
 
 /* empty */
+.hday{font-size:13px;font-weight:600;color:var(--ink2);margin:20px 0 6px}.hday:first-child{margin-top:4px}
+.hlist{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--rl);background:var(--raised)}
+.hlist li{display:flex;gap:14px;align-items:flex-start;padding:11px 14px;border-bottom:1px solid var(--line2)}.hlist li:last-child{border:0}
+.hlist .t{flex:none;width:64px;font-size:12px;color:var(--ink3);padding-top:2px}
+.hlist .xhb{flex:1;min-width:0;display:grid;gap:3px}
+.hlist .xhl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.hlist .xhl b,.hlist .linkbtn{font-size:14px;font-weight:600}
+.hlist .xhw{font-size:13px;color:var(--ink2);overflow-wrap:anywhere}.hlist .xhw b{color:var(--ink);font-weight:600}
+.hlist .xhf{display:inline-block;min-width:48px;font-size:12px;color:var(--ink3)}.hlist s.hold{color:var(--no);text-decoration-thickness:1px}
+.hlist .hd2{flex:none;max-width:160px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-top:2px}
+.linkbtn{border:0;background:none;padding:0;color:var(--ink);cursor:pointer;text-align:left;font:inherit}.linkbtn:hover{color:var(--brandink);text-decoration:underline}
+@media (max-width:640px){.hlist li{flex-wrap:wrap;gap:4px 10px}.hlist .t{width:auto}.hlist .xhb{flex-basis:100%;order:3}.hlist .hd2{margin-left:auto}}
 .empty{display:grid;justify-items:center;text-align:center;gap:8px;padding:56px 16px}
 .empty svg.art{width:min(280px,70%);height:auto;margin-bottom:6px}
 .empty h2{font-size:18px;font-weight:650}
@@ -343,6 +354,7 @@ body:has(#bulk) .toast{bottom:calc(84px + var(--safe))}
   <symbol id="i-desk" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
   <symbol id="i-groups" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></symbol>
   <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.8c1.6.8 2.6 2.5 3 5.2"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></symbol>
   <symbol id="i-report" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 17v-3M12 17v-6M15 17v-2"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
@@ -384,7 +396,7 @@ const persist = () => { store.set('queue', queue); store.set('cache', {v: 3, S, 
 const WORKER = 'https://ccrw.jonmidas27.workers.dev';
 const API = /\.workers\.dev$|^localhost$|^127\./.test(location.hostname) ? '/api' : WORKER + '/api';
 async function api(path, opts = {}){
-  const r = await fetch(API + path, {...opts, headers:{'content-type':'application/json', 'x-passcode': pass}});
+  const r = await fetch(API + path, {...opts, headers:{'content-type':'application/json', 'x-passcode': pass, 'x-device': encodeURIComponent(store.get('device', '') || 'Unnamed device')}});
   const body = await r.json().catch(()=>({}));
   if (r.status === 401 || r.status === 429) throw {auth:true, msg: body.error || 'Wrong passcode.'};
   if (!r.ok) throw new Error(body.error || 'Request failed');
@@ -396,7 +408,7 @@ function syncBadge(){
   const txt = !online ? `Offline${queue.length?`, ${queue.length} waiting`:''}` : queue.length ? 'Saving…' : 'All changes saved';
   document.querySelectorAll('.syncslot').forEach(el => { el.className = 'sync syncslot ' + st; el.innerHTML = `<span class="dot"></span><span>${txt}</span>`; });
 }
-function enqueue(op){ queue.push(op); persist(); syncBadge(); flush(); }
+function enqueue(op){ op.at = Date.now(); queue.push(op); persist(); syncBadge(); flush(); }
 let flushing = false;
 async function flush(){
   if (flushing || !queue.length || !pass) return; flushing = true;
@@ -425,7 +437,7 @@ function lock(msg){ pass = ''; store.set('pass', ''); store.set('cache', null); 
 let pendingRender = false;
 function softRender(){
   const a = document.activeElement;
-  if (a && /INPUT|SELECT|TEXTAREA/.test(a.tagName) && a.id !== 'q' && a.id !== 'dq' && a.id !== 'fq' && a.id !== 'rq') { pendingRender = true; render(true); return; }
+  if (a && /INPUT|SELECT|TEXTAREA/.test(a.tagName) && a.id !== 'q' && a.id !== 'dq' && a.id !== 'fq' && a.id !== 'rq' && a.id !== 'hq') { pendingRender = true; render(true); return; }
   render();
 }
 document.addEventListener('focusout', () => setTimeout(() => { const a = document.activeElement; if (pendingRender && !(a && /INPUT|SELECT|TEXTAREA/.test(a.tagName))) { pendingRender = false; render(); } }, 250));
@@ -491,7 +503,7 @@ function search(q, limit=30){
 const crowd = (n=5) => `<svg class="art" viewBox="-40 0 ${n*70+10} 110" role="img" aria-label="People arriving">${Array.from({length:n},(_,i)=>`<g transform="translate(${i*70+(i%2?0:6)},${i%2?6:0}) scale(${i%2?.92:1})" fill="${i===2?'var(--brand)':'var(--line)'}"><use href="#person"/></g>`).join('')}</svg>`;
 
 /* ---------- routing & shell ---------- */
-const NAV = [['overview','Overview','home'],['checkin','Check-in','desk'],['groups','Groups','groups'],['directory','Directory','people'],['reports','Reports','report']];
+const NAV = [['overview','Overview','home'],['checkin','Check-in','desk'],['groups','Groups','groups'],['directory','Directory','people'],['reports','Reports','report'],['changes','Changes','history']];
 function route(){ const [n, id] = location.hash.slice(1).split('/'); return {n: [...NAV.map(x=>x[0]), 'settings'].includes(n) ? n : 'checkin', id: id ? decodeURIComponent(id) : ''}; }
 
 function render(headerOnly){
@@ -521,15 +533,17 @@ function render(headerOnly){
   const key = r.n + '/' + r.id;
   if (r.n === 'checkin' && $('#q') && v.dataset.key === key + ciKey()) { renderDesk(); return; }
   if (r.n === 'directory' && $('#dq') && v.dataset.key === key + ui.dtab) { renderDir(); return; }
-  const views = {overview: vOverview, checkin: vCheckin, groups: r.id ? () => vGroup(r.id) : vGroups, directory: vDirectory, reports: vReports, settings: vSettings};
+  const views = {overview: vOverview, checkin: vCheckin, groups: r.id ? () => vGroup(r.id) : vGroups, directory: vDirectory, reports: vReports, changes: vChanges, settings: vSettings};
   v.innerHTML = `<div class="page">${state.msg ? `<div class="callout">${esc(state.msg)}</div>` : ''}${views[r.n]()}</div>`;
   v.dataset.key = key + (r.n === 'checkin' ? ciKey() : r.n === 'directory' ? ui.dtab : '');
   if (r.n === 'checkin') { const q = $('#q'); if (q && !q.disabled) { q.value = ui.q; if (matchMedia('(min-width:861px)').matches || ui.q) q.focus(); } }
   if (r.n === 'directory' && $('#dq')) $('#dq').value = ui.dq;
+  if (r.n === 'changes' && $('#hq')) $('#hq').value = ui.hq;
+  if (!deviceName() && !store.get('devAsked', false) && !$('#overlay').innerHTML) { store.set('devAsked', true); devicePanel(true); }
 }
 const ciKey = () => { const m = meeting(); return `:${S.current}:${m?.endedAt?1:0}:${Object.keys(S.members).length>0}`; };
 function header(r, m, here, total){
-  const label = {overview:'Overview', checkin:'Check-in', groups:'Groups', directory:'Directory', reports:'Reports', settings:'Settings'}[r.n];
+  const label = {overview:'Overview', checkin:'Check-in', groups:'Groups', directory:'Directory', reports:'Reports', changes:'Changes', settings:'Settings'}[r.n];
   const crumbs = r.n === 'groups' && r.id && S.groups[r.id] ? `<a href="#groups">Groups</a><span class="sep">/</span><span>${esc(S.groups[r.id].name)}</span>` : `<span>${label}</span>`;
   return `<button class="btn ghost sm mob" data-act="meetingMenu" style="padding:0 6px;margin-left:-6px;max-width:62vw"><span class="livedot ${m && !m.endedAt ? '' : 'off'}"></span><span style="overflow:hidden;text-overflow:ellipsis">${m ? esc(m.title) : 'No meeting'}</span>${I('chev')}</button>
     <nav class="crumbs desk-only" aria-label="Breadcrumb">${crumbs}</nav>
@@ -725,6 +739,7 @@ function vSettings(){
       <section class="card"><div class="ch"><div><h2>Register data</h2><div class="small muted" style="margin-top:2px">Import from a spreadsheet with Name, Phone, Group, Subgroup and Role columns.</div></div></div>
         <div class="cb row"><input type="file" id="file" accept=".csv,.xlsx,.xls,text/csv" class="hide"><button class="btn" data-act="pick">${I('upload')}Import spreadsheet</button><button class="btn" data-act="tpl">${I('download')}Download template</button><button class="btn" data-act="dlRoster">${I('download')}Export register</button></div></section>
       <section class="card"><div class="ch"><div><h2>This device</h2><div class="small muted" style="margin-top:2px">Changes are saved on the device first, then sent as soon as there's a connection.</div></div></div>
+        <div class="cb row sp" style="border-bottom:1px solid var(--line2)"><div><div style="font-weight:550">${esc(deviceName() || 'Unnamed device')}</div><div class="small muted">Shown next to every change made here. <a href="#changes">See all changes</a></div></div><button class="btn" data-act="nameDevice">${I('edit')}Rename device</button></div>
         <div class="cb row sp"><div class="sync syncslot" style="padding:0"></div><button class="btn" data-act="lock">${I('lock')}Lock this device</button></div></section></div>`;
 }
 
@@ -1139,6 +1154,103 @@ async function readFile(file){
   const cols = [['Name', iName >= 0 || iFirst >= 0], ['Phone', iPhone >= 0], ['Group', iGroup >= 0], ['Unit', iSub >= 0], ['Role', iRole >= 0]].filter(c => c[1]).map(c => c[0]).join(', ');
   return {file: file.name, rows, dupes, newGroups, cols};
 }
+
+/* ---------- changes (history) ---------- */
+// The server logs every add, edit, move and removal. This page reads that log.
+const H = {rows: [], loaded: false, loading: false, err: '', at: 0};
+ui.htab = 'all'; ui.hq = ''; ui.hlimit = 200;
+const deviceName = () => store.get('device', '');
+async function loadHistory(force){
+  if (H.loading || (!force && H.loaded && Date.now() - H.at < 20000)) return;
+  H.loading = true;
+  try { const d = await api('/history'); H.rows = d.rows || []; H.loaded = true; H.err = ''; }
+  catch(e){ H.err = e.auth ? e.msg : "Couldn't load the change history. Check the connection and try again."; }
+  finally { H.loading = false; H.at = Date.now(); if (route().n === 'changes') renderChanges(); }
+}
+const FIELD_LABEL = {name:'Name', phone:'Phone', group:'Group', unit:'Unit', role:'Role', leaders:'Leaders'};
+const H_TABS = [
+  ['all', 'All changes', r => true],
+  ['name', 'Names', r => r.field === 'name'],
+  ['phone', 'Phone numbers', r => r.field === 'phone'],
+  ['move', 'Group moves', r => r.field === 'group' || r.field === 'unit'],
+  ['added', 'Added', r => r.action === 'added'],
+  ['removed', 'Removed', r => r.action === 'removed'],
+];
+function hFiltered(){
+  const f = (H_TABS.find(t => t[0] === ui.htab) || H_TABS[0])[2], q = norm(ui.hq);
+  return H.rows.filter(r => f(r) && (!q || norm(r.label + ' ' + r.old + ' ' + r.new).includes(q)));
+}
+const sourceBadge = r => r.source === 'recovered' ? '<span class="badge warn" title="Worked out by comparing with the first register import. The time is when this person was last changed.">Recovered</span>'
+  : r.source === 'sheet' ? '<span class="badge brand">Sheet update</span>' : r.source === 'admin' ? '<span class="badge">Admin</span>' : '';
+function hWhat(r){
+  const who = r.kind === 'group' ? 'group' : 'person';
+  if (r.action === 'added') return `Added${r.new ? ` to <b>${esc(r.new)}</b>` : who === 'person' ? ' to the register' : ''}`;
+  if (r.action === 'removed') return `Removed${r.old ? ` from <b>${esc(r.old)}</b>` : ''}`;
+  if (r.action === 'restored') return 'Brought back';
+  const f = FIELD_LABEL[r.field] || r.field;
+  const o = r.old ? `<s class="hold">${esc(r.old)}</s>` : '<span class="faint">none</span>';
+  const n = r.new ? `<b>${esc(r.new)}</b>` : '<span class="faint">none</span>';
+  return `<span class="xhf">${f}</span> ${o} <span class="faint">→</span> ${n}`;
+}
+const dayLabel = t => { const d = new Date(t), k = new Date(d - d.getTimezoneOffset()*6e4).toISOString().slice(0,10); return k === today() ? 'Today' : fmtDate(k); };
+function hList(){
+  if (!H.loaded) return H.err ? `<div class="callout">${esc(H.err)}</div>` : '<p class="muted">Loading the change history…</p>';
+  const rows = hFiltered();
+  if (!rows.length) return `<div class="empty"><b>No changes here</b><span class="muted small">${ui.hq ? 'Nothing matches that search.' : 'Changes will appear here as people are added and edited.'}</span></div>`;
+  let h = '', day = '';
+  for (const r of rows.slice(0, ui.hlimit)) {
+    const dl = dayLabel(r.at);
+    if (dl !== day) { if (day) h += '</ul>'; h += `<h3 class="hday">${dl}</h3><ul class="hlist">`; day = dl; }
+    const open = r.kind === 'person' && S.members[r.target] ? `data-act="editP" data-id="${esc(r.target)}"` : '';
+    h += `<li><span class="t num">${fmtTime(r.at)}</span><div class="xhb"><div class="xhl">${open ? `<button class="linkbtn" ${open}>${esc(r.label)}</button>` : `<b>${esc(r.label)}</b>`}${r.kind === 'group' ? '<span class="badge">Group</span>' : ''}${sourceBadge(r)}</div><div class="xhw">${hWhat(r)}</div></div><span class="hd2 small muted">${esc(r.device || '')}</span></li>`;
+  }
+  h += '</ul>';
+  if (rows.length > ui.hlimit) h += `<div style="text-align:center;margin-top:12px"><button class="btn" data-act="hMore">Show more (${rows.length - ui.hlimit} left)</button></div>`;
+  return h;
+}
+function vChanges(){
+  loadHistory();
+  const counts = Object.fromEntries(H_TABS.map(([k,,f]) => [k, H.rows.filter(f).length]));
+  const rec = H.rows.some(r => r.source === 'recovered');
+  return pageTitle('Changes', 'Every person and group that was added, edited, moved or removed.', `<button class="btn" data-act="hRefresh">Refresh</button><button class="btn" data-act="hExport" ${H.rows.length ? '' : 'disabled'}>${I('download')}Excel</button>`)
+    + `<div class="callout small" id="hNote" style="${rec ? '' : 'display:none'}">Changes marked <b>Recovered</b> were made before the change log was switched on. They come from comparing the register with its first import, so they show the original and current details, the time each person was last changed, and no device.</div>`
+    + `<div class="tabs" role="tablist">${H_TABS.map(([k,l]) => `<button role="tab" data-act="htab" data-v="${k}" aria-selected="${ui.htab===k}">${l}<span class="count num">${H.loaded ? counts[k] : ''}</span></button>`).join('')}</div>
+    <div class="toolbar"><div class="sinput">${I('search')}<input class="input" id="hq" type="search" placeholder="Search a name or number" aria-label="Search changes" autocomplete="off"></div></div>
+    <div id="hBody">${hList()}</div>`;
+}
+function renderChanges(){
+  const b = $('#hBody'); if (!b) return;
+  b.innerHTML = hList();
+  document.querySelectorAll('[data-act="htab"] .count').forEach((c, i) => c.textContent = H.rows.filter(H_TABS[i][2]).length);
+  const x = $('[data-act="hExport"]'); if (x) x.disabled = !H.rows.length;
+  const rec = H.rows.some(r => r.source === 'recovered'), cl = $('#hNote'); if (cl) cl.style.display = rec ? '' : 'none';
+}
+async function exportChanges(){
+  const rows = hFiltered(); if (!rows.length) return;
+  toast('Preparing the spreadsheet…');
+  const ExcelJS = await loadExcelJS();
+  const wb = new ExcelJS.Workbook(), ws = wb.addWorksheet('Changes', {views:[{state:'frozen', ySplit:1}]});
+  ws.columns = [{header:'When', key:'when', width:20}, {header:'Person or group', key:'who', width:32}, {header:'What changed', key:'what', width:16}, {header:'From', key:'old', width:30}, {header:'To', key:'new', width:30}, {header:'Device', key:'dev', width:18}, {header:'Source', key:'src', width:14}];
+  for (const r of rows) {
+    const what = r.action === 'edited' ? (FIELD_LABEL[r.field] || r.field) : r.action === 'added' ? 'Added' : r.action === 'removed' ? 'Removed' : 'Brought back';
+    ws.addRow({when: new Date(r.at - new Date(r.at).getTimezoneOffset() * 6e4), who: r.label + (r.kind === 'group' ? ' (group)' : ''), what, old: r.old, new: r.new, dev: r.device, src: r.source === 'recovered' ? 'Recovered' : r.source === 'sheet' ? 'Sheet update' : r.source === 'admin' ? 'Admin' : 'Desk'});
+  }
+  ws.getColumn('when').numFmt = 'd mmm yyyy, h:mm AM/PM';
+  const hr = ws.getRow(1); hr.font = {bold:true, color:{argb:'FFFFFFFF'}}; hr.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF2F45FF'}}; hr.height = 22;
+  ws.eachRow((row, i) => { if (i === 1) return; const src = row.getCell('src').value, what = row.getCell('what').value;
+    const c = what === 'Name' ? 'FFEEF0FF' : what === 'Phone' ? 'FFE8F6EE' : what === 'Removed' ? 'FFFDECEC' : null;
+    if (c) row.getCell('what').fill = {type:'pattern', pattern:'solid', fgColor:{argb:c}};
+    if (src === 'Recovered') row.getCell('src').font = {color:{argb:'FFB45309'}}; });
+  ws.autoFilter = {from:'A1', to:'G1'};
+  const buf = await wb.xlsx.writeBuffer();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+  a.download = `CCRW changes ${today()}.xlsx`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function devicePanel(first){
+  openPanel(`${dh(first ? 'Name this device' : 'Device name', 'The change log shows which device made each change.')}
+    <form id="devForm"><div class="db"><label class="field">Device name<input class="input" name="dn" maxlength="40" required placeholder="For example, Front desk 1" value="${esc(deviceName())}" autocomplete="off"></label></div>
+    <div class="df">${first ? '<button type="button" class="btn" data-act="close">Later</button>' : ''}<button class="btn primary">Save name</button></div></form>`, {center:true});
+}
 function importPanel(imp){
   const fresh = imp.rows.length - imp.dupes;
   openPanel(`${dh('Import ' + esc(imp.file), `Found ${imp.rows.length} people. Columns read: ${esc(imp.cols)}.`)}<div class="db">
@@ -1198,6 +1310,11 @@ document.addEventListener('click', e => {
   else if (a === 'pick') $('#file').click();
   else if (a === 'addP') personPanel();
   else if (a === 'editP') personPanel(id);
+  else if (a === 'htab') { ui.htab = b.dataset.v; ui.hlimit = 200; document.querySelectorAll('[data-act="htab"]').forEach(x => x.setAttribute('aria-selected', x === b)); renderChanges(); }
+  else if (a === 'hMore') { ui.hlimit += 300; renderChanges(); }
+  else if (a === 'hRefresh') { H.loaded ? toast('Refreshing…') : 0; loadHistory(true); }
+  else if (a === 'hExport') exportChanges().catch(() => toast("The spreadsheet couldn't be made. Check the connection."));
+  else if (a === 'nameDevice') devicePanel(false);
   else if (a === 'more') { ui.dlimit += 150; renderDir(); }
   else if (a === 'pair') { const g = $(`[data-pairg="${id}"]`).value, u = $(`[data-pairu="${id}"]`).value, p = S.members[id];
     if (!g) { toast('Choose a group first.'); $(`[data-pairg="${id}"]`).focus(); return; }
@@ -1230,6 +1347,7 @@ document.addEventListener('input', e => {
   const t = e.target;
   if (t.id === 'q') { ui.q = t.value; ui.sel = 0; if (ui.q) ui.last = null; renderDesk(); }
   else if (t.id === 'dq') { ui.dq = t.value; ui.dlimit = 150; renderDir(); }
+  else if (t.id === 'hq') { ui.hq = t.value; ui.hlimit = 200; renderChanges(); }
   else if (t.id === 'fq') { ui.fq = t.value; findResults(); }
   else if (t.id === 'rq') { ui.rq = t.value; const pos = t.selectionStart; render(); const n = $('#rq'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }
 });
@@ -1252,6 +1370,7 @@ document.addEventListener('submit', e => {
     api('/login').then(() => { store.set('pass', pass); ready = false; cursor = 0; S.members = {}; S.groups = {}; S.meetings = {}; S.current = null; render(); pull(); })
       .catch(err => { pass = ''; state.loginMsg = err.auth ? err.msg : "Can't reach the server. Check the internet connection."; render(); }); }
   else if (/^newMeeting/.test(f.id)) startMeeting(f.title.value, f.date.value || today());
+  else if (f.id === 'devForm') { const v = f.dn.value.trim().slice(0, 40); if (v) { store.set('device', v); closePanel(); render(); toast(`This device is now “${v}”.`); } }
   else if (f.id === 'quickAdd') quickAdd(f.name.value, f.phone.value);
   else if (f.id === 'changePass') { const v = f.np.value.trim(); api('/passcode', {method:'POST', body: JSON.stringify({passcode: v})}).then(() => { pass = v; store.set('pass', v); f.reset(); toast('Passcode changed. Other desks need the new one.'); }).catch(err => toast(err.msg || err.message || "The passcode couldn't be changed.")); }
   else if (f.id === 'pform') {

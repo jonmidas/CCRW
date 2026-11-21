@@ -276,6 +276,14 @@ body:has(#bulk) .toast{bottom:calc(84px + var(--safe))}
 .dupc{margin-bottom:12px}.duph{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line2);font-size:13px}
 .dupl{list-style:none;margin:0;padding:0}.dupl li{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line2)}.dupl li:last-child{border:0}
 .dupw{flex:1;min-width:0}.dupw .linkbtn{font-weight:600;font-size:14px}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.chip{height:30px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--raised);color:var(--ink2);font:inherit;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--ink3);color:var(--ink)}.chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.fbar{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px 10px;margin:0 0 14px;padding:12px;border:1px solid var(--line);border-radius:var(--rl);background:var(--raised)}
+.fsel{display:grid;gap:3px;min-width:0}.fsel span{font-size:11.5px;color:var(--ink3);padding-left:2px}
+.fsel select{height:34px;font-size:13px;padding-right:28px;width:100%}.ftoggle{display:none;align-items:center;gap:6px}.ftoggle svg{width:14px;height:14px}.fsel.on select{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand) inset}
+.fsum{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;min-height:32px}.fsum>.small{min-width:0}.fsum>.row{flex:none;flex-wrap:nowrap}
+@media (max-width:640px){.fbar{display:none;grid-template-columns:1fr 1fr;padding:10px}.fbar.open{display:grid}.ftoggle{display:inline-flex}.presets{flex-wrap:nowrap;overflow-x:auto;margin-right:-16px;padding-right:16px}.chip{flex:none}}
 .empty{display:grid;justify-items:center;text-align:center;gap:8px;padding:56px 16px}
 .empty svg.art{width:min(280px,70%);height:auto;margin-bottom:6px}
 .empty h2{font-size:18px;font-weight:650}
@@ -357,6 +365,7 @@ body:has(#bulk) .toast{bottom:calc(84px + var(--safe))}
   <symbol id="i-desk" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
   <symbol id="i-groups" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></symbol>
   <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.8c1.6.8 2.6 2.5 3 5.2"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M10 19h4"/></symbol>
   <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></symbol>
   <symbol id="i-report" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 17v-3M12 17v-6M15 17v-2"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
@@ -700,15 +709,15 @@ function vDirectory(){
   return pageTitle('Directory', `${all.length} people on the register`, `<input type="file" id="file" accept=".csv,.xlsx,.xls,text/csv" class="hide"><button class="btn" data-act="pick">${I('upload')}Import</button><button class="btn primary" data-act="addP">${I('plus')}Add person</button>`)
     + `<div class="tabs" role="tablist">${[['all','All people',all.length],['new','First-timers',all.filter(isNew).length],['pair','Needs pairing',unp.length],['leaders','Leaders',leaders.length],['dups','Possible duplicates',dupClusters().length]].map(([k,l,c]) => `<button role="tab" data-act="dtab" data-v="${k}" aria-selected="${ui.dtab===k}">${l}<span class="count num">${c}</span></button>`).join('')}</div>
     <div class="toolbar"><div class="sinput">${I('search')}<input class="input" id="dq" type="search" placeholder="Search name or phone" aria-label="Search the directory" autocomplete="off"></div>
-      ${ui.dtab === 'all' ? `<select class="input" id="dg" aria-label="Filter by group" style="max-width:200px"><option value="all">All groups</option>${realGroups().map(g => `<option value="${g.id}" ${ui.dg===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select>` : ''}
       ${ui.dtab === 'pair' ? '<span class="small muted">Choose a group and unit, then select Pair.</span>' : ''}</div>
-    <div id="dirBody">${dirBody()}</div>`;
+    ${ui.dtab === 'all' ? `<div id="fWrap">${filterBar()}</div>` : ''}<div id="dirBody">${dirBody()}</div>`;
 }
 function dirBody(){
   if (ui.dtab === 'dups') return dupBody();
-  const pres = presentMap(meeting()), m = meeting(), q = norm(ui.dq), digits = ui.dq.replace(/\D/g,'');
-  let list = members().filter(p => ui.dtab === 'pair' ? !isPaired(p) : ui.dtab === 'leaders' ? isLeader(p) : ui.dtab === 'new' ? isNew(p) : (ui.dg === 'all' || p.group === ui.dg));
+  const isAll = ui.dtab === 'all', m = isAll ? S.meetings[fMeeting()] || null : meeting(), pres = presentMap(m), q = norm(ui.dq), digits = ui.dq.replace(/\D/g,'');
+  let list = isAll ? filterPeople(members()) : members().filter(p => ui.dtab === 'pair' ? !isPaired(p) : ui.dtab === 'leaders' ? isLeader(p) : ui.dtab === 'new' ? isNew(p) : true);
   if (q) list = list.filter(p => norm(p.name).includes(q) || (digits.length >= 3 && (p.phone||'').replace(/\D/g,'').includes(digits)));
+  if (isAll) { lastFiltered = list; if (!list.length) return filterSummary(0) + `<div class="empty"><h2>No one matches</h2><p>${activeFilters() ? 'Try fewer filters.' : 'Try another name or number.'}</p>${activeFilters() ? '<button class="btn" data-act="fClear">Clear filters</button>' : ''}</div>`; }
   if (!list.length) return `<div class="empty"><h2>${ui.dtab === 'pair' && !q ? 'Everyone is paired' : ui.dtab === 'new' && !q ? 'No first-timers yet' : 'No one matches'}</h2><p>${ui.dtab === 'pair' && !q ? 'New first-timers will appear here.' : ui.dtab === 'new' && !q ? 'People added at check-in during a meeting show here until the next meeting starts.' : 'Try another name or number.'}</p></div>`;
   if (ui.dtab === 'new') list.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
   const shown = list.slice(0, ui.dlimit);
@@ -719,9 +728,9 @@ function dirBody(){
       <td><div class="pairsel"><select class="input" data-pairg="${p.id}" aria-label="Group for ${esc(p.name)}"><option value="">Group</option>${gopts}</select><select class="input" data-pairu="${p.id}" aria-label="Unit for ${esc(p.name)}" disabled><option value="">Unit</option></select><button class="btn sm" data-act="pair" data-id="${p.id}">Pair</button></div></td></tr>`).join('')}</tbody></table></div>${more(list)}`;
   }
   const allSel = shown.length && shown.every(p => ui.sel2.has(p.id));
-  return `<div class="tblwrap"><table class="tbl"><thead><tr><th style="width:36px"><input type="checkbox" class="pick" id="selAll" aria-label="Select everyone shown" ${allSel ? 'checked' : ''}></th><th>Person</th><th class="hide-sm">Phone</th><th>Group</th><th class="hide-sm">Tags</th>${m ? '<th class="hide-sm">Today</th>' : ''}</tr></thead><tbody>${shown.map(p => `<tr class="click ${ui.sel2.has(p.id) ? 'picked' : ''}" data-act="editP" data-id="${p.id}">
+  return (isAll ? filterSummary(list.length) : '') + `<div class="tblwrap"><table class="tbl"><thead><tr><th style="width:36px"><input type="checkbox" class="pick" id="selAll" aria-label="Select everyone shown" ${allSel ? 'checked' : ''}></th><th>Person</th><th class="hide-sm">Phone</th><th>Group</th><th class="hide-sm">Tags</th>${m ? `<th class="hide-sm">${m === meeting() ? 'Today' : esc(fmtShort(m.date))}</th>` : ''}${isAll && meetingsList().length > 1 ? '<th class="hide-sm" title="Meetings attended">Meetings</th>' : ''}</tr></thead><tbody>${shown.map(p => `<tr class="click ${ui.sel2.has(p.id) ? 'picked' : ''}" data-act="editP" data-id="${p.id}">
     <td><input type="checkbox" class="pick" data-pick="${p.id}" aria-label="Select ${esc(p.name)}" ${ui.sel2.has(p.id) ? 'checked' : ''}></td><td><span class="person"><span class="av">${esc(initials(p.name))}</span><b>${esc(p.name)}</b></span></td><td class="hide-sm num muted">${esc(firstPhone(p))}</td><td>${isPaired(p) ? `<span class="small">${esc(gName(p.group))}${S.groups[p.subgroup] ? `<span class="muted">, ${esc(unitShort(p.subgroup))}</span>` : ''}</span>` : `<span class="badge warn">${UNPAIRED}</span>`}</td>
-    <td class="hide-sm">${badges(p)}</td>${m ? `<td class="hide-sm">${pres[p.id] ? `<span class="badge ok"><span class="dot"></span>Here</span>` : '<span class="faint small">–</span>'}</td>` : ''}</tr>`).join('')}</tbody></table></div>${more(list)}`;
+    <td class="hide-sm">${badges(p)}</td>${m ? `<td class="hide-sm">${pres[p.id] ? `<span class="badge ok"><span class="dot"></span>Here</span>` : '<span class="faint small">–</span>'}</td>` : ''}${isAll && meetingsList().length > 1 ? `<td class="hide-sm num muted">${attendedCount(p.id)}</td>` : ''}</tr>`).join('')}</tbody></table></div>${more(list)}`;
 }
 const more = list => list.length > ui.dlimit ? `<div style="text-align:center;margin-top:14px"><button class="btn" data-act="more">Show ${Math.min(150, list.length - ui.dlimit)} more of ${list.length}</button></div>` : '';
 const renderDir = () => { const b = $('#dirBody'); if (b) b.innerHTML = dirBody(); renderBulk(); };
@@ -1345,6 +1354,92 @@ function dismissDup(ids){
   for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) { const key = pairKey(ids[i], ids[j]); S.notdup[key] = 1; enqueue({t:'notdup', op:'put', data:{pair: key}}); }
   persist(); render(); toast('Marked as different people.');
 }
+
+/* ---------- directory filters ---------- */
+// All filters combine (AND) with each other and with the search box.
+const F0 = {att:'any', mt:'', grp:'any', unit:'any', role:'any', origin:'any', phone:'any', hist:'any'};
+ui.f = {...F0};
+const meetingsList = () => Object.entries(S.meetings).filter(([, v]) => v && v.title).sort((a, b) => (b[1].date || '').localeCompare(a[1].date || '') || (b[1].createdAt || 0) - (a[1].createdAt || 0));
+const fMeeting = () => (ui.f.mt && S.meetings[ui.f.mt]) ? ui.f.mt : (S.meetings[S.current] ? S.current : latestMeeting());
+let attCache = {sig: '', n: {}};
+function attendedCount(id){
+  const ms = meetingsList(), sig = ms.length + ':' + (cursor || 0) + ':' + ms.reduce((s, [, v]) => s + Object.keys(v.present || {}).length, 0);
+  if (attCache.sig !== sig) { const n = {}; for (const [, v] of ms) for (const [k, t] of Object.entries(v.present || {})) if (t) n[k] = (n[k] || 0) + 1; attCache = {sig, n}; }
+  return attCache.n[id] || 0;
+}
+const ROLE_F = {
+  leaders: p => isLeader(p),
+  group_leaders: p => leadsGroups(p).length > 0,
+  unit_heads: p => p.role === 'subgroup_head',
+  assistants: p => p.role === 'assistant_head',
+  members: p => !isLeader(p),
+};
+function filterPeople(list){
+  const f = ui.f, mid = fMeeting(), pres = mid ? presentMap(S.meetings[mid]) : {};
+  return list.filter(p =>
+    (f.att === 'any' || (f.att === 'here' ? !!pres[p.id] : !pres[p.id])) &&
+    (f.grp === 'any' || (f.grp === 'unp' ? !isPaired(p) : p.group === f.grp)) &&
+    (f.grp === 'any' || f.grp === 'unp' || f.unit === 'any' || (f.unit === 'none' ? !S.groups[p.subgroup] : p.subgroup === f.unit)) &&
+    (f.role === 'any' || ROLE_F[f.role](p)) &&
+    (f.origin === 'any' || (f.origin === 'new' ? isNew(p) : f.origin === 'desk' ? !!p.createdAt : !p.createdAt)) &&
+    (f.phone === 'any' || (f.phone === 'has' ? phoneKeys(p).length > 0 : f.phone === 'none' ? !(p.phone || '').replace(/\D/g, '') : sharedPhone(p))) &&
+    (f.hist === 'any' || (f.hist === 'never' ? attendedCount(p.id) === 0 : f.hist === 'once' ? attendedCount(p.id) === 1 : attendedCount(p.id) >= 2)));
+}
+let phoneCache = {sig: '', n: {}};
+function sharedPhone(p){
+  const sig = Object.keys(S.members).length + ':' + (cursor || 0);
+  if (phoneCache.sig !== sig) { const n = {}; for (const m of Object.values(S.members)) for (const k of new Set(phoneKeys(m))) n[k] = (n[k] || 0) + 1; phoneCache = {sig, n}; }
+  return phoneKeys(p).some(k => phoneCache.n[k] > 1);
+}
+const activeFilters = () => Object.keys(F0).filter(k => k !== 'mt' && ui.f[k] !== F0[k]).length;
+const PRESETS = [
+  ['hereUnp', 'Here but not paired', {att:'here', grp:'unp'}],
+  ['hereNew', 'First-timers here', {att:'here', origin:'new'}],
+  ['absent', 'Not here', {att:'absent', grp:'any'}],
+  ['leadAbs', 'Leaders not here', {att:'absent', role:'leaders'}],
+  ['never', 'Never attended', {hist:'never'}],
+  ['nophone', 'No phone number', {phone:'none'}],
+];
+const presetOn = f => Object.entries(f).every(([k, v]) => ui.f[k] === v) && activeFilters() === Object.keys(f).filter(k => F0[k] !== f[k]).length;
+const sel = (id, label, opts, val, style='') => `<label class="fsel${val !== F0[id] && id !== 'mt' ? ' on' : ''}"><span>${label}</span><select class="input" id="f_${id}" ${style}>${opts.map(([v, l]) => `<option value="${esc(v)}" ${v === val ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`;
+function filterBar(){
+  const f = ui.f, ms = meetingsList(), mid = fMeeting(), g = S.groups[f.grp];
+  const groupOpts = [['any', 'All groups'], ['unp', UNPAIRED], ...realGroups().map(x => [x.id, x.name])];
+  const a = activeFilters();
+  return `<div class="presets" role="group" aria-label="Quick filters"><button class="chip ftoggle${a ? ' on' : ''}" data-act="fToggle" aria-expanded="${!!ui.fOpen}">${I('filter')}Filters${a ? ` (${a})` : ''}</button>${PRESETS.map(([k, l, pf]) => `<button class="chip${presetOn(pf) ? ' on' : ''}" data-act="fPreset" data-v="${k}" aria-pressed="${presetOn(pf)}">${l}</button>`).join('')}</div>
+  <div class="fbar${ui.fOpen ? ' open' : ''}">
+    ${sel('att', 'Attendance', [['any', 'Anyone'], ['here', 'Here'], ['absent', 'Not here']], f.att)}
+    ${ms.length ? sel('mt', 'Meeting', ms.map(([id, v]) => [id, `${v.title}, ${fmtShort(v.date)}`]), mid, f.att === 'any' ? 'disabled' : '') : ''}
+    ${sel('grp', 'Group', groupOpts, f.grp)}
+    ${g && !isUnp(g) ? sel('unit', 'Unit', [['any', 'All units'], ['none', 'No unit'], ...subsOf(g.id).map(u => [u.id, unitShort(u.id)])], f.unit) : ''}
+    ${sel('role', 'Role', [['any', 'Anyone'], ['leaders', 'All leaders'], ['group_leaders', 'Group leaders'], ['unit_heads', 'Unit heads'], ['assistants', 'Assistant heads'], ['members', 'Members only']], f.role)}
+    ${sel('origin', 'Added', [['any', 'Any time'], ['new', 'First-timers (New)'], ['desk', 'At a desk'], ['import', 'From the register import']], f.origin)}
+    ${sel('phone', 'Phone', [['any', 'Any'], ['has', 'Has a number'], ['none', 'No number'], ['shared', 'Shares a number']], f.phone)}
+    ${ms.length ? sel('hist', 'Meetings attended', [['any', 'Any'], ['never', 'None'], ['once', 'Only one'], ['regular', 'Two or more']], f.hist) : ''}
+  </div>`;
+}
+function filterSummary(n){
+  const a = activeFilters();
+  return `<div class="fsum"><span class="small"><b class="num">${n}</b> ${n === 1 ? 'person' : 'people'}${a ? ` ${n === 1 ? 'matches' : 'match'} ${a === 1 ? 'this filter' : 'these filters'}` : ''}</span>
+    <span class="row" style="gap:6px">${a ? '<button class="btn ghost sm" data-act="fClear">Clear filters</button>' : ''}<button class="btn sm" data-act="fExport" ${n ? '' : 'disabled'}>${I('download')}Excel</button></span></div>`;
+}
+let lastFiltered = [];
+async function exportFiltered(){
+  const list = lastFiltered; if (!list.length) return;
+  toast('Preparing the spreadsheet…');
+  const ExcelJS = await loadExcelJS(), mid = fMeeting(), m = S.meetings[mid], pres = m ? presentMap(m) : {};
+  const wb = new ExcelJS.Workbook(), ws = wb.addWorksheet('People', {views:[{state:'frozen', ySplit:1}]});
+  ws.columns = [{header:'Name', key:'n', width:34}, {header:'Phone', key:'p', width:26}, {header:'Group', key:'g', width:16}, {header:'Unit', key:'u', width:10}, {header:'Role', key:'r', width:20},
+    ...(m ? [{header:`${m.title}, ${fmtShort(m.date)}`, key:'h', width:20}] : []), {header:'Meetings attended', key:'c', width:12}, {header:'First-timer', key:'f', width:11}];
+  for (const p of list) ws.addRow({n: p.name, p: p.phone || '', g: isPaired(p) ? gName(p.group) : UNPAIRED, u: S.groups[p.subgroup] ? unitShort(p.subgroup) : '', r: leadsGroups(p).length ? 'Group leader' : ROLE_LABEL[p.role] || 'Member', h: pres[p.id] ? 'Here' : 'Not here', c: attendedCount(p.id), f: isNew(p) ? 'Yes' : ''});
+  const hr = ws.getRow(1); hr.font = {bold:true, color:{argb:'FFFFFFFF'}}; hr.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF2F45FF'}}; hr.height = 22;
+  if (m) ws.getColumn('h').eachCell((c, i) => { if (i > 1) c.fill = {type:'pattern', pattern:'solid', fgColor:{argb: c.value === 'Here' ? 'FFE3F5EA' : 'FFFDECEC'}}; });
+  ws.autoFilter = {from:'A1', to:{row:1, column:ws.columns.length}};
+  const buf = await wb.xlsx.writeBuffer();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+  a.download = `CCRW people ${today()}.xlsx`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+const renderFilters = () => { const w = $('#fWrap'); if (w) w.innerHTML = filterBar(); renderDir(); };
 function importPanel(imp){
   const fresh = imp.rows.length - imp.dupes;
   openPanel(`${dh('Import ' + esc(imp.file), `Found ${imp.rows.length} people. Columns read: ${esc(imp.cols)}.`)}<div class="db">
@@ -1404,6 +1499,10 @@ document.addEventListener('click', e => {
   else if (a === 'pick') $('#file').click();
   else if (a === 'addP') personPanel();
   else if (a === 'editP') personPanel(id);
+  else if (a === 'fPreset') { const pf = PRESETS.find(x => x[0] === b.dataset.v)[2]; ui.f = presetOn(pf) ? {...F0, mt: ui.f.mt} : {...F0, mt: ui.f.mt, ...pf}; ui.dlimit = 150; ui.sel2.clear(); renderFilters(); }
+  else if (a === 'fToggle') { ui.fOpen = !ui.fOpen; renderFilters(); }
+  else if (a === 'fClear') { ui.f = {...F0, mt: ui.f.mt}; ui.dlimit = 150; renderFilters(); }
+  else if (a === 'fExport') exportFiltered().catch(() => toast("The spreadsheet couldn't be made. Check the connection."));
   else if (a === 'keepDup') keepDup(id, b.dataset.ids.split(','));
   else if (a === 'notDup') { const ids = b.dataset.ids.split(','); confirmPanel('Not the same person?', `${ids.map(x => esc(S.members[x]?.name || '')).join(', ')} will stop showing as possible duplicates on every desk.`, 'They\'re different people', () => dismissDup(ids), false); }
   else if (a === 'htab') { ui.htab = b.dataset.v; ui.hlimit = 200; document.querySelectorAll('[data-act="htab"]').forEach(x => x.setAttribute('aria-selected', x === b)); renderChanges(); }
@@ -1453,7 +1552,7 @@ document.addEventListener('change', async e => {
   else if (t.dataset.pick) { t.checked ? ui.sel2.add(t.dataset.pick) : ui.sel2.delete(t.dataset.pick); t.closest('tr').classList.toggle('picked', t.checked); renderBulk(); }
   else if (t.id === 'selAll') { document.querySelectorAll('[data-pick]').forEach(c => { c.checked = t.checked; t.checked ? ui.sel2.add(c.dataset.pick) : ui.sel2.delete(c.dataset.pick); c.closest('tr').classList.toggle('picked', t.checked); }); renderBulk(); }
   else if (t.id === 'bulkMove' && t.value) { const [g, u] = t.value.split('|'), ids = [...ui.sel2].filter(x => S.members[x]); ids.forEach(x => { const m = S.members[x]; m.group = g; m.subgroup = u; if (m.role !== 'member' && m.role !== 'group_head') m.role = 'member'; saveMember(m); }); ui.sel2.clear(); render(); renderBulk(); toast(`${ids.length} moved to ${gName(g)}${u ? ', ' + unitShort(u) : ''}.`); }
-  else if (t.id === 'dg') { ui.dg = t.value; ui.dlimit = 150; renderDir(); }
+  else if (t.id && t.id.startsWith('f_')) { const k = t.id.slice(2); ui.f[k] = t.value; if (k === 'grp') ui.f.unit = 'any'; if (k === 'att' && t.value !== 'any' && !ui.f.mt) ui.f.mt = fMeeting() || ''; ui.dlimit = 150; ui.sel2.clear(); renderFilters(); }
   else if (t.id === 'rm') { ui.rm = t.value; render(); }
   else if (t.id === 'rg') { ui.rg = t.value; render(); }
   else if (t.id === 'pfGroup') $('#pfUnit').innerHTML = unitOptions(t.value, '');

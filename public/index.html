@@ -1051,7 +1051,7 @@ async function downloadReport(mid){
   s.views = [{state:'frozen', ySplit:7, showGridLines:false}];
 
   /* 2. By group: every person, grouped, colour-tagged */
-  const b = wb.addWorksheet('By group', {views:[{state:'frozen', ySplit:4, showGridLines:false}], properties:{outlineLevelRow:1}});
+  const b = wb.addWorksheet('By group', {views:[{state:'frozen', ySplit:4, showGridLines:false}]});
   b.columns = [{width:36},{width:18},{width:12},{width:22},{width:12},{width:11}];
   titleRows(b, 6, 'Attendance by group');
   const lg = b.getRow(3); lg.getCell(1).value = 'Key:'; lg.getCell(1).font = F({color:{argb:C.grey}});
@@ -1075,7 +1075,6 @@ async function downloadReport(mid){
         row.values = [p.name, (p.phone||'').split(',')[0].trim(), S.groups[p.subgroup] ? unitLabel(p.subgroup).replace(/^Unit /,'') : '', [p.joinedMeeting === (mid || S.current) ? 'First-timer' : '', leadsGroups(p).length ? 'Group leader' : '', p.role !== 'member' && p.role !== 'group_head' ? ROLE_LABEL[p.role] : ''].filter(Boolean).join(', '), ok ? 'Present' : 'Absent', ok ? fmtTime(pres[p.id]) : ''];
         row.eachCell({includeEmpty:true}, c => { c.font = F(); c.fill = fill(ok ? C.okTint : C.noTint); c.border = thin; });
         Object.assign(row.getCell(5), {fill: fill(ok ? C.okBg : C.noBg), font: F({bold:true, color:{argb: ok ? C.okFg : C.noFg}}), alignment:{horizontal:'center'}});
-        row.outlineLevel = 1;
       }
     }
     r++;

@@ -469,8 +469,12 @@ const state = {msg:'', loginMsg:''};
 const UNPAIRED = 'Not paired yet';
 const members = () => Object.values(S.members).sort(byName);
 const isUnp = g => !!g && norm(g.name) === norm(UNPAIRED);
-const groupsTop = () => Object.values(S.groups).filter(g => !g.parent).sort((a,b) => (isUnp(a)-isUnp(b)) || byName(a,b));
-const realGroups = () => groupsTop().filter(g => !isUnp(g));
+// supervisors oversee groups but are not counted in any of them
+const SUPS = 'Supervisors';
+const isSup = g => !!g && norm(g.name) === norm(SUPS);
+const isSupervisor = p => isSup(S.groups[p.group]);
+const groupsTop = () => Object.values(S.groups).filter(g => !g.parent).sort((a,b) => (isUnp(a)-isUnp(b)) || (isSup(a)-isSup(b)) || byName(a,b));
+const realGroups = () => groupsTop().filter(g => !isUnp(g) && !isSup(g));
 const subsOf = gid => Object.values(S.groups).filter(g => g.parent === gid).sort(byName);
 const gName = id => S.groups[id]?.name || '';
 const meeting = () => S.meetings[S.current] || null;
@@ -479,12 +483,12 @@ const inGroup = gid => members().filter(m => m.group === gid);
 const leadersOf = gid => { const g = S.groups[gid]; if (!g) return []; const ids = [...(g.leaders || [])]; for (const m of Object.values(S.members)) if (m.role === 'group_head' && m.group === gid && !ids.includes(m.id)) ids.push(m.id); return ids.map(id => S.members[id]).filter(Boolean); };
 const leaderNames = (gid, max=3) => { const l = leadersOf(gid); return l.length ? l.slice(0, max).map(p => p.name).join(', ') + (l.length > max ? ` and ${l.length - max} more` : '') : ''; };
 const leadsGroups = p => groupsTop().filter(g => (g.leaders || []).includes(p.id) || (p.role === 'group_head' && p.group === g.id));
-const isLeader = p => p.role !== 'member' || leadsGroups(p).length > 0;
+const isLeader = p => p.role !== 'member' || isSupervisor(p) || leadsGroups(p).length > 0;
 const headOf = (gid, role) => role === 'group_head' ? leadersOf(gid)[0] : Object.values(S.members).find(m => m.role === role && m.subgroup === gid);
 const isPaired = p => S.groups[p.group] && !isUnp(S.groups[p.group]);
 const unitLabel = id => { const u = S.groups[id]; if (!u) return ''; const g = S.groups[u.parent]; return g && /^group\s/i.test(u.name) && u.name.startsWith(g.name) && u.name.length > g.name.length ? 'Unit ' + u.name.replace(/^group\s*/i, '') : u.name; };
 const unitShort = id => unitLabel(id).replace(/^Unit /, '');
-const where = p => isPaired(p) ? [gName(p.group), S.groups[p.subgroup] ? unitLabel(p.subgroup) : ''].filter(Boolean).join(', ') : UNPAIRED;
+const where = p => isSupervisor(p) ? 'Supervisor' : isPaired(p) ? [gName(p.group), S.groups[p.subgroup] ? unitLabel(p.subgroup) : ''].filter(Boolean).join(', ') : UNPAIRED;
 const initials = n => { const w = n.replace(/^(pst|pastor|rev|reverend|apst|apstl|apost|apostle|ap|evang|evangelist|mrs|mr|dr|prof|hon|sis|bro|elder|eld|min|minister|deac|barr|prophet|past)\.?\s+/i,'').split(/[\s,]+/).filter(Boolean); return ((w[0]||'?')[0] + (w.length > 1 ? w[w.length-1][0] : '')).toUpperCase(); };
 const pct = (a,b) => b ? Math.round(a/b*100) : 0;
 const pctTxt = (a,b) => a && pct(a,b) === 0 ? '<1%' : pct(a,b) + '%';
@@ -496,7 +500,7 @@ const isNew = p => !!p.joinedMeeting && p.joinedMeeting === latestMeeting();
 const firstTimersOf = mid => Object.values(S.members).filter(p => p.joinedMeeting === mid).sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
 const newBadge = p => isNew(p) ? '<span class="badge newb">New</span>' : '';
 const badges = p => { const lg = leadsGroups(p); return newBadge(p) + (lg.length ? `<span class="badge brand">${lg.length === 1 && lg[0].id === p.group ? 'Group leader' : 'Leads ' + esc(lg.map(g => g.name).join(', '))}</span>` : '') + roleBadge(p.role); };
-const whereBadge = p => isPaired(p) ? `<span class="badge">${esc(where(p))}</span>` : `<span class="badge warn">${UNPAIRED}</span>`;
+const whereBadge = p => isSupervisor(p) ? '<span class="badge brand">Supervisor</span>' : isPaired(p) ? `<span class="badge">${esc(where(p))}</span>` : `<span class="badge warn">${UNPAIRED}</span>`;
 const isPhoneQ = q => /^\+?[\d\s-]{6,}$/.test(q.trim());
 const titleCase = s => s.trim().replace(/\s+/g,' ').replace(/(^|[\s\-'])(\p{L})/gu, (a,b,c) => b + c.toUpperCase());
 const firstPhone = p => (p.phone||'').split(',')[0].trim();
@@ -627,6 +631,9 @@ function board(pres){
       h += `<a class="cell ${p > 55 ? 'hi' : ''}" style="--p:${p}" href="#groups/${g.id}" title="${esc(unitLabel(u.id))}: ${uh} of ${ul.length} here">${uh}<small>/${ul.length}</small></a>`; }
     h += `<div class="gtot"><div class="bar"><i style="width:${pct(gh, list.length)}%"></i></div><span class="num">${gh}<span class="faint" style="font-weight:500">/${list.length}</span></span></div>`;
   }
+  const sup = groupsTop().find(isSup), sl = sup ? Object.values(S.members).filter(p => p.group === sup.id) : [];
+  if (sl.length) { const sh = sl.filter(p => pres[p.id]).length;
+    h += `<a class="gname" href="#directory" data-act="dtab" data-v="leaders"><b>${SUPS}</b><span>Not counted in a group</span></a><div class="cell none" style="grid-column:span ${cols};justify-content:flex-start;padding-left:12px">${sh} of ${sl.length} here</div><div class="gtot"><div class="bar"><i style="width:${pct(sh, sl.length)}%"></i></div><span class="num">${sh}<span class="faint" style="font-weight:500">/${sl.length}</span></span></div>`; }
   const unp = groupsTop().find(isUnp);
   if (unp) { const list = Object.values(S.members).filter(p => !isPaired(p)), uh = list.filter(p => pres[p.id]).length;
     h += `<a class="gname" href="#directory" data-act="needsPairing"><b>${UNPAIRED}</b><span>First-timers and others</span></a><div class="cell none" style="grid-column:span ${cols};justify-content:flex-start;padding-left:12px;border-style:dashed">${uh} here today. Pair them in Directory.</div><div class="gtot"><div class="bar"><i style="width:${pct(uh, list.length)}%;background:var(--warn)"></i></div><span class="num">${uh}<span class="faint" style="font-weight:500">/${list.length}</span></span></div>`; }
@@ -793,7 +800,7 @@ function personPanel(id){
       ${!isNew && m ? `<div class="callout" style="margin:0">${t ? `<span class="badge ok">Here</span><span class="grow">Checked in at ${fmtTime(t)}</span><button type="button" class="btn sm" data-act="undo" data-id="${p.id}">Undo</button>` : `<span class="badge">Not here</span><span class="grow">${esc(m.title)}</span>${m.endedAt ? '' : `<button type="button" class="btn sm primary" data-act="reg" data-id="${p.id}">Check in</button>`}`}</div>` : ''}
       <label class="field">Full name<input class="input" name="name" required value="${esc(p.name)}" autocomplete="off"></label>
       <label class="field">Phone<input class="input" name="phone" inputmode="tel" value="${esc(p.phone)}" autocomplete="off"><span class="hint">Separate extra numbers with commas.</span></label>
-      <div class="two"><label class="field">Group<select class="input" name="group" id="pfGroup"><option value="">${UNPAIRED}</option>${realGroups().map(g => `<option value="${g.id}" ${p.group===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select></label>
+      <div class="two"><label class="field">Group<select class="input" name="group" id="pfGroup"><option value="">${UNPAIRED}</option>${groupsTop().filter(isSup).map(g => `<option value="${g.id}" ${p.group===g.id?'selected':''}>Supervisor (no group)</option>`).join('')}${realGroups().map(g => `<option value="${g.id}" ${p.group===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select></label>
         <label class="field">Unit<select class="input" name="subgroup" id="pfUnit">${unitOptions(p.group, p.subgroup)}</select></label></div>
       <label class="field">Role in their unit<select class="input" name="role">${Object.entries(ROLE_LABEL).filter(([k]) => k !== 'group_head').map(([k,l]) => `<option value="${k}" ${p.role===k?'selected':''}>${l}</option>`).join('')}</select></label>
       ${latestMeeting() ? `<label class="chk" style="height:auto;padding:10px 12px;align-items:flex-start"><input type="checkbox" name="firstTimer" ${(isNew && meeting() && !meeting().endedAt) || isNew_(p) ? 'checked' : ''} style="margin-top:3px"><span><b style="font-weight:600">First-timer</b><span class="hint" style="display:block">${isNew ? 'New people added during a meeting are marked New until the next meeting starts.' : isNew_(p) ? 'Marked New until the next meeting starts.' : 'Tick to mark them New for the latest meeting.'}</span></span></label>` : ''}
@@ -1072,7 +1079,7 @@ async function downloadReport(mid){
       // present first, then absent
       for (const p of [...u.list].sort((x,y) => (!!pres[y.id] - !!pres[x.id]) || byName(x,y))) {
         const ok = !!pres[p.id], row = b.getRow(r++);
-        row.values = [p.name, (p.phone||'').split(',')[0].trim(), S.groups[p.subgroup] ? unitLabel(p.subgroup).replace(/^Unit /,'') : '', [p.joinedMeeting === (mid || S.current) ? 'First-timer' : '', leadsGroups(p).length ? 'Group leader' : '', p.role !== 'member' && p.role !== 'group_head' ? ROLE_LABEL[p.role] : ''].filter(Boolean).join(', '), ok ? 'Present' : 'Absent', ok ? fmtTime(pres[p.id]) : ''];
+        row.values = [p.name, (p.phone||'').split(',')[0].trim(), S.groups[p.subgroup] ? unitLabel(p.subgroup).replace(/^Unit /,'') : '', [p.joinedMeeting === (mid || S.current) ? 'First-timer' : '', isSupervisor(p) ? 'Supervisor' : leadsGroups(p).length ? 'Group leader' : '', p.role !== 'member' && p.role !== 'group_head' ? ROLE_LABEL[p.role] : ''].filter(Boolean).join(', '), ok ? 'Present' : 'Absent', ok ? fmtTime(pres[p.id]) : ''];
         row.eachCell({includeEmpty:true}, c => { c.font = F(); c.fill = fill(ok ? C.okTint : C.noTint); c.border = thin; });
         Object.assign(row.getCell(5), {fill: fill(ok ? C.okBg : C.noBg), font: F({bold:true, color:{argb: ok ? C.okFg : C.noFg}}), alignment:{horizontal:'center'}});
       }
@@ -1368,6 +1375,7 @@ function attendedCount(id){
 }
 const ROLE_F = {
   leaders: p => isLeader(p),
+  supervisors: p => isSupervisor(p),
   group_leaders: p => leadsGroups(p).length > 0,
   unit_heads: p => p.role === 'subgroup_head',
   assistants: p => p.role === 'assistant_head',
@@ -1377,7 +1385,7 @@ function filterPeople(list){
   const f = ui.f, mid = fMeeting(), pres = mid ? presentMap(S.meetings[mid]) : {};
   return list.filter(p =>
     (f.att === 'any' || (f.att === 'here' ? !!pres[p.id] : !pres[p.id])) &&
-    (f.grp === 'any' || (f.grp === 'unp' ? !isPaired(p) : p.group === f.grp)) &&
+    (f.grp === 'any' || (f.grp === 'unp' ? !isPaired(p) : f.grp === 'sup' ? isSupervisor(p) : p.group === f.grp)) &&
     (f.grp === 'any' || f.grp === 'unp' || f.unit === 'any' || (f.unit === 'none' ? !S.groups[p.subgroup] : p.subgroup === f.unit)) &&
     (f.role === 'any' || ROLE_F[f.role](p)) &&
     (f.origin === 'any' || (f.origin === 'new' ? isNew(p) : f.origin === 'desk' ? !!p.createdAt : !p.createdAt)) &&
@@ -1403,15 +1411,15 @@ const presetOn = f => Object.entries(f).every(([k, v]) => ui.f[k] === v) && acti
 const sel = (id, label, opts, val, style='') => `<label class="fsel${val !== F0[id] && id !== 'mt' ? ' on' : ''}"><span>${label}</span><select class="input" id="f_${id}" ${style}>${opts.map(([v, l]) => `<option value="${esc(v)}" ${v === val ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`;
 function filterBar(){
   const f = ui.f, ms = meetingsList(), mid = fMeeting(), g = S.groups[f.grp];
-  const groupOpts = [['any', 'All groups'], ['unp', UNPAIRED], ...realGroups().map(x => [x.id, x.name])];
+  const groupOpts = [['any', 'All groups'], ['unp', UNPAIRED], ['sup', 'Supervisors'], ...realGroups().map(x => [x.id, x.name])];
   const a = activeFilters();
   return `<div class="presets" role="group" aria-label="Quick filters"><button class="chip ftoggle${a ? ' on' : ''}" data-act="fToggle" aria-expanded="${!!ui.fOpen}">${I('filter')}Filters${a ? ` (${a})` : ''}</button>${PRESETS.map(([k, l, pf]) => `<button class="chip${presetOn(pf) ? ' on' : ''}" data-act="fPreset" data-v="${k}" aria-pressed="${presetOn(pf)}">${l}</button>`).join('')}</div>
   <div class="fbar${ui.fOpen ? ' open' : ''}">
     ${sel('att', 'Attendance', [['any', 'Anyone'], ['here', 'Here'], ['absent', 'Not here']], f.att)}
     ${ms.length ? sel('mt', 'Meeting', ms.map(([id, v]) => [id, `${v.title}, ${fmtShort(v.date)}`]), mid, f.att === 'any' ? 'disabled' : '') : ''}
     ${sel('grp', 'Group', groupOpts, f.grp)}
-    ${g && !isUnp(g) ? sel('unit', 'Unit', [['any', 'All units'], ['none', 'No unit'], ...subsOf(g.id).map(u => [u.id, unitShort(u.id)])], f.unit) : ''}
-    ${sel('role', 'Role', [['any', 'Anyone'], ['leaders', 'All leaders'], ['group_leaders', 'Group leaders'], ['unit_heads', 'Unit heads'], ['assistants', 'Assistant heads'], ['members', 'Members only']], f.role)}
+    ${g && !isUnp(g) && !isSup(g) ? sel('unit', 'Unit', [['any', 'All units'], ['none', 'No unit'], ...subsOf(g.id).map(u => [u.id, unitShort(u.id)])], f.unit) : ''}
+    ${sel('role', 'Role', [['any', 'Anyone'], ['leaders', 'All leaders'], ['supervisors', 'Supervisors'], ['group_leaders', 'Group leaders'], ['unit_heads', 'Unit heads'], ['assistants', 'Assistant heads'], ['members', 'Members only']], f.role)}
     ${sel('origin', 'Added', [['any', 'Any time'], ['new', 'First-timers (New)'], ['desk', 'At a desk'], ['import', 'From the register import']], f.origin)}
     ${sel('phone', 'Phone', [['any', 'Any'], ['has', 'Has a number'], ['none', 'No number'], ['shared', 'Shares a number']], f.phone)}
     ${ms.length ? sel('hist', 'Meetings attended', [['any', 'Any'], ['never', 'None'], ['once', 'Only one'], ['regular', 'Two or more']], f.hist) : ''}
@@ -1430,7 +1438,7 @@ async function exportFiltered(){
   const wb = new ExcelJS.Workbook(), ws = wb.addWorksheet('People', {views:[{state:'frozen', ySplit:1}]});
   ws.columns = [{header:'Name', key:'n', width:34}, {header:'Phone', key:'p', width:26}, {header:'Group', key:'g', width:16}, {header:'Unit', key:'u', width:10}, {header:'Role', key:'r', width:20},
     ...(m ? [{header:`${m.title}, ${fmtShort(m.date)}`, key:'h', width:20}] : []), {header:'Meetings attended', key:'c', width:12}, {header:'First-timer', key:'f', width:11}];
-  for (const p of list) ws.addRow({n: p.name, p: p.phone || '', g: isPaired(p) ? gName(p.group) : UNPAIRED, u: S.groups[p.subgroup] ? unitShort(p.subgroup) : '', r: leadsGroups(p).length ? 'Group leader' : ROLE_LABEL[p.role] || 'Member', h: pres[p.id] ? 'Here' : 'Not here', c: attendedCount(p.id), f: isNew(p) ? 'Yes' : ''});
+  for (const p of list) ws.addRow({n: p.name, p: p.phone || '', g: isPaired(p) ? gName(p.group) : UNPAIRED, u: S.groups[p.subgroup] ? unitShort(p.subgroup) : '', r: isSupervisor(p) ? 'Supervisor' : leadsGroups(p).length ? 'Group leader' : ROLE_LABEL[p.role] || 'Member', h: pres[p.id] ? 'Here' : 'Not here', c: attendedCount(p.id), f: isNew(p) ? 'Yes' : ''});
   const hr = ws.getRow(1); hr.font = {bold:true, color:{argb:'FFFFFFFF'}}; hr.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF2F45FF'}}; hr.height = 22;
   if (m) ws.getColumn('h').eachCell((c, i) => { if (i > 1) c.fill = {type:'pattern', pattern:'solid', fgColor:{argb: c.value === 'Here' ? 'FFE3F5EA' : 'FFFDECEC'}}; });
   ws.autoFilter = {from:'A1', to:{row:1, column:ws.columns.length}};

@@ -674,7 +674,7 @@ function deskBody(){
   if (ui.q.trim().length > 1 && !m.endedAt) {
     const phone = isPhoneQ(ui.q);
     h += `<div class="addnew"><b style="font-size:14px">${res.length ? 'Not on the list?' : phone ? 'No one has that number' : `No one called “${esc(ui.q.trim())}”`}</b>
-      <div class="small muted">Add them as a first-timer and check them in. They go into “${UNPAIRED}” until you pair them.</div>
+      <div class="small muted">Add them as a first-timer and check them in. They go straight into the next unit with space.</div>
       <form id="quickAdd"><input class="input" name="name" placeholder="Full name" aria-label="Full name" required value="${phone ? '' : esc(titleCase(ui.q))}">
       <input class="input" name="phone" inputmode="tel" placeholder="Phone (optional)" aria-label="Phone" value="${phone ? esc(ui.q.trim()) : ''}">
       <button class="btn ${res.length ? '' : 'primary'}">${I('plus')}Add and check in</button></form></div>`;
@@ -835,6 +835,7 @@ function toast(msg, undo){
 function register(id){
   const m = meeting(); if (!m || m.endedAt || !S.members[id]) return;
   if (!presentMap(m)[id]) { const at = Date.now(); m.present = {...m.present, [id]: at}; enqueue({t:'checkin', op:'put', data:{meeting: S.current, member: id, at}}); }
+  const p = S.members[id]; if (!isPaired(p) && !isSupervisor(p)) autoPair(p);
   ui.last = id; ui.q = ''; ui.sel = 0;
   if ($('.drawer')) { closePanel(); toast(`${S.members[id].name} is checked in.`); }
   const q = $('#q'); if (q) { q.value = ''; q.focus(); }
@@ -850,10 +851,25 @@ function unpair(ids){
   const up = unpairedGroup();
   for (const id of ids) { const m = S.members[id]; if (!m) continue; m.group = up; m.subgroup = ''; if (m.role !== 'member') m.role = 'member'; saveMember(m); }
 }
+/* ---------- automatic pairing at check-in ---------- */
+// Units hold 10 and groups have 4 units, so a group tops out at 40. When every unit is full, the next group is created.
+const UNIT_CAP = 10, UNIT_LETTERS = 'abcd';
+const gNum = g => parseInt((g.name.match(/\d+/) || [0])[0], 10) || 0;
+function nextSlot(){
+  const counts = {}; for (const m of Object.values(S.members)) if (m.subgroup) counts[m.subgroup] = (counts[m.subgroup] || 0) + 1;
+  for (const g of [...realGroups()].sort((a, b) => gNum(a) - gNum(b)))
+    for (const u of subsOf(g.id)) if ((counts[u.id] || 0) < UNIT_CAP) return {group: g.id, subgroup: u.id};
+  const n = Math.max(0, ...realGroups().map(gNum)) + 1, g = {id: 'g_group' + n, name: 'Group ' + n, parent: '', leaders: []};
+  S.groups[g.id] = g; saveGroup(g);
+  for (const l of UNIT_LETTERS) { const u = {id: g.id + l, name: g.name + l.toUpperCase(), parent: g.id}; S.groups[u.id] = u; saveGroup(u); }
+  return {group: g.id, subgroup: g.id + 'a'};
+}
+// the server re-checks the unit is still under 10 when it saves, in case two desks add people at once
+function autoPair(m){ const s = nextSlot(); m.group = s.group; m.subgroup = s.subgroup; enqueue({t:'member', op:'put', data:{...m, autoPair: true}}); }
 function quickAdd(name, phone){
   if (!name.trim()) return;
-  const m = {id: uid('m'), name: titleCase(name), phone: phone.trim(), group: unpairedGroup(), subgroup: '', role: 'member', joinedMeeting: S.current || '', createdAt: Date.now()};
-  S.members[m.id] = m; saveMember(m); register(m.id);
+  const m = {id: uid('m'), name: titleCase(name), phone: phone.trim(), group: '', subgroup: '', role: 'member', joinedMeeting: S.current || '', createdAt: Date.now()};
+  S.members[m.id] = m; autoPair(m); register(m.id);
 }
 function setHead(gid, role, memberId){
   for (const m of Object.values(S.members)) {

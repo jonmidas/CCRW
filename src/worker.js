@@ -179,6 +179,41 @@ async function historyFor(env, ops, now, device) {
   return rows.map((r) => env.DB.prepare('INSERT INTO history (at, kind, target, label, action, field, old, new, device, source) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(...r));
 }
 
+/* ---------- automatic pairing ---------- */
+// A desk asks for a person to be auto-paired. The device suggests a unit; this checks the stored counts and moves them
+// to the next unit with room if that one filled up meanwhile, creating the next group (4 units of 10) when all are full.
+const UNIT_CAP = 10;
+async function autoPlace(env, ops) {
+  const auto = ops.filter((o) => o.t === 'member' && o.op !== 'del' && o.data && o.data.autoPair);
+  if (!auto.length) return [];
+  const groups = (await env.DB.prepare('SELECT id, name, parent FROM groups WHERE deleted = 0').all()).results;
+  const counts = new Map((await env.DB.prepare("SELECT subgroup_id AS s, count(*) AS n FROM members WHERE deleted = 0 AND subgroup_id <> '' GROUP BY subgroup_id").all()).results.map((r) => [r.s, r.n]));
+  const cur = await rowsById(env, 'members', auto.map((o) => str(o.data.id, 64)));
+  const num = (g) => parseInt((g.name.match(/\d+/) || [0])[0], 10) || 0;
+  const tops = () => groups.filter((g) => !g.parent && !/^(not paired yet|supervisors)$/i.test(g.name.trim())).sort((a, b) => num(a) - num(b));
+  const unitsOf = (gid) => groups.filter((u) => u.parent === gid).sort((a, b) => a.name.localeCompare(b.name));
+  const room = (u) => (counts.get(u) || 0) < UNIT_CAP;
+  const extra = [];
+  for (const o of auto) {
+    const d = o.data, id = str(d.id, 64), c = cur.get(id), want = str(d.subgroup, 64);
+    if (c && !c.deleted && c.subgroup_id && c.subgroup_id === want) continue; // already saved in that unit
+    let slot = null;
+    const wantUnit = groups.find((g) => g.id === want && g.parent);
+    if (wantUnit && room(want)) slot = { g: wantUnit.parent, u: want };
+    if (!slot) for (const g of tops()) { const u = unitsOf(g.id).find((x) => room(x.id)); if (u) { slot = { g: g.id, u: u.id }; break; } }
+    if (!slot) {
+      const n = Math.max(0, ...tops().map(num)) + 1, gid = 'g_group' + n, name = 'Group ' + n;
+      const g = { id: gid, name, parent: '' }; groups.push(g);
+      extra.push({ t: 'group', op: 'put', at: o.at, data: { id: gid, name, parent: '', leaders: [] } });
+      for (const l of 'abcd') { const u = { id: gid + l, name: name + l.toUpperCase(), parent: gid }; groups.push(u); extra.push({ t: 'group', op: 'put', at: o.at, data: u }); }
+      slot = { g: gid, u: gid + 'a' };
+    }
+    if (c && c.subgroup_id) counts.set(c.subgroup_id, Math.max(0, (counts.get(c.subgroup_id) || 1) - 1));
+    d.group = slot.g; d.subgroup = slot.u; counts.set(slot.u, (counts.get(slot.u) || 0) + 1);
+  }
+  return extra;
+}
+
 async function handleApi(req, env, url) {
   if (url.pathname === '/api/health') return json({ ok: true });
 
@@ -214,6 +249,8 @@ async function handleApi(req, env, url) {
   if (url.pathname === '/api/ops' && req.method === 'POST') {
     const body = await req.json().catch(() => null);
     const ops = Array.isArray(body?.ops) ? body.ops.slice(0, 2000) : [];
+    // group ops for any new group go first, so it exists before people are placed in it
+    ops.unshift(...(await autoPlace(env, ops)));
     const now = Date.now();
     let device = req.headers.get('x-device') || 'Unnamed device';
     try { device = decodeURIComponent(device); } catch (e) {}
